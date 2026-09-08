@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import DashboardEmpresa from "./Dashboard-Empresa.jsx";
 import "./Dashboard-Estudiante.css";
 
 export default function Dashboard() {
@@ -43,7 +44,9 @@ export default function Dashboard() {
         </section>
       )}
 
-      {usuario?.rol !== "ESTUDIANTE" && (
+      {usuario?.rol === "EMPRESA" && <DashboardEmpresa />}
+
+      {usuario?.rol !== "ESTUDIANTE" && usuario?.rol !== "EMPRESA" && (
         <p>Vista para el rol "{usuario?.rol}" — pendiente de construir.</p>
       )}
     </div>

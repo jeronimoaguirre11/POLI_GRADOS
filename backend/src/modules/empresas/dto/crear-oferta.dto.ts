@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsNotEmpty, IsString } from 'class-validator';
 
 export class CrearOfertaDto {
   @IsString()
@@ -10,6 +10,6 @@ export class CrearOfertaDto {
   perfilBuscado!: string;
 
   @IsString()
-  @IsOptional()
-  descripcion?: string;
+  @IsNotEmpty()
+  descripcion!: string;
 }

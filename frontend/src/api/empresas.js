@@ -9,25 +9,26 @@ async function manejarRespuesta(res) {
   return res.json()
 }
 
-export async function ingresarEmpresa({ email, nombre }) {
-  const res = await fetch(`${API_URL}/empresas/ingresar`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email, nombre }),
-  })
-  return manejarRespuesta(res)
+function headersAutenticados() {
+  const token = localStorage.getItem('token')
+  return {
+    'Content-Type': 'application/json',
+    ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }
 }
 
-export async function crearOferta(empresaId, { titulo, perfilBuscado, descripcion }) {
-  const res = await fetch(`${API_URL}/empresas/${empresaId}/ofertas`, {
+export async function crearOferta({ titulo, perfilBuscado, descripcion }) {
+  const res = await fetch(`${API_URL}/empresas/ofertas`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: headersAutenticados(),
     body: JSON.stringify({ titulo, perfilBuscado, descripcion }),
   })
   return manejarRespuesta(res)
 }
 
-export async function listarOfertas(empresaId) {
-  const res = await fetch(`${API_URL}/empresas/${empresaId}/ofertas`)
+export async function listarOfertas() {
+  const res = await fetch(`${API_URL}/empresas/ofertas`, {
+    headers: headersAutenticados(),
+  })
   return manejarRespuesta(res)
 }

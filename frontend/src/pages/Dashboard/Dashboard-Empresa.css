@@ -1,0 +1,116 @@
+.dashboard-empresa h2 {
+  margin-bottom: 1.5rem;
+}
+
+.dashboard-empresa-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+@media (max-width: 720px) {
+  .dashboard-empresa-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.empresa-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 1.5rem;
+}
+
+.empresa-form h3 {
+  margin: 0 0 0.25rem;
+}
+
+.empresa-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.empresa-form input,
+.empresa-form textarea {
+  font: inherit;
+  padding: 0.5rem;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  resize: vertical;
+}
+
+.empresa-form button {
+  margin-top: 0.25rem;
+  padding: 0.6rem;
+  background-color: #0d5904;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.empresa-form button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.empresa-error {
+  color: #991b1b;
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.empresa-lista-ofertas {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.empresa-lista-ofertas li {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  padding: 0.85rem 1rem;
+}
+
+.empresa-lista-ofertas-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.empresa-lista-ofertas p {
+  margin: 0.4rem 0 0;
+  font-size: 0.85rem;
+  color: #6b6558;
+}
+
+.empresa-estado {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  padding: 0.2rem 0.5rem;
+  border-radius: 999px;
+  flex: none;
+}
+
+.empresa-estado-abierta {
+  background: #e3f3ea;
+  color: #1f7a5c;
+}
+
+.empresa-estado-cerrada {
+  background: #f1e3e6;
+  color: #a1435a;
+}

@@ -9,9 +9,14 @@ export default function Register() {
     email: "",
     password: "",
     rol: "ESTUDIANTE",
+    nombreEmpresa: "",
+    nit: "",
+    sector: "",
   });
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
+
+  const esEmpresa = form.rol === "EMPRESA";
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -23,16 +28,31 @@ export default function Register() {
     setCargando(true);
 
     try {
+      const body = {
+        nombre: form.nombre,
+        email: form.email,
+        password: form.password,
+        rol: form.rol,
+        ...(esEmpresa && {
+          nombreEmpresa: form.nombreEmpresa,
+          nit: form.nit,
+          sector: form.sector,
+        }),
+      };
+
       const res = await fetch("http://localhost:3000/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Error al registrarse");
+        const mensaje = Array.isArray(data.message)
+          ? data.message.join(", ")
+          : data.message;
+        throw new Error(mensaje || "Error al registrarse");
       }
 
       navigate("/login");
@@ -83,6 +103,40 @@ export default function Register() {
           <option value="ESTUDIANTE">Estudiante</option>
           <option value="EMPRESA">Empresa</option>
         </select>
+
+        {esEmpresa && (
+          <>
+            <label>Nombre de la empresa</label>
+            <input
+              type="text"
+              name="nombreEmpresa"
+              value={form.nombreEmpresa}
+              onChange={handleChange}
+              required
+              placeholder="Empresa S.A.S."
+            />
+
+            <label>NIT</label>
+            <input
+              type="text"
+              name="nit"
+              value={form.nit}
+              onChange={handleChange}
+              required
+              placeholder="900123456-7"
+            />
+
+            <label>Sector</label>
+            <input
+              type="text"
+              name="sector"
+              value={form.sector}
+              onChange={handleChange}
+              required
+              placeholder="Tecnología, construcción, salud..."
+            />
+          </>
+        )}
 
         <button type="submit" disabled={cargando}>
           {cargando ? "Creando cuenta..." : "Registrarme"}

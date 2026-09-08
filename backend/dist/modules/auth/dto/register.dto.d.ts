@@ -3,4 +3,7 @@ export declare class RegisterDto {
     password: string;
     nombre: string;
     rol: 'ESTUDIANTE' | 'EMPRESA' | 'COORDINADOR' | 'DOCENTE';
+    nombreEmpresa?: string;
+    nit?: string;
+    sector?: string;
 }

@@ -3,5 +3,8 @@ export class RegisterDto {
     password;
     nombre;
     rol;
+    nombreEmpresa;
+    nit;
+    sector;
 }
 //# sourceMappingURL=register.dto.js.map
