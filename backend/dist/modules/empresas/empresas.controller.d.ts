@@ -21,10 +21,10 @@ export declare class EmpresasController {
         fechaFinConvocatoria: Date;
         fechaInicioPractica: Date;
         duracionMeses: number;
+        empresaId: string;
         imagenUrl: string | null;
         estado: string;
         fechaPublicacion: Date;
-        empresaId: string;
     }>;
     listarOfertas(request: any): Promise<{
         id: string;
@@ -38,10 +38,10 @@ export declare class EmpresasController {
         fechaFinConvocatoria: Date;
         fechaInicioPractica: Date;
         duracionMeses: number;
+        empresaId: string;
         imagenUrl: string | null;
         estado: string;
         fechaPublicacion: Date;
-        empresaId: string;
     }[]>;
     actualizarOferta(request: any, id: string, dto: ActualizarOfertaDto, imagen?: any): Promise<{
         id: string;
@@ -55,10 +55,10 @@ export declare class EmpresasController {
         fechaFinConvocatoria: Date;
         fechaInicioPractica: Date;
         duracionMeses: number;
+        empresaId: string;
         imagenUrl: string | null;
         estado: string;
         fechaPublicacion: Date;
-        empresaId: string;
     }>;
     eliminarOferta(request: any, id: string): Promise<{
         eliminado: boolean;

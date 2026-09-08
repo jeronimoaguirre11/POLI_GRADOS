@@ -6,4 +6,7 @@ export declare class RegisterDto {
     nombreEmpresa?: string;
     nit?: string;
     sector?: string;
+    codigo?: string;
+    programa?: string;
+    semestre?: number;
 }

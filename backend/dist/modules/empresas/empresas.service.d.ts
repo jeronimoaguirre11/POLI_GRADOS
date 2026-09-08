@@ -1,7 +1,7 @@
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CrearOfertaDto } from './dto/crear-oferta.dto.js';
 import { ActualizarOfertaDto } from './dto/actualizar-oferta.dto.js';
-import type { JwtPayload } from './guards/jwt-auth.guard.js';
+import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 export declare class EmpresasService {
     private readonly prisma;
     private readonly directorioImagenes;
@@ -27,10 +27,10 @@ export declare class EmpresasService {
         fechaFinConvocatoria: Date;
         fechaInicioPractica: Date;
         duracionMeses: number;
+        empresaId: string;
         imagenUrl: string | null;
         estado: string;
         fechaPublicacion: Date;
-        empresaId: string;
     }>;
     listarOfertas(payload: JwtPayload): Promise<{
         id: string;
@@ -44,10 +44,10 @@ export declare class EmpresasService {
         fechaFinConvocatoria: Date;
         fechaInicioPractica: Date;
         duracionMeses: number;
+        empresaId: string;
         imagenUrl: string | null;
         estado: string;
         fechaPublicacion: Date;
-        empresaId: string;
     }[]>;
     actualizarOferta(payload: JwtPayload, ofertaId: string, dto: ActualizarOfertaDto, imagen?: any): Promise<{
         id: string;
@@ -61,10 +61,10 @@ export declare class EmpresasService {
         fechaFinConvocatoria: Date;
         fechaInicioPractica: Date;
         duracionMeses: number;
+        empresaId: string;
         imagenUrl: string | null;
         estado: string;
         fechaPublicacion: Date;
-        empresaId: string;
     }>;
     eliminarOferta(payload: JwtPayload, ofertaId: string): Promise<{
         eliminado: boolean;

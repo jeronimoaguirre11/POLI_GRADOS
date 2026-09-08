@@ -128,6 +128,7 @@ export const PostulacionScalarFieldEnum = {
     id: 'id',
     ofertaId: 'ofertaId',
     estudianteId: 'estudianteId',
+    hojaVidaUrl: 'hojaVidaUrl',
     estado: 'estado',
     fecha: 'fecha'
 };

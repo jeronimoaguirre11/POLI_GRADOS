@@ -11,7 +11,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CrearOfertaDto } from './dto/crear-oferta.dto.js';
 import { ActualizarOfertaDto } from './dto/actualizar-oferta.dto.js';
-import type { JwtPayload } from './guards/jwt-auth.guard.js';
+import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 
 const TIPOS_IMAGEN_PERMITIDOS: Record<string, string> = {
   'image/png': 'png',

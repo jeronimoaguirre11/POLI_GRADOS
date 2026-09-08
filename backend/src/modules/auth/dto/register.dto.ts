@@ -1,11 +1,14 @@
 import {
   IsEmail,
   IsIn,
+  IsInt,
   IsNotEmpty,
   IsOptional,
   IsString,
+  Min,
   MinLength,
 } from 'class-validator';
+import { Type } from 'class-transformer';
 
 export class RegisterDto {
   @IsEmail()
@@ -35,4 +38,20 @@ export class RegisterDto {
   @IsOptional()
   @IsString()
   sector?: string;
+
+  // Requeridos solo cuando rol === 'ESTUDIANTE': se usan para crear el
+  // perfil de Estudiante asociado al Usuario (ver AuthService.register).
+  @IsOptional()
+  @IsString()
+  codigo?: string;
+
+  @IsOptional()
+  @IsString()
+  programa?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  semestre?: number;
 }

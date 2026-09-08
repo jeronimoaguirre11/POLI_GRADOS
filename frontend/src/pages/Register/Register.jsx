@@ -2,6 +2,15 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./Register.css";
 
+const PROGRAMAS = [
+  { value: "TECNOLOGIA_AGROPECUARIA", label: "Tecnología Agropecuaria" },
+  {
+    value: "ADMINISTRACION_EMPRESAS_AGROPECUARIAS",
+    label: "Administración de Empresas Agropecuarias",
+  },
+  { value: "INGENIERO_AGROPECUARIO", label: "Ingeniero Agropecuario" },
+];
+
 export default function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -12,11 +21,14 @@ export default function Register() {
     nombreEmpresa: "",
     nit: "",
     sector: "",
+    codigo: "",
+    programa: "",
   });
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
 
   const esEmpresa = form.rol === "EMPRESA";
+  const esEstudiante = form.rol === "ESTUDIANTE";
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -37,6 +49,10 @@ export default function Register() {
           nombreEmpresa: form.nombreEmpresa,
           nit: form.nit,
           sector: form.sector,
+        }),
+        ...(esEstudiante && {
+          codigo: form.codigo,
+          programa: form.programa,
         }),
       };
 
@@ -103,6 +119,38 @@ export default function Register() {
           <option value="ESTUDIANTE">Estudiante</option>
           <option value="EMPRESA">Empresa</option>
         </select>
+
+        {esEstudiante && (
+          <>
+            <label>Código estudiantil</label>
+            <input
+              type="text"
+              name="codigo"
+              value={form.codigo}
+              onChange={handleChange}
+              required
+              placeholder="20231234"
+            />
+
+            <label>Programa</label>
+            <select
+              name="programa"
+              value={form.programa}
+              onChange={handleChange}
+              required
+            >
+              <option value="" disabled>
+                Selecciona tu programa
+              </option>
+              {PROGRAMAS.map((programa) => (
+                <option key={programa.value} value={programa.value}>
+                  {programa.label}
+                </option>
+              ))}
+            </select>
+
+          </>
+        )}
 
         {esEmpresa && (
           <>

@@ -13,9 +13,10 @@ export interface JwtPayload {
 }
 
 // Guard propio (en vez de usar passport-jwt) porque AuthModule no exporta
-// JwtModule/JwtService todavia. Registra su propio JwtModule con el mismo
-// JWT_SECRET, asi que valida exactamente los mismos tokens que emite
-// AuthService.login().
+// JwtModule/JwtService todavia. Cada modulo que lo usa registra su propio
+// JwtModule con el mismo JWT_SECRET, asi que valida exactamente los mismos
+// tokens que emite AuthService.login(). Vive en common/ porque lo usan
+// varios modulos (empresas, ofertas, postulaciones).
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
   constructor(private readonly jwtService: JwtService) {}

@@ -1,10 +1,13 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardEmpresa from "./Dashboard-Empresa.jsx";
+import ConvocatoriasDisponibles from "./Convocatorias-Disponibles.jsx";
 import "./Dashboard-Estudiante.css";
 
 export default function Dashboard() {
   const navigate = useNavigate();
   const usuario = JSON.parse(localStorage.getItem("usuario"));
+  const [vistaEstudiante, setVistaEstudiante] = useState("inicio");
 
   function handleLogout() {
     localStorage.removeItem("token");
@@ -24,25 +27,36 @@ export default function Dashboard() {
         </button>
       </header>
 
-      {usuario?.rol === "ESTUDIANTE" && (
-        <section className="servicios">
-          <h2>Elige tu modalidad de trabajo de grado</h2>
-          <div className="cards">
-            <div className="card">
-              <h3>Trabajo de Investigación</h3>
-              <p>Únete o continúa con tu grupo de investigación.</p>
+      {usuario?.rol === "ESTUDIANTE" &&
+        (vistaEstudiante === "practicas" ? (
+          <ConvocatoriasDisponibles onVolver={() => setVistaEstudiante("inicio")} />
+        ) : (
+          <section className="servicios">
+            <h2>Elige tu modalidad de trabajo de grado</h2>
+            <div className="cards">
+              <div className="card">
+                <h3>Trabajo de Investigación</h3>
+                <p>Únete o continúa con tu grupo de investigación.</p>
+              </div>
+              <div className="card">
+                <h3>Diplomado</h3>
+                <p>Reporta el diplomado o curso que estás tomando.</p>
+              </div>
+              <div
+                className="card card-clicable"
+                role="button"
+                tabIndex={0}
+                onClick={() => setVistaEstudiante("practicas")}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") setVistaEstudiante("practicas");
+                }}
+              >
+                <h3>Prácticas Profesionales</h3>
+                <p>Explora ofertas o reporta tu práctica independiente.</p>
+              </div>
             </div>
-            <div className="card">
-              <h3>Diplomado</h3>
-              <p>Reporta el diplomado o curso que estás tomando.</p>
-            </div>
-            <div className="card">
-              <h3>Prácticas Profesionales</h3>
-              <p>Explora ofertas o reporta tu práctica independiente.</p>
-            </div>
-          </div>
-        </section>
-      )}
+          </section>
+        ))}
 
       {usuario?.rol === "EMPRESA" && <DashboardEmpresa />}
 

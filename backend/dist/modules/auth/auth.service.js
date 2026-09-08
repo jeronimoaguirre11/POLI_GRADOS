@@ -28,6 +28,10 @@ let AuthService = class AuthService {
         if (dto.rol === 'EMPRESA' && (!dto.nombreEmpresa || !dto.nit || !dto.sector)) {
             throw new BadRequestException('Para registrar una cuenta de empresa se requiere nombreEmpresa, nit y sector');
         }
+        if (dto.rol === 'ESTUDIANTE' &&
+            (!dto.codigo || !dto.programa)) {
+            throw new BadRequestException('Para registrar una cuenta de estudiante se requiere codigo y programa');
+        }
         const passwordHasheada = await bcrypt.hash(dto.password, 10);
         const usuario = await this.prisma.$transaction(async (tx) => {
             const nuevoUsuario = await tx.usuario.create({
@@ -45,6 +49,16 @@ let AuthService = class AuthService {
                         nombreEmpresa: dto.nombreEmpresa,
                         nit: dto.nit,
                         sector: dto.sector,
+                    },
+                });
+            }
+            if (dto.rol === 'ESTUDIANTE') {
+                await tx.estudiante.create({
+                    data: {
+                        usuarioId: nuevoUsuario.id,
+                        codigo: dto.codigo,
+                        programa: dto.programa,
+                        semestre: dto.semestre ?? null,
                     },
                 });
             }

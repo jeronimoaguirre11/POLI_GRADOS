@@ -302,6 +302,13 @@ export type PracticaUncheckedUpdateOneWithoutProcesoGradoNestedInput = {
 export type EnumTipoPracticaFieldUpdateOperationsInput = {
     set?: $Enums.TipoPractica;
 };
+export type IntFieldUpdateOperationsInput = {
+    set?: number;
+    increment?: number;
+    decrement?: number;
+    multiply?: number;
+    divide?: number;
+};
 export type PracticaCreateNestedManyWithoutOfertaInput = {
     create?: Prisma.XOR<Prisma.PracticaCreateWithoutOfertaInput, Prisma.PracticaUncheckedCreateWithoutOfertaInput> | Prisma.PracticaCreateWithoutOfertaInput[] | Prisma.PracticaUncheckedCreateWithoutOfertaInput[];
     connectOrCreate?: Prisma.PracticaCreateOrConnectWithoutOfertaInput | Prisma.PracticaCreateOrConnectWithoutOfertaInput[];

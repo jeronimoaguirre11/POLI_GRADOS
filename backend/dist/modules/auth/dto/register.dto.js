@@ -7,7 +7,8 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsEmail, IsIn, IsNotEmpty, IsOptional, IsString, MinLength, } from 'class-validator';
+import { IsEmail, IsIn, IsInt, IsNotEmpty, IsOptional, IsString, Min, MinLength, } from 'class-validator';
+import { Type } from 'class-transformer';
 export class RegisterDto {
     email;
     password;
@@ -16,6 +17,9 @@ export class RegisterDto {
     nombreEmpresa;
     nit;
     sector;
+    codigo;
+    programa;
+    semestre;
 }
 __decorate([
     IsEmail(),
@@ -50,4 +54,21 @@ __decorate([
     IsString(),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "sector", void 0);
+__decorate([
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "codigo", void 0);
+__decorate([
+    IsOptional(),
+    IsString(),
+    __metadata("design:type", String)
+], RegisterDto.prototype, "programa", void 0);
+__decorate([
+    IsOptional(),
+    Type(() => Number),
+    IsInt(),
+    Min(1),
+    __metadata("design:type", Number)
+], RegisterDto.prototype, "semestre", void 0);
 //# sourceMappingURL=register.dto.js.map

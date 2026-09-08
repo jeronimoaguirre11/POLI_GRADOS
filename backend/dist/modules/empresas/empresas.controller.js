@@ -15,7 +15,7 @@ import { FileInterceptor } from '@nestjs/platform-express';
 import { EmpresasService } from './empresas.service.js';
 import { CrearOfertaDto } from './dto/crear-oferta.dto.js';
 import { ActualizarOfertaDto } from './dto/actualizar-oferta.dto.js';
-import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
 let EmpresasController = class EmpresasController {
     empresasService;
     constructor(empresasService) {

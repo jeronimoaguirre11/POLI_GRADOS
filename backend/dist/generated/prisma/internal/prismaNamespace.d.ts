@@ -1128,6 +1128,7 @@ export declare const PostulacionScalarFieldEnum: {
     readonly id: "id";
     readonly ofertaId: "ofertaId";
     readonly estudianteId: "estudianteId";
+    readonly hojaVidaUrl: "hojaVidaUrl";
     readonly estado: "estado";
     readonly fecha: "fecha";
 };

@@ -64,7 +64,7 @@ model Estudiante {
   usuario   Usuario @relation(fields: [usuarioId], references: [id])
   codigo    String  @unique
   programa  String
-  semestre  Int
+  semestre  Int?
 
   procesoGrado  ProcesoGrado?
   postulaciones Postulacion[]
@@ -178,6 +178,10 @@ model Postulacion {
   oferta       Oferta     @relation(fields: [ofertaId], references: [id])
   estudianteId String
   estudiante   Estudiante @relation(fields: [estudianteId], references: [id])
+  hojaVidaUrl  String
   estado       String     @default("PENDIENTE")
   fecha        DateTime   @default(now())
+
+  // Un estudiante no puede postularse dos veces a la misma convocatoria.
+  @@unique([ofertaId, estudianteId])
 }
