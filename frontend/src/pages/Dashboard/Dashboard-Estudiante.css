@@ -1,0 +1,49 @@
+.dashboard {
+  font-family: system-ui, sans-serif;
+  padding: 2rem 3rem;
+}
+
+.dashboard-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.rol-badge {
+  display: inline-block;
+  background: #e0e7ff;
+  color: #0d5904;
+  padding: 0.2rem 0.6rem;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+}
+
+.btn-logout {
+  padding: 0.5rem 1rem;
+  border: 1px solid #ddd;
+  background: white;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.servicios h2 {
+  margin-bottom: 1.5rem;
+}
+
+.cards {
+  display: flex;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.card {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 1.5rem;
+  width: 250px;
+}
