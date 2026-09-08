@@ -12,3 +12,32 @@ datasource db {
   url      = env("DATABASE_URL")
   provider = "postgresql"
 }
+
+enum EstadoOferta {
+  ABIERTA
+  CERRADA
+}
+
+// Modulo Empresas: la empresa se identifica por email mientras no exista
+// el modulo de Auth con JWT (ver EmpresasService.ingresar). Cuando el Auth
+// real este listo, se le agrega aqui un usuarioId y se retira el placeholder.
+model Empresa {
+  id       Int              @id @default(autoincrement())
+  email    String           @unique
+  nombre   String
+  nit      String?          @unique
+  sector   String?
+  creadoEn DateTime         @default(now())
+  ofertas  OfertaPractica[]
+}
+
+model OfertaPractica {
+  id            Int          @id @default(autoincrement())
+  empresaId     Int
+  empresa       Empresa      @relation(fields: [empresaId], references: [id])
+  titulo        String
+  perfilBuscado String
+  descripcion   String?
+  estado        EstadoOferta @default(ABIERTA)
+  creadoEn      DateTime     @default(now())
+}

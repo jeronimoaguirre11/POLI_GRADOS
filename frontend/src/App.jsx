@@ -1,10 +1,14 @@
 import { useState } from 'react'
+import { Route, Routes } from 'react-router-dom'
 import heroImg from './assets/hero.png'
 import reactLogo from './assets/react.svg'
 import viteLogo from './assets/vite.svg'
 import './App.css'
+import EmpresaPortal from './pages/EmpresaPortal.jsx'
 
-function App() {
+// Contenido original de la plantilla de Vite, sin cambios: solo se movio
+// de "App" a su propio componente para poder enrutar "/" y "/empresa".
+function Home() {
   const [count, setCount] = useState(0)
 
   return (
@@ -116,6 +120,15 @@ function App() {
       <div className="ticks"></div>
       <section id="spacer"></section>
     </>
+  )
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Home />} />
+      <Route path="/empresa" element={<EmpresaPortal />} />
+    </Routes>
   )
 }
 
