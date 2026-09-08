@@ -1,3 +1,6 @@
+// Debe ser el primer import: carga las variables de .env (como DATABASE_URL)
+// en process.env antes de que cualquier otro modulo (Prisma incluido) las lea.
+import 'dotenv/config';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule, ObserveInstrument } from './app.module.js';
