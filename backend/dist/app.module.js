@@ -5,21 +5,16 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
     return c > 3 && r && Object.defineProperty(target, key, r), r;
 };
 import { Module } from '@nestjs/common';
-import { createObserveModule } from '@nestjs/observe';
 import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
-export const { ObserveModule, ObserveInstrument } = createObserveModule();
+import { PrismaModule } from './modules/prisma/prisma.module.js';
+import { AuthModule } from './modules/auth/auth.module.js';
+import { EmpresasModule } from './modules/empresas/empresas.module.js';
 let AppModule = class AppModule {
 };
 AppModule = __decorate([
     Module({
-        imports: [
-            ObserveModule.forRoot({
-                appKey: 'YOUR_APP_KEY',
-                appSecret: 'YOUR_APP_SECRET',
-                serviceId: 'backend',
-            }),
-        ],
+        imports: [PrismaModule, AuthModule, EmpresasModule],
         controllers: [AppController],
         providers: [AppService],
     })

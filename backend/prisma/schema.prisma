@@ -12,31 +12,152 @@ datasource db {
   provider = "postgresql"
 }
 
-enum EstadoOferta {
-  ABIERTA
-  CERRADA
+enum Rol {
+  ESTUDIANTE
+  EMPRESA
+  COORDINADOR
+  DOCENTE
 }
 
-// Modulo Empresas: la empresa se identifica por email mientras no exista
-// el modulo de Auth con JWT (ver EmpresasService.ingresar). Cuando el Auth
-// real este listo, se le agrega aqui un usuarioId y se retira el placeholder.
+model Coordinador {
+  id        String  @id @default(uuid())
+  usuarioId String  @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  cargo     String?
+
+  procesosAsignados ProcesoGrado[]
+}
+
+enum Modalidad {
+  INVESTIGACION
+  DIPLOMADO
+  PRACTICA
+}
+
+enum TipoDocente {
+  DOCENTE
+  EGRESADO
+}
+
+enum TipoPractica {
+  UNIVERSIDAD
+  INDEPENDIENTE
+}
+
+model Usuario {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  nombre    String
+  rol       Rol
+  createdAt DateTime @default(now())
+
+  estudiante  Estudiante?
+  empresa     Empresa?
+  docente     Docente?
+  coordinador Coordinador?
+}
+
+model Estudiante {
+  id        String  @id @default(uuid())
+  usuarioId String  @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+  codigo    String  @unique
+  programa  String
+  semestre  Int
+
+  procesoGrado  ProcesoGrado?
+  postulaciones Postulacion[]
+}
+
 model Empresa {
-  id       Int              @id @default(autoincrement())
-  email    String           @unique
-  nombre   String
-  nit      String?          @unique
-  sector   String?
-  creadoEn DateTime         @default(now())
-  ofertas  OfertaPractica[]
+  id            String  @id @default(uuid())
+  usuarioId     String  @unique
+  usuario       Usuario @relation(fields: [usuarioId], references: [id])
+  nombreEmpresa String
+  nit           String  @unique
+  sector        String
+
+  ofertas Oferta[]
 }
 
-model OfertaPractica {
-  id            Int          @id @default(autoincrement())
-  empresaId     Int
-  empresa       Empresa      @relation(fields: [empresaId], references: [id])
-  titulo        String
-  perfilBuscado String
-  descripcion   String?
-  estado        EstadoOferta @default(ABIERTA)
-  creadoEn      DateTime     @default(now())
+model Docente {
+  id           String      @id @default(uuid())
+  usuarioId    String      @unique
+  usuario      Usuario     @relation(fields: [usuarioId], references: [id])
+  tipo         TipoDocente
+  especialidad String
+
+  procesosAsesorados ProcesoGrado[]
+}
+
+model ProcesoGrado {
+  id              String       @id @default(uuid())
+  estudianteId    String       @unique
+  estudiante      Estudiante   @relation(fields: [estudianteId], references: [id])
+  modalidad       Modalidad
+  estado          String       @default("EN_PROCESO")
+  asesorId        String?
+  asesor          Docente?     @relation(fields: [asesorId], references: [id])
+  coordinadorId   String?
+  coordinador     Coordinador? @relation(fields: [coordinadorId], references: [id])
+  fechaAsignacion DateTime?
+  fechaInicio     DateTime     @default(now())
+
+  investigacion Investigacion?
+  diplomado     Diplomado?
+  practica      Practica?
+}
+
+model Investigacion {
+  id                 String       @id @default(uuid())
+  procesoGradoId     String       @unique
+  procesoGrado       ProcesoGrado @relation(fields: [procesoGradoId], references: [id])
+  grupoInvestigacion String
+  ideaPropuesta      String
+  materiaMatriculada Boolean      @default(false)
+}
+
+model Diplomado {
+  id               String       @id @default(uuid())
+  procesoGradoId   String       @unique
+  procesoGrado     ProcesoGrado @relation(fields: [procesoGradoId], references: [id])
+  nombreCurso      String
+  institucion      String
+  estadoAprobacion String       @default("PENDIENTE")
+}
+
+model Practica {
+  id               String       @id @default(uuid())
+  procesoGradoId   String       @unique
+  procesoGrado     ProcesoGrado @relation(fields: [procesoGradoId], references: [id])
+  tipo             TipoPractica
+  horasCompletadas Int          @default(0)
+  ofertaId         String?
+  oferta           Oferta?      @relation(fields: [ofertaId], references: [id])
+  estadoReporte    String       @default("PENDIENTE")
+}
+
+model Oferta {
+  id               String   @id @default(uuid())
+  empresaId        String
+  empresa          Empresa  @relation(fields: [empresaId], references: [id])
+  titulo           String
+  descripcion      String
+  perfilBuscado    String
+  estado           String   @default("ABIERTA")
+  fechaPublicacion DateTime @default(now())
+
+  postulaciones Postulacion[]
+  practicas     Practica[]
+}
+
+model Postulacion {
+  id           String     @id @default(uuid())
+  ofertaId     String
+  oferta       Oferta     @relation(fields: [ofertaId], references: [id])
+  estudianteId String
+  estudiante   Estudiante @relation(fields: [estudianteId], references: [id])
+  estado       String     @default("PENDIENTE")
+  fecha        DateTime   @default(now())
 }

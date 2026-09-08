@@ -1,0 +1,93 @@
+.home {
+  font-family: system-ui, sans-serif;
+  color: #1a1a1a;
+}
+
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 3rem;
+  border-bottom: 1px solid #eee;
+}
+
+.logo {
+  font-weight: 700;
+  font-size: 1.25rem;
+}
+
+.nav-buttons {
+  display: flex;
+  gap: 0.75rem;
+}
+
+.btn {
+  padding: 0.5rem 1.25rem;
+  border-radius: 6px;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 0.9rem;
+}
+
+.btn-primary {
+  background-color: #0d5904;
+  color: white;
+}
+
+.btn-outline {
+  border: 1px solid #0d5904;
+  color: #0d5904;
+}
+
+.hero {
+  text-align: center;
+  padding: 4rem 2rem;
+}
+
+.hero h1 {
+  font-size: 2.25rem;
+  margin-bottom: 1rem;
+}
+
+.hero p {
+  color: #555;
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.servicios,
+.empresas {
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.servicios h2,
+.empresas h2 {
+  margin-bottom: 2rem;
+}
+
+.cards {
+  display: flex;
+  gap: 1.5rem;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.card {
+  border: 1px solid #eee;
+  border-radius: 10px;
+  padding: 1.5rem;
+  width: 250px;
+  text-align: left;
+}
+
+.empresas {
+  background-color: #f9fafb;
+}
+
+.footer {
+  text-align: center;
+  padding: 2rem;
+  color: #999;
+  font-size: 0.85rem;
+}
