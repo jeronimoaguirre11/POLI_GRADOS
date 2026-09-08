@@ -9,26 +9,60 @@ async function manejarRespuesta(res) {
   return res.json()
 }
 
-function headersAutenticados() {
+function tokenHeader() {
   const token = localStorage.getItem('token')
-  return {
-    'Content-Type': 'application/json',
-    ...(token ? { Authorization: `Bearer ${token}` } : {}),
-  }
+  return token ? { Authorization: `Bearer ${token}` } : {}
 }
 
-export async function crearOferta({ titulo, perfilBuscado, descripcion }) {
+function aFormData({ imagen, ...campos }) {
+  const formData = new FormData()
+  Object.entries(campos).forEach(([clave, valor]) => {
+    formData.append(clave, valor)
+  })
+  if (imagen) {
+    formData.append('imagen', imagen)
+  }
+  return formData
+}
+
+export async function obtenerPerfilEmpresa() {
+  const res = await fetch(`${API_URL}/empresas/perfil`, {
+    headers: tokenHeader(),
+  })
+  return manejarRespuesta(res)
+}
+
+// Se envia como multipart/form-data porque "imagen" (opcional) es un archivo.
+// No se fija 'Content-Type' a mano: el navegador arma el boundary correcto.
+export async function crearOferta(datos) {
   const res = await fetch(`${API_URL}/empresas/ofertas`, {
     method: 'POST',
-    headers: headersAutenticados(),
-    body: JSON.stringify({ titulo, perfilBuscado, descripcion }),
+    headers: tokenHeader(),
+    body: aFormData(datos),
   })
   return manejarRespuesta(res)
 }
 
 export async function listarOfertas() {
   const res = await fetch(`${API_URL}/empresas/ofertas`, {
-    headers: headersAutenticados(),
+    headers: tokenHeader(),
+  })
+  return manejarRespuesta(res)
+}
+
+export async function actualizarOferta(id, datos) {
+  const res = await fetch(`${API_URL}/empresas/ofertas/${id}`, {
+    method: 'PATCH',
+    headers: tokenHeader(),
+    body: aFormData(datos),
+  })
+  return manejarRespuesta(res)
+}
+
+export async function eliminarOferta(id) {
+  const res = await fetch(`${API_URL}/empresas/ofertas/${id}`, {
+    method: 'DELETE',
+    headers: tokenHeader(),
   })
   return manejarRespuesta(res)
 }

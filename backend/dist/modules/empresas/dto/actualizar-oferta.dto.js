@@ -7,10 +7,10 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { IsDate, IsIn, IsInt, IsNotEmpty, IsString, Max, Min } from 'class-validator';
+import { IsDate, IsIn, IsInt, IsOptional, IsString, Max, Min } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PERFILES_BUSCADOS, MODALIDADES_CONTRATACION } from './constantes.js';
-export class CrearOfertaDto {
+export class ActualizarOfertaDto {
     titulo;
     descripcion;
     perfilBuscado;
@@ -23,53 +23,59 @@ export class CrearOfertaDto {
     duracionMeses;
 }
 __decorate([
+    IsOptional(),
     IsString(),
-    IsNotEmpty(),
     __metadata("design:type", String)
-], CrearOfertaDto.prototype, "titulo", void 0);
+], ActualizarOfertaDto.prototype, "titulo", void 0);
 __decorate([
+    IsOptional(),
     IsString(),
-    IsNotEmpty(),
     __metadata("design:type", String)
-], CrearOfertaDto.prototype, "descripcion", void 0);
+], ActualizarOfertaDto.prototype, "descripcion", void 0);
 __decorate([
+    IsOptional(),
     IsIn(PERFILES_BUSCADOS),
     __metadata("design:type", String)
-], CrearOfertaDto.prototype, "perfilBuscado", void 0);
+], ActualizarOfertaDto.prototype, "perfilBuscado", void 0);
 __decorate([
+    IsOptional(),
     IsIn(MODALIDADES_CONTRATACION),
     __metadata("design:type", String)
-], CrearOfertaDto.prototype, "modalidadContratacion", void 0);
+], ActualizarOfertaDto.prototype, "modalidadContratacion", void 0);
 __decorate([
+    IsOptional(),
     IsString(),
-    IsNotEmpty(),
     __metadata("design:type", String)
-], CrearOfertaDto.prototype, "ubicacion", void 0);
+], ActualizarOfertaDto.prototype, "ubicacion", void 0);
 __decorate([
+    IsOptional(),
     IsString(),
-    IsNotEmpty(),
     __metadata("design:type", String)
-], CrearOfertaDto.prototype, "funciones", void 0);
+], ActualizarOfertaDto.prototype, "funciones", void 0);
 __decorate([
+    IsOptional(),
     Type(() => Date),
     IsDate(),
     __metadata("design:type", Date)
-], CrearOfertaDto.prototype, "fechaInicioConvocatoria", void 0);
+], ActualizarOfertaDto.prototype, "fechaInicioConvocatoria", void 0);
 __decorate([
+    IsOptional(),
     Type(() => Date),
     IsDate(),
     __metadata("design:type", Date)
-], CrearOfertaDto.prototype, "fechaFinConvocatoria", void 0);
+], ActualizarOfertaDto.prototype, "fechaFinConvocatoria", void 0);
 __decorate([
+    IsOptional(),
     Type(() => Date),
     IsDate(),
     __metadata("design:type", Date)
-], CrearOfertaDto.prototype, "fechaInicioPractica", void 0);
+], ActualizarOfertaDto.prototype, "fechaInicioPractica", void 0);
 __decorate([
+    IsOptional(),
     Type(() => Number),
     IsInt(),
     Min(4),
     Max(6),
     __metadata("design:type", Number)
-], CrearOfertaDto.prototype, "duracionMeses", void 0);
-//# sourceMappingURL=crear-oferta.dto.js.map
+], ActualizarOfertaDto.prototype, "duracionMeses", void 0);
+//# sourceMappingURL=actualizar-oferta.dto.js.map

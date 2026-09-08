@@ -111,6 +111,14 @@ export declare const OfertaScalarFieldEnum: {
     readonly titulo: "titulo";
     readonly descripcion: "descripcion";
     readonly perfilBuscado: "perfilBuscado";
+    readonly modalidadContratacion: "modalidadContratacion";
+    readonly ubicacion: "ubicacion";
+    readonly funciones: "funciones";
+    readonly fechaInicioConvocatoria: "fechaInicioConvocatoria";
+    readonly fechaFinConvocatoria: "fechaFinConvocatoria";
+    readonly fechaInicioPractica: "fechaInicioPractica";
+    readonly duracionMeses: "duracionMeses";
+    readonly imagenUrl: "imagenUrl";
     readonly estado: "estado";
     readonly fechaPublicacion: "fechaPublicacion";
 };

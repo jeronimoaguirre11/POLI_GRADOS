@@ -1112,6 +1112,14 @@ export declare const OfertaScalarFieldEnum: {
     readonly titulo: "titulo";
     readonly descripcion: "descripcion";
     readonly perfilBuscado: "perfilBuscado";
+    readonly modalidadContratacion: "modalidadContratacion";
+    readonly ubicacion: "ubicacion";
+    readonly funciones: "funciones";
+    readonly fechaInicioConvocatoria: "fechaInicioConvocatoria";
+    readonly fechaFinConvocatoria: "fechaFinConvocatoria";
+    readonly fechaInicioPractica: "fechaInicioPractica";
+    readonly duracionMeses: "duracionMeses";
+    readonly imagenUrl: "imagenUrl";
     readonly estado: "estado";
     readonly fechaPublicacion: "fechaPublicacion";
 };
@@ -1154,6 +1162,10 @@ export type ListEnumModalidadFieldRefInput<$PrismaModel> = FieldRefInputType<$Pr
 export type BooleanFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Boolean'>;
 export type EnumTipoPracticaFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TipoPractica'>;
 export type ListEnumTipoPracticaFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'TipoPractica[]'>;
+export type EnumPerfilBuscadoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PerfilBuscado'>;
+export type ListEnumPerfilBuscadoFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'PerfilBuscado[]'>;
+export type EnumModalidadContratacionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ModalidadContratacion'>;
+export type ListEnumModalidadContratacionFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'ModalidadContratacion[]'>;
 export type FloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float'>;
 export type ListFloatFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Float[]'>;
 export type BatchPayload = {

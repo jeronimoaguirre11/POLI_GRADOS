@@ -208,6 +208,36 @@ export type EnumTipoPracticaWithAggregatesFilter<$PrismaModel = never> = {
     _min?: Prisma.NestedEnumTipoPracticaFilter<$PrismaModel>;
     _max?: Prisma.NestedEnumTipoPracticaFilter<$PrismaModel>;
 };
+export type EnumPerfilBuscadoFilter<$PrismaModel = never> = {
+    equals?: $Enums.PerfilBuscado | Prisma.EnumPerfilBuscadoFieldRefInput<$PrismaModel>;
+    in?: $Enums.PerfilBuscado[] | Prisma.ListEnumPerfilBuscadoFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.PerfilBuscado[] | Prisma.ListEnumPerfilBuscadoFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumPerfilBuscadoFilter<$PrismaModel> | $Enums.PerfilBuscado;
+};
+export type EnumModalidadContratacionFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModalidadContratacion | Prisma.EnumModalidadContratacionFieldRefInput<$PrismaModel>;
+    in?: $Enums.ModalidadContratacion[] | Prisma.ListEnumModalidadContratacionFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.ModalidadContratacion[] | Prisma.ListEnumModalidadContratacionFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumModalidadContratacionFilter<$PrismaModel> | $Enums.ModalidadContratacion;
+};
+export type EnumPerfilBuscadoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PerfilBuscado | Prisma.EnumPerfilBuscadoFieldRefInput<$PrismaModel>;
+    in?: $Enums.PerfilBuscado[] | Prisma.ListEnumPerfilBuscadoFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.PerfilBuscado[] | Prisma.ListEnumPerfilBuscadoFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumPerfilBuscadoWithAggregatesFilter<$PrismaModel> | $Enums.PerfilBuscado;
+    _count?: Prisma.NestedIntFilter<$PrismaModel>;
+    _min?: Prisma.NestedEnumPerfilBuscadoFilter<$PrismaModel>;
+    _max?: Prisma.NestedEnumPerfilBuscadoFilter<$PrismaModel>;
+};
+export type EnumModalidadContratacionWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModalidadContratacion | Prisma.EnumModalidadContratacionFieldRefInput<$PrismaModel>;
+    in?: $Enums.ModalidadContratacion[] | Prisma.ListEnumModalidadContratacionFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.ModalidadContratacion[] | Prisma.ListEnumModalidadContratacionFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumModalidadContratacionWithAggregatesFilter<$PrismaModel> | $Enums.ModalidadContratacion;
+    _count?: Prisma.NestedIntFilter<$PrismaModel>;
+    _min?: Prisma.NestedEnumModalidadContratacionFilter<$PrismaModel>;
+    _max?: Prisma.NestedEnumModalidadContratacionFilter<$PrismaModel>;
+};
 export type NestedStringFilter<$PrismaModel = never> = {
     equals?: string | Prisma.StringFieldRefInput<$PrismaModel>;
     in?: string[] | Prisma.ListStringFieldRefInput<$PrismaModel>;
@@ -427,4 +457,34 @@ export type NestedEnumTipoPracticaWithAggregatesFilter<$PrismaModel = never> = {
     _count?: Prisma.NestedIntFilter<$PrismaModel>;
     _min?: Prisma.NestedEnumTipoPracticaFilter<$PrismaModel>;
     _max?: Prisma.NestedEnumTipoPracticaFilter<$PrismaModel>;
+};
+export type NestedEnumPerfilBuscadoFilter<$PrismaModel = never> = {
+    equals?: $Enums.PerfilBuscado | Prisma.EnumPerfilBuscadoFieldRefInput<$PrismaModel>;
+    in?: $Enums.PerfilBuscado[] | Prisma.ListEnumPerfilBuscadoFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.PerfilBuscado[] | Prisma.ListEnumPerfilBuscadoFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumPerfilBuscadoFilter<$PrismaModel> | $Enums.PerfilBuscado;
+};
+export type NestedEnumModalidadContratacionFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModalidadContratacion | Prisma.EnumModalidadContratacionFieldRefInput<$PrismaModel>;
+    in?: $Enums.ModalidadContratacion[] | Prisma.ListEnumModalidadContratacionFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.ModalidadContratacion[] | Prisma.ListEnumModalidadContratacionFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumModalidadContratacionFilter<$PrismaModel> | $Enums.ModalidadContratacion;
+};
+export type NestedEnumPerfilBuscadoWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.PerfilBuscado | Prisma.EnumPerfilBuscadoFieldRefInput<$PrismaModel>;
+    in?: $Enums.PerfilBuscado[] | Prisma.ListEnumPerfilBuscadoFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.PerfilBuscado[] | Prisma.ListEnumPerfilBuscadoFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumPerfilBuscadoWithAggregatesFilter<$PrismaModel> | $Enums.PerfilBuscado;
+    _count?: Prisma.NestedIntFilter<$PrismaModel>;
+    _min?: Prisma.NestedEnumPerfilBuscadoFilter<$PrismaModel>;
+    _max?: Prisma.NestedEnumPerfilBuscadoFilter<$PrismaModel>;
+};
+export type NestedEnumModalidadContratacionWithAggregatesFilter<$PrismaModel = never> = {
+    equals?: $Enums.ModalidadContratacion | Prisma.EnumModalidadContratacionFieldRefInput<$PrismaModel>;
+    in?: $Enums.ModalidadContratacion[] | Prisma.ListEnumModalidadContratacionFieldRefInput<$PrismaModel>;
+    notIn?: $Enums.ModalidadContratacion[] | Prisma.ListEnumModalidadContratacionFieldRefInput<$PrismaModel>;
+    not?: Prisma.NestedEnumModalidadContratacionWithAggregatesFilter<$PrismaModel> | $Enums.ModalidadContratacion;
+    _count?: Prisma.NestedIntFilter<$PrismaModel>;
+    _min?: Prisma.NestedEnumModalidadContratacionFilter<$PrismaModel>;
+    _max?: Prisma.NestedEnumModalidadContratacionFilter<$PrismaModel>;
 };

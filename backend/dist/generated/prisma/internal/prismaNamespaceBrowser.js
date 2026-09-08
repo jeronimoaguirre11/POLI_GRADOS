@@ -98,6 +98,14 @@ export const OfertaScalarFieldEnum = {
     titulo: 'titulo',
     descripcion: 'descripcion',
     perfilBuscado: 'perfilBuscado',
+    modalidadContratacion: 'modalidadContratacion',
+    ubicacion: 'ubicacion',
+    funciones: 'funciones',
+    fechaInicioConvocatoria: 'fechaInicioConvocatoria',
+    fechaFinConvocatoria: 'fechaFinConvocatoria',
+    fechaInicioPractica: 'fechaInicioPractica',
+    duracionMeses: 'duracionMeses',
+    imagenUrl: 'imagenUrl',
     estado: 'estado',
     fechaPublicacion: 'fechaPublicacion'
 };

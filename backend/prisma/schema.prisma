@@ -138,15 +138,35 @@ model Practica {
   estadoReporte    String       @default("PENDIENTE")
 }
 
+enum PerfilBuscado {
+  TECNOLOGIA_AGROPECUARIA
+  ADMINISTRACION_EMPRESAS_AGROPECUARIAS
+  INGENIERO_AGROPECUARIO
+}
+
+enum ModalidadContratacion {
+  CONTRATO_SENA
+  CONVENIO
+  VOLUNTARIA
+}
+
 model Oferta {
-  id               String   @id @default(uuid())
-  empresaId        String
-  empresa          Empresa  @relation(fields: [empresaId], references: [id])
-  titulo           String
-  descripcion      String
-  perfilBuscado    String
-  estado           String   @default("ABIERTA")
-  fechaPublicacion DateTime @default(now())
+  id                      String                @id @default(uuid())
+  empresaId               String
+  empresa                 Empresa               @relation(fields: [empresaId], references: [id])
+  titulo                  String
+  descripcion             String
+  perfilBuscado           PerfilBuscado
+  modalidadContratacion   ModalidadContratacion
+  ubicacion               String
+  funciones               String
+  fechaInicioConvocatoria DateTime
+  fechaFinConvocatoria    DateTime
+  fechaInicioPractica     DateTime
+  duracionMeses           Int
+  imagenUrl               String?
+  estado                  String                @default("ABIERTA")
+  fechaPublicacion        DateTime              @default(now())
 
   postulaciones Postulacion[]
   practicas     Practica[]
