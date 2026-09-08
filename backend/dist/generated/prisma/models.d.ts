@@ -1,0 +1,12 @@
+export type * from './models/Coordinador.js';
+export type * from './models/Usuario.js';
+export type * from './models/Estudiante.js';
+export type * from './models/Empresa.js';
+export type * from './models/Docente.js';
+export type * from './models/ProcesoGrado.js';
+export type * from './models/Investigacion.js';
+export type * from './models/Diplomado.js';
+export type * from './models/Practica.js';
+export type * from './models/Oferta.js';
+export type * from './models/Postulacion.js';
+export type * from './commonInputTypes.js';
