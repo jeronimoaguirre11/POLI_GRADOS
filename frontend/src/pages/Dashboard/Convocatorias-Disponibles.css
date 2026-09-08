@@ -1,0 +1,372 @@
+.convocatorias-disponibles {
+  --cd-navy-900: #0f172a;
+  --cd-navy-700: #1e293b;
+  --cd-navy-500: #475569;
+  --cd-navy-300: #94a3b8;
+  --cd-border: #e2e8f0;
+  --cd-surface: #ffffff;
+  --cd-surface-muted: #f8fafc;
+  --cd-accent: #0d5904;
+  --cd-accent-dark: #0a4703;
+  --cd-accent-soft: #e6f4e6;
+  --cd-gold: #b8860b;
+  --cd-gold-soft: #fbf1dc;
+  --cd-danger: #b3435c;
+  --cd-danger-soft: #fbe9ed;
+  --cd-radius: 14px;
+  --cd-radius-sm: 9px;
+  --cd-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.12);
+
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+  color: var(--cd-navy-700);
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.convocatorias-disponibles-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.convocatorias-disponibles-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--cd-navy-900);
+  letter-spacing: -0.01em;
+}
+
+.convocatorias-disponibles-header .volver {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--cd-border);
+  border-radius: 999px;
+  background: var(--cd-surface);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--cd-navy-700);
+}
+
+.convocatorias-disponibles-header .volver:hover {
+  background: var(--cd-surface-muted);
+  border-color: var(--cd-navy-300);
+}
+
+.convocatorias-disponibles-tabs {
+  display: inline-flex;
+  gap: 0.25rem;
+  margin: 0 auto 1.75rem;
+  padding: 0.3rem;
+  background: var(--cd-accent-soft);
+  border: 1px solid #d3e8d1;
+  border-radius: 999px;
+  width: fit-content;
+}
+
+.convocatorias-disponibles-tabs button {
+  padding: 0.5rem 1.2rem;
+  border: none;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--cd-accent-dark);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.convocatorias-disponibles-tabs button.activo {
+  background-color: var(--cd-navy-900);
+  color: #ffffff;
+}
+
+.convocatoria-error {
+  color: var(--cd-danger);
+  background: var(--cd-danger-soft);
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--cd-radius-sm);
+  font-size: 0.85rem;
+  margin: 0 0 1rem;
+}
+
+.convocatoria-estado-vacio {
+  text-align: center;
+  color: var(--cd-navy-500);
+  font-size: 0.9rem;
+  padding: 2.5rem 1.5rem;
+  border: 1px dashed var(--cd-border);
+  border-radius: var(--cd-radius);
+  background: var(--cd-surface-muted);
+}
+
+.convocatoria-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0.5rem 0 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 2.25rem 1.25rem;
+}
+
+.convocatoria-card {
+  position: relative;
+  background: var(--cd-surface);
+  border: 1px solid var(--cd-border);
+  border-radius: var(--cd-radius);
+  box-shadow: var(--cd-shadow);
+  padding-top: 2.6rem;
+  transition: box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.convocatoria-card:hover {
+  box-shadow: 0 4px 6px -2px rgba(15, 23, 42, 0.06), 0 16px 32px -14px rgba(15, 23, 42, 0.2);
+  transform: translateY(-2px);
+}
+
+.convocatoria-card-avatar {
+  position: absolute;
+  top: -1.7rem;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3.6rem;
+  height: 3.6rem;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cd-navy-900) 0%, var(--cd-accent-dark) 100%);
+  border: 3px solid var(--cd-surface);
+  box-shadow: 0 4px 12px -4px rgba(15, 23, 42, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.convocatoria-card-body {
+  padding: 0 1.25rem 1.25rem;
+  text-align: center;
+}
+
+.convocatoria-card-empresa {
+  margin: 0;
+  font-size: 0.74rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--cd-accent-dark);
+}
+
+.convocatoria-card-body h4 {
+  margin: 0.2rem 0 0;
+  font-size: 1.02rem;
+  font-weight: 700;
+  color: var(--cd-navy-900);
+  letter-spacing: -0.01em;
+}
+
+.convocatoria-card-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+}
+
+.chip {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.26rem 0.6rem;
+  border-radius: 999px;
+  letter-spacing: 0.01em;
+  border: 1px solid transparent;
+}
+
+.chip-perfil {
+  background: var(--cd-accent-soft);
+  color: var(--cd-accent-dark);
+  border-color: #cfe8cd;
+}
+
+.chip-modalidad {
+  background: var(--cd-gold-soft);
+  color: var(--cd-gold);
+  border-color: #f0dfb0;
+}
+
+.convocatoria-card-descripcion {
+  margin: 0.65rem auto 0;
+  max-width: 42ch;
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--cd-navy-500);
+}
+
+.convocatoria-card-meta {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.8rem 1rem;
+  margin-top: 0.9rem;
+  padding: 0.8rem 0.9rem;
+  background: var(--cd-surface-muted);
+  border: 1px solid var(--cd-border);
+  border-radius: var(--cd-radius-sm);
+}
+
+.convocatoria-card-meta > div {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.convocatoria-card-meta-label {
+  font-size: 0.63rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--cd-navy-300);
+}
+
+.convocatoria-card-meta-valor {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cd-navy-700);
+}
+
+.convocatoria-card-hoja-vida {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  margin-top: 1rem;
+  padding: 0.65rem 0.75rem;
+  background: var(--cd-surface-muted);
+  border: 1px dashed var(--cd-border);
+  border-radius: var(--cd-radius-sm);
+  text-align: left;
+}
+
+.convocatoria-card-hoja-vida span {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--cd-navy-500);
+}
+
+.convocatoria-card-hoja-vida input[type="file"] {
+  font-size: 0.8rem;
+  color: var(--cd-navy-700);
+}
+
+.convocatoria-card-hoja-vida-nombre {
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  letter-spacing: normal !important;
+  color: var(--cd-accent-dark) !important;
+}
+
+.convocatoria-card-boton {
+  margin-top: 0.75rem;
+  width: 100%;
+  padding: 0.65rem;
+  background: linear-gradient(120deg, var(--cd-accent) 0%, var(--cd-accent-dark) 100%);
+  color: white;
+  border: none;
+  border-radius: var(--cd-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.88rem;
+  transition: filter 0.15s ease;
+}
+
+.convocatoria-card-boton:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.convocatoria-card-boton:disabled {
+  background: var(--cd-surface-muted);
+  color: var(--cd-navy-300);
+  cursor: default;
+}
+
+.postulacion-card {
+  background: var(--cd-surface);
+  border: 1px solid var(--cd-border);
+  border-radius: var(--cd-radius);
+  box-shadow: var(--cd-shadow);
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.postulacion-card h4 {
+  margin: 0.2rem 0 0;
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--cd-navy-900);
+}
+
+.postulacion-estado {
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.6rem;
+  border-radius: 999px;
+  flex: none;
+  background: var(--cd-accent-soft);
+  color: var(--cd-accent-dark);
+}
+
+.postulacion-estado-rechazada {
+  background: var(--cd-danger-soft);
+  color: var(--cd-danger);
+}
+
+.postulacion-card-acciones {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.55rem;
+  flex: none;
+}
+
+.postulacion-quitar {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--cd-danger-soft);
+  border-radius: var(--cd-radius-sm);
+  background: white;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--cd-danger);
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+  white-space: nowrap;
+}
+
+.postulacion-quitar:hover:not(:disabled) {
+  background: var(--cd-danger-soft);
+  border-color: var(--cd-danger);
+}
+
+.postulacion-quitar:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 640px) {
+  .convocatoria-lista {
+    grid-template-columns: 1fr;
+  }
+
+  .convocatoria-card-meta {
+    grid-template-columns: 1fr;
+  }
+}

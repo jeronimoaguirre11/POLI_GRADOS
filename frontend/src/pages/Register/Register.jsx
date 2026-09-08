@@ -2,6 +2,15 @@ import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import "./Register.css";
 
+const PROGRAMAS = [
+  { value: "TECNOLOGIA_AGROPECUARIA", label: "Tecnología Agropecuaria" },
+  {
+    value: "ADMINISTRACION_EMPRESAS_AGROPECUARIAS",
+    label: "Administración de Empresas Agropecuarias",
+  },
+  { value: "INGENIERO_AGROPECUARIO", label: "Ingeniero Agropecuario" },
+];
+
 export default function Register() {
   const navigate = useNavigate();
   const [form, setForm] = useState({
@@ -9,9 +18,17 @@ export default function Register() {
     email: "",
     password: "",
     rol: "ESTUDIANTE",
+    nombreEmpresa: "",
+    nit: "",
+    sector: "",
+    codigo: "",
+    programa: "",
   });
   const [error, setError] = useState("");
   const [cargando, setCargando] = useState(false);
+
+  const esEmpresa = form.rol === "EMPRESA";
+  const esEstudiante = form.rol === "ESTUDIANTE";
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -23,16 +40,35 @@ export default function Register() {
     setCargando(true);
 
     try {
+      const body = {
+        nombre: form.nombre,
+        email: form.email,
+        password: form.password,
+        rol: form.rol,
+        ...(esEmpresa && {
+          nombreEmpresa: form.nombreEmpresa,
+          nit: form.nit,
+          sector: form.sector,
+        }),
+        ...(esEstudiante && {
+          codigo: form.codigo,
+          programa: form.programa,
+        }),
+      };
+
       const res = await fetch("http://localhost:3000/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify(body),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.message || "Error al registrarse");
+        const mensaje = Array.isArray(data.message)
+          ? data.message.join(", ")
+          : data.message;
+        throw new Error(mensaje || "Error al registrarse");
       }
 
       navigate("/login");
@@ -83,6 +119,72 @@ export default function Register() {
           <option value="ESTUDIANTE">Estudiante</option>
           <option value="EMPRESA">Empresa</option>
         </select>
+
+        {esEstudiante && (
+          <>
+            <label>Código estudiantil</label>
+            <input
+              type="text"
+              name="codigo"
+              value={form.codigo}
+              onChange={handleChange}
+              required
+              placeholder="20231234"
+            />
+
+            <label>Programa</label>
+            <select
+              name="programa"
+              value={form.programa}
+              onChange={handleChange}
+              required
+            >
+              <option value="" disabled>
+                Selecciona tu programa
+              </option>
+              {PROGRAMAS.map((programa) => (
+                <option key={programa.value} value={programa.value}>
+                  {programa.label}
+                </option>
+              ))}
+            </select>
+
+          </>
+        )}
+
+        {esEmpresa && (
+          <>
+            <label>Nombre de la empresa</label>
+            <input
+              type="text"
+              name="nombreEmpresa"
+              value={form.nombreEmpresa}
+              onChange={handleChange}
+              required
+              placeholder="Empresa S.A.S."
+            />
+
+            <label>NIT</label>
+            <input
+              type="text"
+              name="nit"
+              value={form.nit}
+              onChange={handleChange}
+              required
+              placeholder="900123456-7"
+            />
+
+            <label>Sector</label>
+            <input
+              type="text"
+              name="sector"
+              value={form.sector}
+              onChange={handleChange}
+              required
+              placeholder="Tecnología, construcción, salud..."
+            />
+          </>
+        )}
 
         <button type="submit" disabled={cargando}>
           {cargando ? "Creando cuenta..." : "Registrarme"}

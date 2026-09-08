@@ -97,7 +97,7 @@ export type EstudianteGroupByOutputType = {
     usuarioId: string;
     codigo: string;
     programa: string;
-    semestre: number;
+    semestre: number | null;
     _count: EstudianteCountAggregateOutputType | null;
     _avg: EstudianteAvgAggregateOutputType | null;
     _sum: EstudianteSumAggregateOutputType | null;
@@ -115,7 +115,7 @@ export type EstudianteWhereInput = {
     usuarioId?: Prisma.StringFilter<"Estudiante"> | string;
     codigo?: Prisma.StringFilter<"Estudiante"> | string;
     programa?: Prisma.StringFilter<"Estudiante"> | string;
-    semestre?: Prisma.IntFilter<"Estudiante"> | number;
+    semestre?: Prisma.IntNullableFilter<"Estudiante"> | number | null;
     usuario?: Prisma.XOR<Prisma.UsuarioScalarRelationFilter, Prisma.UsuarioWhereInput>;
     procesoGrado?: Prisma.XOR<Prisma.ProcesoGradoNullableScalarRelationFilter, Prisma.ProcesoGradoWhereInput> | null;
     postulaciones?: Prisma.PostulacionListRelationFilter;
@@ -125,7 +125,7 @@ export type EstudianteOrderByWithRelationInput = {
     usuarioId?: Prisma.SortOrder;
     codigo?: Prisma.SortOrder;
     programa?: Prisma.SortOrder;
-    semestre?: Prisma.SortOrder;
+    semestre?: Prisma.SortOrderInput | Prisma.SortOrder;
     usuario?: Prisma.UsuarioOrderByWithRelationInput;
     procesoGrado?: Prisma.ProcesoGradoOrderByWithRelationInput;
     postulaciones?: Prisma.PostulacionOrderByRelationAggregateInput;
@@ -138,7 +138,7 @@ export type EstudianteWhereUniqueInput = Prisma.AtLeast<{
     OR?: Prisma.EstudianteWhereInput[];
     NOT?: Prisma.EstudianteWhereInput | Prisma.EstudianteWhereInput[];
     programa?: Prisma.StringFilter<"Estudiante"> | string;
-    semestre?: Prisma.IntFilter<"Estudiante"> | number;
+    semestre?: Prisma.IntNullableFilter<"Estudiante"> | number | null;
     usuario?: Prisma.XOR<Prisma.UsuarioScalarRelationFilter, Prisma.UsuarioWhereInput>;
     procesoGrado?: Prisma.XOR<Prisma.ProcesoGradoNullableScalarRelationFilter, Prisma.ProcesoGradoWhereInput> | null;
     postulaciones?: Prisma.PostulacionListRelationFilter;
@@ -148,7 +148,7 @@ export type EstudianteOrderByWithAggregationInput = {
     usuarioId?: Prisma.SortOrder;
     codigo?: Prisma.SortOrder;
     programa?: Prisma.SortOrder;
-    semestre?: Prisma.SortOrder;
+    semestre?: Prisma.SortOrderInput | Prisma.SortOrder;
     _count?: Prisma.EstudianteCountOrderByAggregateInput;
     _avg?: Prisma.EstudianteAvgOrderByAggregateInput;
     _max?: Prisma.EstudianteMaxOrderByAggregateInput;
@@ -163,13 +163,13 @@ export type EstudianteScalarWhereWithAggregatesInput = {
     usuarioId?: Prisma.StringWithAggregatesFilter<"Estudiante"> | string;
     codigo?: Prisma.StringWithAggregatesFilter<"Estudiante"> | string;
     programa?: Prisma.StringWithAggregatesFilter<"Estudiante"> | string;
-    semestre?: Prisma.IntWithAggregatesFilter<"Estudiante"> | number;
+    semestre?: Prisma.IntNullableWithAggregatesFilter<"Estudiante"> | number | null;
 };
 export type EstudianteCreateInput = {
     id?: string;
     codigo: string;
     programa: string;
-    semestre: number;
+    semestre?: number | null;
     usuario: Prisma.UsuarioCreateNestedOneWithoutEstudianteInput;
     procesoGrado?: Prisma.ProcesoGradoCreateNestedOneWithoutEstudianteInput;
     postulaciones?: Prisma.PostulacionCreateNestedManyWithoutEstudianteInput;
@@ -179,7 +179,7 @@ export type EstudianteUncheckedCreateInput = {
     usuarioId: string;
     codigo: string;
     programa: string;
-    semestre: number;
+    semestre?: number | null;
     procesoGrado?: Prisma.ProcesoGradoUncheckedCreateNestedOneWithoutEstudianteInput;
     postulaciones?: Prisma.PostulacionUncheckedCreateNestedManyWithoutEstudianteInput;
 };
@@ -187,7 +187,7 @@ export type EstudianteUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     codigo?: Prisma.StringFieldUpdateOperationsInput | string;
     programa?: Prisma.StringFieldUpdateOperationsInput | string;
-    semestre?: Prisma.IntFieldUpdateOperationsInput | number;
+    semestre?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
     usuario?: Prisma.UsuarioUpdateOneRequiredWithoutEstudianteNestedInput;
     procesoGrado?: Prisma.ProcesoGradoUpdateOneWithoutEstudianteNestedInput;
     postulaciones?: Prisma.PostulacionUpdateManyWithoutEstudianteNestedInput;
@@ -197,7 +197,7 @@ export type EstudianteUncheckedUpdateInput = {
     usuarioId?: Prisma.StringFieldUpdateOperationsInput | string;
     codigo?: Prisma.StringFieldUpdateOperationsInput | string;
     programa?: Prisma.StringFieldUpdateOperationsInput | string;
-    semestre?: Prisma.IntFieldUpdateOperationsInput | number;
+    semestre?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
     procesoGrado?: Prisma.ProcesoGradoUncheckedUpdateOneWithoutEstudianteNestedInput;
     postulaciones?: Prisma.PostulacionUncheckedUpdateManyWithoutEstudianteNestedInput;
 };
@@ -206,20 +206,20 @@ export type EstudianteCreateManyInput = {
     usuarioId: string;
     codigo: string;
     programa: string;
-    semestre: number;
+    semestre?: number | null;
 };
 export type EstudianteUpdateManyMutationInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     codigo?: Prisma.StringFieldUpdateOperationsInput | string;
     programa?: Prisma.StringFieldUpdateOperationsInput | string;
-    semestre?: Prisma.IntFieldUpdateOperationsInput | number;
+    semestre?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 };
 export type EstudianteUncheckedUpdateManyInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     usuarioId?: Prisma.StringFieldUpdateOperationsInput | string;
     codigo?: Prisma.StringFieldUpdateOperationsInput | string;
     programa?: Prisma.StringFieldUpdateOperationsInput | string;
-    semestre?: Prisma.IntFieldUpdateOperationsInput | number;
+    semestre?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
 };
 export type EstudianteNullableScalarRelationFilter = {
     is?: Prisma.EstudianteWhereInput | null;
@@ -284,8 +284,8 @@ export type EstudianteUncheckedUpdateOneWithoutUsuarioNestedInput = {
     connect?: Prisma.EstudianteWhereUniqueInput;
     update?: Prisma.XOR<Prisma.XOR<Prisma.EstudianteUpdateToOneWithWhereWithoutUsuarioInput, Prisma.EstudianteUpdateWithoutUsuarioInput>, Prisma.EstudianteUncheckedUpdateWithoutUsuarioInput>;
 };
-export type IntFieldUpdateOperationsInput = {
-    set?: number;
+export type NullableIntFieldUpdateOperationsInput = {
+    set?: number | null;
     increment?: number;
     decrement?: number;
     multiply?: number;
@@ -319,7 +319,7 @@ export type EstudianteCreateWithoutUsuarioInput = {
     id?: string;
     codigo: string;
     programa: string;
-    semestre: number;
+    semestre?: number | null;
     procesoGrado?: Prisma.ProcesoGradoCreateNestedOneWithoutEstudianteInput;
     postulaciones?: Prisma.PostulacionCreateNestedManyWithoutEstudianteInput;
 };
@@ -327,7 +327,7 @@ export type EstudianteUncheckedCreateWithoutUsuarioInput = {
     id?: string;
     codigo: string;
     programa: string;
-    semestre: number;
+    semestre?: number | null;
     procesoGrado?: Prisma.ProcesoGradoUncheckedCreateNestedOneWithoutEstudianteInput;
     postulaciones?: Prisma.PostulacionUncheckedCreateNestedManyWithoutEstudianteInput;
 };
@@ -348,7 +348,7 @@ export type EstudianteUpdateWithoutUsuarioInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     codigo?: Prisma.StringFieldUpdateOperationsInput | string;
     programa?: Prisma.StringFieldUpdateOperationsInput | string;
-    semestre?: Prisma.IntFieldUpdateOperationsInput | number;
+    semestre?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
     procesoGrado?: Prisma.ProcesoGradoUpdateOneWithoutEstudianteNestedInput;
     postulaciones?: Prisma.PostulacionUpdateManyWithoutEstudianteNestedInput;
 };
@@ -356,7 +356,7 @@ export type EstudianteUncheckedUpdateWithoutUsuarioInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     codigo?: Prisma.StringFieldUpdateOperationsInput | string;
     programa?: Prisma.StringFieldUpdateOperationsInput | string;
-    semestre?: Prisma.IntFieldUpdateOperationsInput | number;
+    semestre?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
     procesoGrado?: Prisma.ProcesoGradoUncheckedUpdateOneWithoutEstudianteNestedInput;
     postulaciones?: Prisma.PostulacionUncheckedUpdateManyWithoutEstudianteNestedInput;
 };
@@ -364,7 +364,7 @@ export type EstudianteCreateWithoutProcesoGradoInput = {
     id?: string;
     codigo: string;
     programa: string;
-    semestre: number;
+    semestre?: number | null;
     usuario: Prisma.UsuarioCreateNestedOneWithoutEstudianteInput;
     postulaciones?: Prisma.PostulacionCreateNestedManyWithoutEstudianteInput;
 };
@@ -373,7 +373,7 @@ export type EstudianteUncheckedCreateWithoutProcesoGradoInput = {
     usuarioId: string;
     codigo: string;
     programa: string;
-    semestre: number;
+    semestre?: number | null;
     postulaciones?: Prisma.PostulacionUncheckedCreateNestedManyWithoutEstudianteInput;
 };
 export type EstudianteCreateOrConnectWithoutProcesoGradoInput = {
@@ -393,7 +393,7 @@ export type EstudianteUpdateWithoutProcesoGradoInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     codigo?: Prisma.StringFieldUpdateOperationsInput | string;
     programa?: Prisma.StringFieldUpdateOperationsInput | string;
-    semestre?: Prisma.IntFieldUpdateOperationsInput | number;
+    semestre?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
     usuario?: Prisma.UsuarioUpdateOneRequiredWithoutEstudianteNestedInput;
     postulaciones?: Prisma.PostulacionUpdateManyWithoutEstudianteNestedInput;
 };
@@ -402,14 +402,14 @@ export type EstudianteUncheckedUpdateWithoutProcesoGradoInput = {
     usuarioId?: Prisma.StringFieldUpdateOperationsInput | string;
     codigo?: Prisma.StringFieldUpdateOperationsInput | string;
     programa?: Prisma.StringFieldUpdateOperationsInput | string;
-    semestre?: Prisma.IntFieldUpdateOperationsInput | number;
+    semestre?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
     postulaciones?: Prisma.PostulacionUncheckedUpdateManyWithoutEstudianteNestedInput;
 };
 export type EstudianteCreateWithoutPostulacionesInput = {
     id?: string;
     codigo: string;
     programa: string;
-    semestre: number;
+    semestre?: number | null;
     usuario: Prisma.UsuarioCreateNestedOneWithoutEstudianteInput;
     procesoGrado?: Prisma.ProcesoGradoCreateNestedOneWithoutEstudianteInput;
 };
@@ -418,7 +418,7 @@ export type EstudianteUncheckedCreateWithoutPostulacionesInput = {
     usuarioId: string;
     codigo: string;
     programa: string;
-    semestre: number;
+    semestre?: number | null;
     procesoGrado?: Prisma.ProcesoGradoUncheckedCreateNestedOneWithoutEstudianteInput;
 };
 export type EstudianteCreateOrConnectWithoutPostulacionesInput = {
@@ -438,7 +438,7 @@ export type EstudianteUpdateWithoutPostulacionesInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     codigo?: Prisma.StringFieldUpdateOperationsInput | string;
     programa?: Prisma.StringFieldUpdateOperationsInput | string;
-    semestre?: Prisma.IntFieldUpdateOperationsInput | number;
+    semestre?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
     usuario?: Prisma.UsuarioUpdateOneRequiredWithoutEstudianteNestedInput;
     procesoGrado?: Prisma.ProcesoGradoUpdateOneWithoutEstudianteNestedInput;
 };
@@ -447,7 +447,7 @@ export type EstudianteUncheckedUpdateWithoutPostulacionesInput = {
     usuarioId?: Prisma.StringFieldUpdateOperationsInput | string;
     codigo?: Prisma.StringFieldUpdateOperationsInput | string;
     programa?: Prisma.StringFieldUpdateOperationsInput | string;
-    semestre?: Prisma.IntFieldUpdateOperationsInput | number;
+    semestre?: Prisma.NullableIntFieldUpdateOperationsInput | number | null;
     procesoGrado?: Prisma.ProcesoGradoUncheckedUpdateOneWithoutEstudianteNestedInput;
 };
 export type EstudianteCountOutputType = {
@@ -521,7 +521,7 @@ export type $EstudiantePayload<ExtArgs extends runtime.Types.Extensions.Internal
         usuarioId: string;
         codigo: string;
         programa: string;
-        semestre: number;
+        semestre: number | null;
     }, ExtArgs["result"]["estudiante"]>;
     composites: {};
 };

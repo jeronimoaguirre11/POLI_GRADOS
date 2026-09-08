@@ -10,6 +10,7 @@ export type PostulacionMinAggregateOutputType = {
     id: string | null;
     ofertaId: string | null;
     estudianteId: string | null;
+    hojaVidaUrl: string | null;
     estado: string | null;
     fecha: Date | null;
 };
@@ -17,6 +18,7 @@ export type PostulacionMaxAggregateOutputType = {
     id: string | null;
     ofertaId: string | null;
     estudianteId: string | null;
+    hojaVidaUrl: string | null;
     estado: string | null;
     fecha: Date | null;
 };
@@ -24,6 +26,7 @@ export type PostulacionCountAggregateOutputType = {
     id: number;
     ofertaId: number;
     estudianteId: number;
+    hojaVidaUrl: number;
     estado: number;
     fecha: number;
     _all: number;
@@ -32,6 +35,7 @@ export type PostulacionMinAggregateInputType = {
     id?: true;
     ofertaId?: true;
     estudianteId?: true;
+    hojaVidaUrl?: true;
     estado?: true;
     fecha?: true;
 };
@@ -39,6 +43,7 @@ export type PostulacionMaxAggregateInputType = {
     id?: true;
     ofertaId?: true;
     estudianteId?: true;
+    hojaVidaUrl?: true;
     estado?: true;
     fecha?: true;
 };
@@ -46,6 +51,7 @@ export type PostulacionCountAggregateInputType = {
     id?: true;
     ofertaId?: true;
     estudianteId?: true;
+    hojaVidaUrl?: true;
     estado?: true;
     fecha?: true;
     _all?: true;
@@ -78,6 +84,7 @@ export type PostulacionGroupByOutputType = {
     id: string;
     ofertaId: string;
     estudianteId: string;
+    hojaVidaUrl: string;
     estado: string;
     fecha: Date;
     _count: PostulacionCountAggregateOutputType | null;
@@ -94,6 +101,7 @@ export type PostulacionWhereInput = {
     id?: Prisma.StringFilter<"Postulacion"> | string;
     ofertaId?: Prisma.StringFilter<"Postulacion"> | string;
     estudianteId?: Prisma.StringFilter<"Postulacion"> | string;
+    hojaVidaUrl?: Prisma.StringFilter<"Postulacion"> | string;
     estado?: Prisma.StringFilter<"Postulacion"> | string;
     fecha?: Prisma.DateTimeFilter<"Postulacion"> | Date | string;
     oferta?: Prisma.XOR<Prisma.OfertaScalarRelationFilter, Prisma.OfertaWhereInput>;
@@ -103,6 +111,7 @@ export type PostulacionOrderByWithRelationInput = {
     id?: Prisma.SortOrder;
     ofertaId?: Prisma.SortOrder;
     estudianteId?: Prisma.SortOrder;
+    hojaVidaUrl?: Prisma.SortOrder;
     estado?: Prisma.SortOrder;
     fecha?: Prisma.SortOrder;
     oferta?: Prisma.OfertaOrderByWithRelationInput;
@@ -110,20 +119,23 @@ export type PostulacionOrderByWithRelationInput = {
 };
 export type PostulacionWhereUniqueInput = Prisma.AtLeast<{
     id?: string;
+    ofertaId_estudianteId?: Prisma.PostulacionOfertaIdEstudianteIdCompoundUniqueInput;
     AND?: Prisma.PostulacionWhereInput | Prisma.PostulacionWhereInput[];
     OR?: Prisma.PostulacionWhereInput[];
     NOT?: Prisma.PostulacionWhereInput | Prisma.PostulacionWhereInput[];
     ofertaId?: Prisma.StringFilter<"Postulacion"> | string;
     estudianteId?: Prisma.StringFilter<"Postulacion"> | string;
+    hojaVidaUrl?: Prisma.StringFilter<"Postulacion"> | string;
     estado?: Prisma.StringFilter<"Postulacion"> | string;
     fecha?: Prisma.DateTimeFilter<"Postulacion"> | Date | string;
     oferta?: Prisma.XOR<Prisma.OfertaScalarRelationFilter, Prisma.OfertaWhereInput>;
     estudiante?: Prisma.XOR<Prisma.EstudianteScalarRelationFilter, Prisma.EstudianteWhereInput>;
-}, "id">;
+}, "id" | "ofertaId_estudianteId">;
 export type PostulacionOrderByWithAggregationInput = {
     id?: Prisma.SortOrder;
     ofertaId?: Prisma.SortOrder;
     estudianteId?: Prisma.SortOrder;
+    hojaVidaUrl?: Prisma.SortOrder;
     estado?: Prisma.SortOrder;
     fecha?: Prisma.SortOrder;
     _count?: Prisma.PostulacionCountOrderByAggregateInput;
@@ -137,11 +149,13 @@ export type PostulacionScalarWhereWithAggregatesInput = {
     id?: Prisma.StringWithAggregatesFilter<"Postulacion"> | string;
     ofertaId?: Prisma.StringWithAggregatesFilter<"Postulacion"> | string;
     estudianteId?: Prisma.StringWithAggregatesFilter<"Postulacion"> | string;
+    hojaVidaUrl?: Prisma.StringWithAggregatesFilter<"Postulacion"> | string;
     estado?: Prisma.StringWithAggregatesFilter<"Postulacion"> | string;
     fecha?: Prisma.DateTimeWithAggregatesFilter<"Postulacion"> | Date | string;
 };
 export type PostulacionCreateInput = {
     id?: string;
+    hojaVidaUrl: string;
     estado?: string;
     fecha?: Date | string;
     oferta: Prisma.OfertaCreateNestedOneWithoutPostulacionesInput;
@@ -151,11 +165,13 @@ export type PostulacionUncheckedCreateInput = {
     id?: string;
     ofertaId: string;
     estudianteId: string;
+    hojaVidaUrl: string;
     estado?: string;
     fecha?: Date | string;
 };
 export type PostulacionUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
+    hojaVidaUrl?: Prisma.StringFieldUpdateOperationsInput | string;
     estado?: Prisma.StringFieldUpdateOperationsInput | string;
     fecha?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     oferta?: Prisma.OfertaUpdateOneRequiredWithoutPostulacionesNestedInput;
@@ -165,6 +181,7 @@ export type PostulacionUncheckedUpdateInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     ofertaId?: Prisma.StringFieldUpdateOperationsInput | string;
     estudianteId?: Prisma.StringFieldUpdateOperationsInput | string;
+    hojaVidaUrl?: Prisma.StringFieldUpdateOperationsInput | string;
     estado?: Prisma.StringFieldUpdateOperationsInput | string;
     fecha?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -172,11 +189,13 @@ export type PostulacionCreateManyInput = {
     id?: string;
     ofertaId: string;
     estudianteId: string;
+    hojaVidaUrl: string;
     estado?: string;
     fecha?: Date | string;
 };
 export type PostulacionUpdateManyMutationInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
+    hojaVidaUrl?: Prisma.StringFieldUpdateOperationsInput | string;
     estado?: Prisma.StringFieldUpdateOperationsInput | string;
     fecha?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -184,6 +203,7 @@ export type PostulacionUncheckedUpdateManyInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     ofertaId?: Prisma.StringFieldUpdateOperationsInput | string;
     estudianteId?: Prisma.StringFieldUpdateOperationsInput | string;
+    hojaVidaUrl?: Prisma.StringFieldUpdateOperationsInput | string;
     estado?: Prisma.StringFieldUpdateOperationsInput | string;
     fecha?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -195,10 +215,15 @@ export type PostulacionListRelationFilter = {
 export type PostulacionOrderByRelationAggregateInput = {
     _count?: Prisma.SortOrder;
 };
+export type PostulacionOfertaIdEstudianteIdCompoundUniqueInput = {
+    ofertaId: string;
+    estudianteId: string;
+};
 export type PostulacionCountOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     ofertaId?: Prisma.SortOrder;
     estudianteId?: Prisma.SortOrder;
+    hojaVidaUrl?: Prisma.SortOrder;
     estado?: Prisma.SortOrder;
     fecha?: Prisma.SortOrder;
 };
@@ -206,6 +231,7 @@ export type PostulacionMaxOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     ofertaId?: Prisma.SortOrder;
     estudianteId?: Prisma.SortOrder;
+    hojaVidaUrl?: Prisma.SortOrder;
     estado?: Prisma.SortOrder;
     fecha?: Prisma.SortOrder;
 };
@@ -213,6 +239,7 @@ export type PostulacionMinOrderByAggregateInput = {
     id?: Prisma.SortOrder;
     ofertaId?: Prisma.SortOrder;
     estudianteId?: Prisma.SortOrder;
+    hojaVidaUrl?: Prisma.SortOrder;
     estado?: Prisma.SortOrder;
     fecha?: Prisma.SortOrder;
 };
@@ -294,6 +321,7 @@ export type PostulacionUncheckedUpdateManyWithoutOfertaNestedInput = {
 };
 export type PostulacionCreateWithoutEstudianteInput = {
     id?: string;
+    hojaVidaUrl: string;
     estado?: string;
     fecha?: Date | string;
     oferta: Prisma.OfertaCreateNestedOneWithoutPostulacionesInput;
@@ -301,6 +329,7 @@ export type PostulacionCreateWithoutEstudianteInput = {
 export type PostulacionUncheckedCreateWithoutEstudianteInput = {
     id?: string;
     ofertaId: string;
+    hojaVidaUrl: string;
     estado?: string;
     fecha?: Date | string;
 };
@@ -332,11 +361,13 @@ export type PostulacionScalarWhereInput = {
     id?: Prisma.StringFilter<"Postulacion"> | string;
     ofertaId?: Prisma.StringFilter<"Postulacion"> | string;
     estudianteId?: Prisma.StringFilter<"Postulacion"> | string;
+    hojaVidaUrl?: Prisma.StringFilter<"Postulacion"> | string;
     estado?: Prisma.StringFilter<"Postulacion"> | string;
     fecha?: Prisma.DateTimeFilter<"Postulacion"> | Date | string;
 };
 export type PostulacionCreateWithoutOfertaInput = {
     id?: string;
+    hojaVidaUrl: string;
     estado?: string;
     fecha?: Date | string;
     estudiante: Prisma.EstudianteCreateNestedOneWithoutPostulacionesInput;
@@ -344,6 +375,7 @@ export type PostulacionCreateWithoutOfertaInput = {
 export type PostulacionUncheckedCreateWithoutOfertaInput = {
     id?: string;
     estudianteId: string;
+    hojaVidaUrl: string;
     estado?: string;
     fecha?: Date | string;
 };
@@ -371,11 +403,13 @@ export type PostulacionUpdateManyWithWhereWithoutOfertaInput = {
 export type PostulacionCreateManyEstudianteInput = {
     id?: string;
     ofertaId: string;
+    hojaVidaUrl: string;
     estado?: string;
     fecha?: Date | string;
 };
 export type PostulacionUpdateWithoutEstudianteInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
+    hojaVidaUrl?: Prisma.StringFieldUpdateOperationsInput | string;
     estado?: Prisma.StringFieldUpdateOperationsInput | string;
     fecha?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     oferta?: Prisma.OfertaUpdateOneRequiredWithoutPostulacionesNestedInput;
@@ -383,23 +417,27 @@ export type PostulacionUpdateWithoutEstudianteInput = {
 export type PostulacionUncheckedUpdateWithoutEstudianteInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     ofertaId?: Prisma.StringFieldUpdateOperationsInput | string;
+    hojaVidaUrl?: Prisma.StringFieldUpdateOperationsInput | string;
     estado?: Prisma.StringFieldUpdateOperationsInput | string;
     fecha?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type PostulacionUncheckedUpdateManyWithoutEstudianteInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     ofertaId?: Prisma.StringFieldUpdateOperationsInput | string;
+    hojaVidaUrl?: Prisma.StringFieldUpdateOperationsInput | string;
     estado?: Prisma.StringFieldUpdateOperationsInput | string;
     fecha?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type PostulacionCreateManyOfertaInput = {
     id?: string;
     estudianteId: string;
+    hojaVidaUrl: string;
     estado?: string;
     fecha?: Date | string;
 };
 export type PostulacionUpdateWithoutOfertaInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
+    hojaVidaUrl?: Prisma.StringFieldUpdateOperationsInput | string;
     estado?: Prisma.StringFieldUpdateOperationsInput | string;
     fecha?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
     estudiante?: Prisma.EstudianteUpdateOneRequiredWithoutPostulacionesNestedInput;
@@ -407,12 +445,14 @@ export type PostulacionUpdateWithoutOfertaInput = {
 export type PostulacionUncheckedUpdateWithoutOfertaInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     estudianteId?: Prisma.StringFieldUpdateOperationsInput | string;
+    hojaVidaUrl?: Prisma.StringFieldUpdateOperationsInput | string;
     estado?: Prisma.StringFieldUpdateOperationsInput | string;
     fecha?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
 export type PostulacionUncheckedUpdateManyWithoutOfertaInput = {
     id?: Prisma.StringFieldUpdateOperationsInput | string;
     estudianteId?: Prisma.StringFieldUpdateOperationsInput | string;
+    hojaVidaUrl?: Prisma.StringFieldUpdateOperationsInput | string;
     estado?: Prisma.StringFieldUpdateOperationsInput | string;
     fecha?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string;
 };
@@ -420,6 +460,7 @@ export type PostulacionSelect<ExtArgs extends runtime.Types.Extensions.InternalA
     id?: boolean;
     ofertaId?: boolean;
     estudianteId?: boolean;
+    hojaVidaUrl?: boolean;
     estado?: boolean;
     fecha?: boolean;
     oferta?: boolean | Prisma.OfertaDefaultArgs<ExtArgs>;
@@ -429,6 +470,7 @@ export type PostulacionSelectCreateManyAndReturn<ExtArgs extends runtime.Types.E
     id?: boolean;
     ofertaId?: boolean;
     estudianteId?: boolean;
+    hojaVidaUrl?: boolean;
     estado?: boolean;
     fecha?: boolean;
     oferta?: boolean | Prisma.OfertaDefaultArgs<ExtArgs>;
@@ -438,6 +480,7 @@ export type PostulacionSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.E
     id?: boolean;
     ofertaId?: boolean;
     estudianteId?: boolean;
+    hojaVidaUrl?: boolean;
     estado?: boolean;
     fecha?: boolean;
     oferta?: boolean | Prisma.OfertaDefaultArgs<ExtArgs>;
@@ -447,10 +490,11 @@ export type PostulacionSelectScalar = {
     id?: boolean;
     ofertaId?: boolean;
     estudianteId?: boolean;
+    hojaVidaUrl?: boolean;
     estado?: boolean;
     fecha?: boolean;
 };
-export type PostulacionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ofertaId" | "estudianteId" | "estado" | "fecha", ExtArgs["result"]["postulacion"]>;
+export type PostulacionOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "ofertaId" | "estudianteId" | "hojaVidaUrl" | "estado" | "fecha", ExtArgs["result"]["postulacion"]>;
 export type PostulacionInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
     oferta?: boolean | Prisma.OfertaDefaultArgs<ExtArgs>;
     estudiante?: boolean | Prisma.EstudianteDefaultArgs<ExtArgs>;
@@ -473,6 +517,7 @@ export type $PostulacionPayload<ExtArgs extends runtime.Types.Extensions.Interna
         id: string;
         ofertaId: string;
         estudianteId: string;
+        hojaVidaUrl: string;
         estado: string;
         fecha: Date;
     }, ExtArgs["result"]["postulacion"]>;
@@ -537,6 +582,7 @@ export interface PostulacionFieldRefs {
     readonly id: Prisma.FieldRef<"Postulacion", 'String'>;
     readonly ofertaId: Prisma.FieldRef<"Postulacion", 'String'>;
     readonly estudianteId: Prisma.FieldRef<"Postulacion", 'String'>;
+    readonly hojaVidaUrl: Prisma.FieldRef<"Postulacion", 'String'>;
     readonly estado: Prisma.FieldRef<"Postulacion", 'String'>;
     readonly fecha: Prisma.FieldRef<"Postulacion", 'DateTime'>;
 }

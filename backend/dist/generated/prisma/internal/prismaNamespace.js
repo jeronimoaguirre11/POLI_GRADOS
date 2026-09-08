@@ -113,6 +113,14 @@ export const OfertaScalarFieldEnum = {
     titulo: 'titulo',
     descripcion: 'descripcion',
     perfilBuscado: 'perfilBuscado',
+    modalidadContratacion: 'modalidadContratacion',
+    ubicacion: 'ubicacion',
+    funciones: 'funciones',
+    fechaInicioConvocatoria: 'fechaInicioConvocatoria',
+    fechaFinConvocatoria: 'fechaFinConvocatoria',
+    fechaInicioPractica: 'fechaInicioPractica',
+    duracionMeses: 'duracionMeses',
+    imagenUrl: 'imagenUrl',
     estado: 'estado',
     fechaPublicacion: 'fechaPublicacion'
 };
@@ -120,6 +128,7 @@ export const PostulacionScalarFieldEnum = {
     id: 'id',
     ofertaId: 'ofertaId',
     estudianteId: 'estudianteId',
+    hojaVidaUrl: 'hojaVidaUrl',
     estado: 'estado',
     fecha: 'fecha'
 };

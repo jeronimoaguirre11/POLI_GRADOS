@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { Injectable, ConflictException, UnauthorizedException, } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, UnauthorizedException, } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -25,14 +25,44 @@ let AuthService = class AuthService {
         if (existente) {
             throw new ConflictException('Ya existe un usuario con ese email');
         }
+        if (dto.rol === 'EMPRESA' && (!dto.nombreEmpresa || !dto.nit || !dto.sector)) {
+            throw new BadRequestException('Para registrar una cuenta de empresa se requiere nombreEmpresa, nit y sector');
+        }
+        if (dto.rol === 'ESTUDIANTE' &&
+            (!dto.codigo || !dto.programa)) {
+            throw new BadRequestException('Para registrar una cuenta de estudiante se requiere codigo y programa');
+        }
         const passwordHasheada = await bcrypt.hash(dto.password, 10);
-        const usuario = await this.prisma.usuario.create({
-            data: {
-                email: dto.email,
-                password: passwordHasheada,
-                nombre: dto.nombre,
-                rol: dto.rol,
-            },
+        const usuario = await this.prisma.$transaction(async (tx) => {
+            const nuevoUsuario = await tx.usuario.create({
+                data: {
+                    email: dto.email,
+                    password: passwordHasheada,
+                    nombre: dto.nombre,
+                    rol: dto.rol,
+                },
+            });
+            if (dto.rol === 'EMPRESA') {
+                await tx.empresa.create({
+                    data: {
+                        usuarioId: nuevoUsuario.id,
+                        nombreEmpresa: dto.nombreEmpresa,
+                        nit: dto.nit,
+                        sector: dto.sector,
+                    },
+                });
+            }
+            if (dto.rol === 'ESTUDIANTE') {
+                await tx.estudiante.create({
+                    data: {
+                        usuarioId: nuevoUsuario.id,
+                        codigo: dto.codigo,
+                        programa: dto.programa,
+                        semestre: dto.semestre ?? null,
+                    },
+                });
+            }
+            return nuevoUsuario;
         });
         const { password, ...usuarioSinPassword } = usuario;
         return usuarioSinPassword;

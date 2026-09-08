@@ -1,0 +1,9 @@
+# Normaliza los saltos de linea para todo el equipo, sin importar el sistema operativo.
+* text=auto eol=lf
+
+# Los binarios no se deben tocar
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.svg text eol=lf
+*.ico binary
