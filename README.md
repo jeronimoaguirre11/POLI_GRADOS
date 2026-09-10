@@ -94,3 +94,4 @@ Asumiendo un semestre de ~16 semanas y sprints de 2 semanas → **8 sprints**. A
 - Presentación final / sustentación
 
 ---
+# Web-DayStrategy
