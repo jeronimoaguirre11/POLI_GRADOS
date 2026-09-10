@@ -19,8 +19,6 @@ export declare class EmpresasService {
     }>;
     crearOferta(payload: JwtPayload, dto: CrearOfertaDto, imagen?: any): Promise<{
         id: string;
-        estado: string;
-        empresaId: string;
         titulo: string;
         descripcion: string;
         perfilBuscado: import("../../generated/prisma/enums.js").PerfilBuscado;
@@ -31,6 +29,8 @@ export declare class EmpresasService {
         fechaFinConvocatoria: Date;
         fechaInicioPractica: Date;
         duracionMeses: number;
+        estado: string;
+        empresaId: string;
         imagenUrl: string | null;
         fechaPublicacion: Date;
     }>;
@@ -40,8 +40,6 @@ export declare class EmpresasService {
         };
     } & {
         id: string;
-        estado: string;
-        empresaId: string;
         titulo: string;
         descripcion: string;
         perfilBuscado: import("../../generated/prisma/enums.js").PerfilBuscado;
@@ -52,25 +50,27 @@ export declare class EmpresasService {
         fechaFinConvocatoria: Date;
         fechaInicioPractica: Date;
         duracionMeses: number;
+        estado: string;
+        empresaId: string;
         imagenUrl: string | null;
         fechaPublicacion: Date;
     })[]>;
     listarPostulantes(payload: JwtPayload, ofertaId: string): Promise<{
         tieneHojaVida: boolean;
+        estudiante: {
+            usuario: {
+                email: string;
+                nombre: string;
+            };
+            codigo: string;
+            programa: string;
+            semestre: number | null;
+        };
         id: string;
         estado: string;
         observacionesEmpresa: string | null;
         fecha: Date;
         updatedAt: Date;
-        estudiante: {
-            codigo: string;
-            programa: string;
-            semestre: number | null;
-            usuario: {
-                email: string;
-                nombre: string;
-            };
-        };
     }[]>;
     actualizarPostulacion(payload: JwtPayload, postulacionId: string, dto: ActualizarPostulacionDto): Promise<{
         id: string;
@@ -85,8 +85,6 @@ export declare class EmpresasService {
     }>;
     actualizarOferta(payload: JwtPayload, ofertaId: string, dto: ActualizarOfertaDto, imagen?: any): Promise<{
         id: string;
-        estado: string;
-        empresaId: string;
         titulo: string;
         descripcion: string;
         perfilBuscado: import("../../generated/prisma/enums.js").PerfilBuscado;
@@ -97,6 +95,8 @@ export declare class EmpresasService {
         fechaFinConvocatoria: Date;
         fechaInicioPractica: Date;
         duracionMeses: number;
+        estado: string;
+        empresaId: string;
         imagenUrl: string | null;
         fechaPublicacion: Date;
     }>;

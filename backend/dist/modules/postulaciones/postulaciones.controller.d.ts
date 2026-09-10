@@ -5,18 +5,17 @@ export declare class PostulacionesController {
     constructor(postulacionesService: PostulacionesService);
     postularse(request: any, dto: CrearPostulacionDto, hojaVida?: any): Promise<{
         id: string;
-        estudianteId: string;
-        estado: string;
-        ofertaId: string;
         hojaVidaUrl: string;
+        estado: string;
         observacionesEmpresa: string | null;
         fecha: Date;
         updatedAt: Date;
+        ofertaId: string;
+        estudianteId: string;
     }>;
     listarMias(request: any): Promise<{
         id: string;
         estado: string;
-        ofertaId: string;
         fecha: Date;
         updatedAt: Date;
         oferta: {
@@ -29,6 +28,7 @@ export declare class PostulacionesController {
                 sector: string;
             };
         };
+        ofertaId: string;
     }[]>;
     cancelar(request: any, id: string): Promise<{
         eliminado: boolean;

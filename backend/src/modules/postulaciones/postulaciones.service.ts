@@ -25,6 +25,7 @@ export class PostulacionesService {
   private readonly directorioHojasVida = join(
     process.cwd(),
     'uploads',
+  
     'hojas-vida',
   );
 
