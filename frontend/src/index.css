@@ -1,4 +1,4 @@
-:root {
+/* :root {
   --text: #6b6375;
   --text-h: #08060d;
   --bg: #fff;
@@ -108,4 +108,78 @@ code {
   line-height: 135%;
   padding: 4px 8px;
   background: var(--code-bg);
+}*/ 
+
+/*si el codigo siguiente funciona bien, eliminar todo el que esta comentado*/
+
+:root {
+  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
+    sans-serif;
+
+  color: #1f2937;
+  background-color: #f5f7f6;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  --verde-principal: #0d5904;
+  --verde-oscuro: #084502;
+  --verde-claro: #eaf4e8;
+
+  --texto-principal: #1f2937;
+  --texto-secundario: #6b7280;
+
+  --fondo: #f5f7f6;
+  --blanco: #ffffff;
+
+  --borde: #e5e7eb;
+
+  --sombra:
+    0 1px 2px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.06);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background-color: var(--fondo);
+  color: var(--texto-principal);
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin-top: 0;
+}
+
+#root {
+  min-height: 100vh;
 }

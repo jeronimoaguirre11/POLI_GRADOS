@@ -1,0 +1,370 @@
+.modalidad-page {
+  width: 100%;
+}
+
+.modalidad-back {
+  margin-bottom: 1.5rem;
+  padding: 0;
+
+  border: none;
+
+  background: transparent;
+  color: #5f685e;
+
+  font-size: 0.82rem;
+  font-weight: 650;
+}
+
+.modalidad-back:hover {
+  color: #0d5904;
+}
+
+.modalidad-hero {
+  min-height: 230px;
+
+  padding: 2.6rem;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 3rem;
+
+  position: relative;
+  overflow: hidden;
+
+  border-radius: 18px;
+
+  background:
+    radial-gradient(
+      circle at 88% 25%,
+      rgba(255, 255, 255, 0.16),
+      transparent 28%
+    ),
+    linear-gradient(120deg, #0b5004, #14710a);
+
+  color: white;
+}
+
+.modalidad-hero::after {
+  content: "";
+
+  position: absolute;
+
+  width: 300px;
+  height: 300px;
+
+  right: -150px;
+  bottom: -180px;
+
+  border: 45px solid rgba(255, 255, 255, 0.05);
+  border-radius: 50%;
+}
+
+.modalidad-hero > div:first-child {
+  position: relative;
+  z-index: 1;
+
+  max-width: 720px;
+}
+
+.modalidad-label {
+  display: inline-block;
+
+  margin-bottom: 0.8rem;
+  padding: 0.35rem 0.7rem;
+
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.modalidad-hero h1 {
+  margin-bottom: 0.75rem;
+
+  color: white;
+
+  font-size: 2.3rem;
+  letter-spacing: -0.04em;
+}
+
+.modalidad-hero p {
+  max-width: 650px;
+
+  margin: 0;
+
+  color: rgba(255, 255, 255, 0.75);
+
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.modalidad-number {
+  position: relative;
+  z-index: 1;
+
+  min-width: 100px;
+  height: 100px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid rgba(255, 255, 255, 0.17);
+  border-radius: 20px;
+
+  background: rgba(255, 255, 255, 0.08);
+
+  color: rgba(255, 255, 255, 0.9);
+
+  font-size: 1.7rem;
+  font-weight: 800;
+}
+
+.modalidad-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.75fr;
+  gap: 1.4rem;
+
+  margin-top: 1.5rem;
+}
+
+.modalidad-card {
+  padding: 1.7rem;
+
+  border: 1px solid #e4e9e3;
+  border-radius: 15px;
+
+  background: white;
+
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.modalidad-card-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+
+  margin-bottom: 1.3rem;
+}
+
+.modalidad-card-icon {
+  width: 40px;
+  height: 40px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+
+  background: #eaf4e8;
+  color: #0d5904;
+
+  font-weight: 800;
+}
+
+.modalidad-card-small {
+  display: block;
+
+  margin-bottom: 0.2rem;
+
+  color: #0d5904;
+
+  font-size: 0.68rem;
+  font-weight: 750;
+
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.modalidad-card h2 {
+  margin: 0;
+
+  color: #111827;
+
+  font-size: 1.15rem;
+}
+
+.modalidad-list {
+  margin: 0;
+  padding-left: 1.3rem;
+}
+
+.modalidad-list li {
+  margin-bottom: 0.85rem;
+
+  color: #626b61;
+
+  font-size: 0.85rem;
+  line-height: 1.55;
+}
+
+.modalidad-list li:last-child {
+  margin-bottom: 0;
+}
+
+.modalidad-summary {
+  background: #f5faf4;
+}
+
+.modalidad-summary > p {
+  color: #626b61;
+
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.summary-status {
+  margin-top: 1.4rem;
+  padding-top: 1rem;
+
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+
+  border-top: 1px solid #dbe7d9;
+
+  color: #697267;
+
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.summary-status span {
+  width: 8px;
+  height: 8px;
+
+  border-radius: 50%;
+
+  background: #e6a700;
+}
+
+.proceso-section {
+  margin-top: 1.5rem;
+  padding: 2rem;
+
+  border: 1px solid #e4e9e3;
+  border-radius: 15px;
+
+  background: white;
+}
+
+.proceso-heading {
+  margin-bottom: 1.7rem;
+}
+
+.proceso-heading > span {
+  color: #0d5904;
+
+  font-size: 0.68rem;
+  font-weight: 750;
+
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.proceso-heading h2 {
+  margin: 0.35rem 0;
+
+  color: #111827;
+
+  font-size: 1.35rem;
+}
+
+.proceso-heading p {
+  margin: 0;
+
+  color: #7b847a;
+
+  font-size: 0.82rem;
+}
+
+.proceso-timeline {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
+}
+
+.proceso-step {
+  position: relative;
+
+  padding: 1.2rem;
+
+  border: 1px solid #edf0ec;
+  border-radius: 12px;
+
+  background: #fafbfa;
+}
+
+.proceso-number {
+  width: 34px;
+  height: 34px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  margin-bottom: 1rem;
+
+  border-radius: 9px;
+
+  background: #0d5904;
+  color: white;
+
+  font-size: 0.75rem;
+  font-weight: 800;
+}
+
+.proceso-step h3 {
+  margin-bottom: 0.5rem;
+
+  color: #1f2937;
+
+  font-size: 0.9rem;
+}
+
+.proceso-step p {
+  margin: 0;
+
+  color: #777f76;
+
+  font-size: 0.77rem;
+  line-height: 1.55;
+}
+
+@media (max-width: 900px) {
+  .modalidad-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .proceso-timeline {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 600px) {
+  .modalidad-hero {
+    padding: 1.7rem;
+  }
+
+  .modalidad-number {
+    display: none;
+  }
+
+  .modalidad-hero h1 {
+    font-size: 1.7rem;
+  }
+
+  .proceso-section {
+    padding: 1.2rem;
+  }
+
+  .proceso-timeline {
+    grid-template-columns: 1fr;
+  }
+}
