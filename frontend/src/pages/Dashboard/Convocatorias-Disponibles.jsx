@@ -22,12 +22,22 @@ const MODALIDADES_CONTRATACION = [
   { value: "VOLUNTARIA", label: "Voluntaria" },
 ];
 
+const ETIQUETAS_ESTADO = {
+  PENDIENTE: "Pendiente",
+  EN_REVISION: "En revisión",
+  PRESELECCIONADO: "Preseleccionado",
+  RECHAZADO: "Rechazado",
+  SELECCIONADO: "Seleccionado",
+};
+
 function etiquetaPerfil(valor) {
   return PERFILES_BUSCADOS.find((p) => p.value === valor)?.label ?? valor;
 }
 
 function etiquetaModalidad(valor) {
-  return MODALIDADES_CONTRATACION.find((m) => m.value === valor)?.label ?? valor;
+  return (
+    MODALIDADES_CONTRATACION.find((m) => m.value === valor)?.label ?? valor
+  );
 }
 
 function TarjetaConvocatoria({ oferta, yaPostulado, onPostularse, cargando }) {
@@ -44,11 +54,15 @@ function TarjetaConvocatoria({ oferta, yaPostulado, onPostularse, cargando }) {
       </div>
 
       <div className="convocatoria-card-body">
-        <p className="convocatoria-card-empresa">{oferta.empresa?.nombreEmpresa}</p>
+        <p className="convocatoria-card-empresa">
+          {oferta.empresa?.nombreEmpresa}
+        </p>
         <h4>{oferta.titulo}</h4>
 
         <div className="convocatoria-card-chips">
-          <span className="chip chip-perfil">{etiquetaPerfil(oferta.perfilBuscado)}</span>
+          <span className="chip chip-perfil">
+            {etiquetaPerfil(oferta.perfilBuscado)}
+          </span>
           <span className="chip chip-modalidad">
             {etiquetaModalidad(oferta.modalidadContratacion)}
           </span>
@@ -61,7 +75,9 @@ function TarjetaConvocatoria({ oferta, yaPostulado, onPostularse, cargando }) {
         <div className="convocatoria-card-meta">
           <div>
             <span className="convocatoria-card-meta-label">Ubicación</span>
-            <span className="convocatoria-card-meta-valor">{oferta.ubicacion}</span>
+            <span className="convocatoria-card-meta-valor">
+              {oferta.ubicacion}
+            </span>
           </div>
           <div>
             <span className="convocatoria-card-meta-label">Duración</span>
@@ -76,7 +92,9 @@ function TarjetaConvocatoria({ oferta, yaPostulado, onPostularse, cargando }) {
             </span>
           </div>
           <div>
-            <span className="convocatoria-card-meta-label">Inicio práctica</span>
+            <span className="convocatoria-card-meta-label">
+              Inicio práctica
+            </span>
             <span className="convocatoria-card-meta-valor">
               {oferta.fechaInicioPractica?.slice(0, 10)}
             </span>
@@ -92,7 +110,9 @@ function TarjetaConvocatoria({ oferta, yaPostulado, onPostularse, cargando }) {
               onChange={handleArchivo}
             />
             {hojaVida && (
-              <span className="convocatoria-card-hoja-vida-nombre">{hojaVida.name}</span>
+              <span className="convocatoria-card-hoja-vida-nombre">
+                {hojaVida.name}
+              </span>
             )}
           </label>
         )}
@@ -114,9 +134,16 @@ function TarjetaConvocatoria({ oferta, yaPostulado, onPostularse, cargando }) {
   );
 }
 
-function ListaDisponibles({ ofertas, idsPostulados, onPostularse, postulandoId }) {
+function ListaDisponibles({
+  ofertas,
+  idsPostulados,
+  onPostularse,
+  postulandoId,
+}) {
   if (ofertas === null) {
-    return <p className="convocatoria-estado-vacio">Cargando convocatorias...</p>;
+    return (
+      <p className="convocatoria-estado-vacio">Cargando convocatorias...</p>
+    );
   }
   if (ofertas.length === 0) {
     return (
@@ -143,7 +170,9 @@ function ListaDisponibles({ ofertas, idsPostulados, onPostularse, postulandoId }
 
 function ListaMisPostulaciones({ postulaciones, onCancelar, cancelandoId }) {
   if (postulaciones === null) {
-    return <p className="convocatoria-estado-vacio">Cargando tus postulaciones...</p>;
+    return (
+      <p className="convocatoria-estado-vacio">Cargando tus postulaciones...</p>
+    );
   }
   if (postulaciones.length === 0) {
     return (
@@ -168,16 +197,25 @@ function ListaMisPostulaciones({ postulaciones, onCancelar, cancelandoId }) {
           </div>
 
           <div className="postulacion-card-acciones">
-            <span className={`postulacion-estado postulacion-estado-${postulacion.estado.toLowerCase()}`}>
-              {postulacion.estado}
+            <span
+              className={`postulacion-estado postulacion-estado-${postulacion.estado.toLowerCase()}`}
+            >
+              {ETIQUETAS_ESTADO[postulacion.estado] ?? postulacion.estado}
             </span>
             <button
               type="button"
               className="postulacion-quitar"
-              disabled={cancelandoId === postulacion.id}
+              disabled={
+                cancelandoId === postulacion.id ||
+                postulacion.estado === "SELECCIONADO"
+              }
               onClick={() => onCancelar(postulacion.id)}
             >
-              {cancelandoId === postulacion.id ? "Quitando..." : "Quitar postulación"}
+              {postulacion.estado === "SELECCIONADO"
+                ? "Candidato seleccionado"
+                : cancelandoId === postulacion.id
+                  ? "Quitando..."
+                  : "Quitar postulación"}
             </button>
           </div>
         </li>
@@ -194,26 +232,39 @@ export default function ConvocatoriasDisponibles({ onVolver }) {
   const [postulandoId, setPostulandoId] = useState(null);
   const [cancelandoId, setCancelandoId] = useState(null);
 
-  async function cargarOfertas() {
-    try {
-      setOfertas(await listarOfertasAbiertas());
-    } catch (err) {
-      setOfertas([]);
-      setError(err.message || "No se pudieron cargar las convocatorias.");
-    }
-  }
-
   async function cargarPostulaciones() {
     try {
       setPostulaciones(await misPostulaciones());
-    } catch (err) {
+    } catch {
       setPostulaciones([]);
     }
   }
 
   useEffect(() => {
-    cargarOfertas();
-    cargarPostulaciones();
+    let activo = true;
+
+    listarOfertasAbiertas()
+      .then((data) => {
+        if (activo) setOfertas(data);
+      })
+      .catch((err) => {
+        if (activo) {
+          setOfertas([]);
+          setError(err.message || "No se pudieron cargar las convocatorias.");
+        }
+      });
+
+    misPostulaciones()
+      .then((data) => {
+        if (activo) setPostulaciones(data);
+      })
+      .catch(() => {
+        if (activo) setPostulaciones([]);
+      });
+
+    return () => {
+      activo = false;
+    };
   }, []);
 
   const idsPostulados = new Set((postulaciones ?? []).map((p) => p.ofertaId));

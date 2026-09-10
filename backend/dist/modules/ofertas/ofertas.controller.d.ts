@@ -9,6 +9,8 @@ export declare class OfertasController {
         };
     } & {
         id: string;
+        estado: string;
+        empresaId: string;
         titulo: string;
         descripcion: string;
         perfilBuscado: import("../../generated/prisma/enums.js").PerfilBuscado;
@@ -19,9 +21,7 @@ export declare class OfertasController {
         fechaFinConvocatoria: Date;
         fechaInicioPractica: Date;
         duracionMeses: number;
-        empresaId: string;
         imagenUrl: string | null;
-        estado: string;
         fechaPublicacion: Date;
     })[]>;
 }

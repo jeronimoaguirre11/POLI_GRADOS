@@ -26,16 +26,16 @@ export class AuthService {
       throw new ConflictException('Ya existe un usuario con ese email');
     }
 
-    if (dto.rol === 'EMPRESA' && (!dto.nombreEmpresa || !dto.nit || !dto.sector)) {
+    if (
+      dto.rol === 'EMPRESA' &&
+      (!dto.nombreEmpresa || !dto.nit || !dto.sector)
+    ) {
       throw new BadRequestException(
         'Para registrar una cuenta de empresa se requiere nombreEmpresa, nit y sector',
       );
     }
 
-    if (
-      dto.rol === 'ESTUDIANTE' &&
-      (!dto.codigo || !dto.programa)
-    ) {
+    if (dto.rol === 'ESTUDIANTE' && (!dto.codigo || !dto.programa)) {
       throw new BadRequestException(
         'Para registrar una cuenta de estudiante se requiere codigo y programa',
       );
@@ -81,7 +81,7 @@ export class AuthService {
       return nuevoUsuario;
     });
 
-    const { password, ...usuarioSinPassword } = usuario;
+    const { password: _password, ...usuarioSinPassword } = usuario;
     return usuarioSinPassword;
   }
 
@@ -103,7 +103,7 @@ export class AuthService {
     const payload = { sub: usuario.id, email: usuario.email, rol: usuario.rol };
     const token = await this.jwtService.signAsync(payload);
 
-    const { password: _, ...usuarioSinPassword } = usuario;
+    const { password: _password, ...usuarioSinPassword } = usuario;
     return { usuario: usuarioSinPassword, token };
   }
 }

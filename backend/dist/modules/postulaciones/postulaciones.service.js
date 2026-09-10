@@ -77,6 +77,7 @@ let PostulacionesService = class PostulacionesService {
             });
         }
         catch (error) {
+            await fs.unlink(join(process.cwd(), hojaVidaUrl)).catch(() => { });
             if (error?.code === 'P2002') {
                 throw new ConflictException('Ya te postulaste a esta convocatoria');
             }
@@ -89,9 +90,18 @@ let PostulacionesService = class PostulacionesService {
         return this.prisma.postulacion.findMany({
             where: { estudianteId: estudiante.id },
             orderBy: { fecha: 'desc' },
-            include: {
+            select: {
+                id: true,
+                ofertaId: true,
+                estado: true,
+                fecha: true,
+                updatedAt: true,
                 oferta: {
-                    include: {
+                    select: {
+                        titulo: true,
+                        perfilBuscado: true,
+                        modalidadContratacion: true,
+                        ubicacion: true,
                         empresa: { select: { nombreEmpresa: true, sector: true } },
                     },
                 },
@@ -106,6 +116,9 @@ let PostulacionesService = class PostulacionesService {
         });
         if (!postulacion || postulacion.estudianteId !== estudiante.id) {
             throw new NotFoundException('Postulacion no encontrada');
+        }
+        if (postulacion.estado === 'SELECCIONADO') {
+            throw new ConflictException('No puedes cancelar una postulacion despues de ser seleccionado');
         }
         await this.prisma.postulacion.delete({ where: { id: postulacionId } });
         fs.unlink(join(process.cwd(), postulacion.hojaVidaUrl)).catch(() => { });

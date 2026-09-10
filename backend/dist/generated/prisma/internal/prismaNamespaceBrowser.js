@@ -115,7 +115,9 @@ export const PostulacionScalarFieldEnum = {
     estudianteId: 'estudianteId',
     hojaVidaUrl: 'hojaVidaUrl',
     estado: 'estado',
-    fecha: 'fecha'
+    observacionesEmpresa: 'observacionesEmpresa',
+    fecha: 'fecha',
+    updatedAt: 'updatedAt'
 };
 export const SortOrder = {
     asc: 'asc',

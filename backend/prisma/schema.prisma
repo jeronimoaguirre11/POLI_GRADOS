@@ -173,14 +173,16 @@ model Oferta {
 }
 
 model Postulacion {
-  id           String     @id @default(uuid())
-  ofertaId     String
-  oferta       Oferta     @relation(fields: [ofertaId], references: [id])
-  estudianteId String
-  estudiante   Estudiante @relation(fields: [estudianteId], references: [id])
-  hojaVidaUrl  String
-  estado       String     @default("PENDIENTE")
-  fecha        DateTime   @default(now())
+  id                   String     @id @default(uuid())
+  ofertaId             String
+  oferta               Oferta     @relation(fields: [ofertaId], references: [id])
+  estudianteId         String
+  estudiante           Estudiante @relation(fields: [estudianteId], references: [id])
+  hojaVidaUrl           String
+  estado               String     @default("PENDIENTE")
+  observacionesEmpresa String?
+  fecha                 DateTime   @default(now())
+  updatedAt             DateTime   @default(now()) @updatedAt
 
   // Un estudiante no puede postularse dos veces a la misma convocatoria.
   @@unique([ofertaId, estudianteId])

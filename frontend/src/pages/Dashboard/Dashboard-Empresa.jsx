@@ -1,9 +1,12 @@
 import { useEffect, useState } from "react";
 import {
+  actualizarPostulacion,
   actualizarOferta,
   crearOferta,
+  descargarHojaVida,
   eliminarOferta,
   listarOfertas,
+  listarPostulantesOferta,
   obtenerPerfilEmpresa,
 } from "../../api/empresas.js";
 import "./Dashboard-Empresa.css";
@@ -24,6 +27,35 @@ const MODALIDADES_CONTRATACION = [
   { value: "CONVENIO", label: "Convenio" },
   { value: "VOLUNTARIA", label: "Voluntaria" },
 ];
+
+const ESTADOS_POSTULACION = [
+  { value: "PENDIENTE", label: "Pendiente" },
+  { value: "EN_REVISION", label: "En revisión" },
+  { value: "PRESELECCIONADO", label: "Preseleccionado" },
+  { value: "RECHAZADO", label: "Rechazado" },
+  { value: "SELECCIONADO", label: "Seleccionado" },
+];
+
+function etiquetaPrograma(programa) {
+  return (
+    PERFILES_BUSCADOS.find((item) => item.value === programa)?.label ?? programa
+  );
+}
+
+function etiquetaEstado(estado) {
+  return (
+    ESTADOS_POSTULACION.find((item) => item.value === estado)?.label ?? estado
+  );
+}
+
+function fechaLegible(fecha) {
+  if (!fecha) return "Sin fecha";
+  return new Intl.DateTimeFormat("es-CO", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  }).format(new Date(fecha));
+}
 
 const FORM_INICIAL = {
   titulo: "",
@@ -68,13 +100,6 @@ function FormularioOferta({ ofertaExistente, onGuardada, onCancelar }) {
   const [cargando, setCargando] = useState(false);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    setForm(datosIniciales(ofertaExistente));
-    setImagen(null);
-    setPreviewImagen(ofertaExistente ? urlImagen(ofertaExistente.imagenUrl) : null);
-    setError(null);
-  }, [ofertaExistente]);
-
   function handleChange(e) {
     const { name, value } = e.target;
     setForm((prev) => ({
@@ -118,7 +143,9 @@ function FormularioOferta({ ofertaExistente, onGuardada, onCancelar }) {
 
   return (
     <form onSubmit={handleSubmit} className="empresa-form">
-      <h3>{editando ? "Editar convocatoria" : "Publicar nueva convocatoria"}</h3>
+      <h3>
+        {editando ? "Editar convocatoria" : "Publicar nueva convocatoria"}
+      </h3>
 
       <label>
         Título de la convocatoria
@@ -289,9 +316,13 @@ function FormularioOferta({ ofertaExistente, onGuardada, onCancelar }) {
   );
 }
 
-function ListaOfertas({ ofertas, onEditar, onEliminar }) {
+function ListaOfertas({ ofertas, onEditar, onEliminar, onVerPostulantes }) {
   if (ofertas === null) {
-    return <p className="dashboard-empresa-estado-vacio">Cargando convocatorias...</p>;
+    return (
+      <p className="dashboard-empresa-estado-vacio">
+        Cargando convocatorias...
+      </p>
+    );
   }
   if (ofertas.length === 0) {
     return (
@@ -335,7 +366,9 @@ function ListaOfertas({ ofertas, onEditar, onEliminar }) {
               <h4>{oferta.titulo}</h4>
 
               {publicada && (
-                <p className="oferta-card-publicada">Publicada el {publicada}</p>
+                <p className="oferta-card-publicada">
+                  Publicada el {publicada}
+                </p>
               )}
 
               <div className="empresa-lista-ofertas-chips">
@@ -354,7 +387,9 @@ function ListaOfertas({ ofertas, onEditar, onEliminar }) {
               <div className="oferta-card-meta">
                 <div>
                   <span className="oferta-card-meta-label">Ubicación</span>
-                  <span className="oferta-card-meta-valor">{oferta.ubicacion}</span>
+                  <span className="oferta-card-meta-valor">
+                    {oferta.ubicacion}
+                  </span>
                 </div>
                 <div>
                   <span className="oferta-card-meta-label">Duración</span>
@@ -370,7 +405,9 @@ function ListaOfertas({ ofertas, onEditar, onEliminar }) {
                   </span>
                 </div>
                 <div>
-                  <span className="oferta-card-meta-label">Inicio práctica</span>
+                  <span className="oferta-card-meta-label">
+                    Inicio práctica
+                  </span>
                   <span className="oferta-card-meta-valor">
                     {oferta.fechaInicioPractica?.slice(0, 10)}
                   </span>
@@ -378,6 +415,13 @@ function ListaOfertas({ ofertas, onEditar, onEliminar }) {
               </div>
 
               <div className="empresa-lista-ofertas-acciones">
+                <button
+                  type="button"
+                  className="postulantes"
+                  onClick={() => onVerPostulantes(oferta)}
+                >
+                  Postulantes ({oferta._count?.postulaciones ?? 0})
+                </button>
                 <button type="button" onClick={() => onEditar(oferta)}>
                   Editar
                 </button>
@@ -397,12 +441,294 @@ function ListaOfertas({ ofertas, onEditar, onEliminar }) {
   );
 }
 
+function TarjetaPostulante({ postulacion, onActualizada }) {
+  const [estado, setEstado] = useState(postulacion.estado);
+  const [observaciones, setObservaciones] = useState(
+    postulacion.observacionesEmpresa ?? "",
+  );
+  const [guardando, setGuardando] = useState(false);
+  const [descargando, setDescargando] = useState(false);
+  const [mensaje, setMensaje] = useState(null);
+  const estudiante = postulacion.estudiante;
+  const usuario = estudiante.usuario;
+  const hayCambios =
+    estado !== postulacion.estado ||
+    observaciones !== (postulacion.observacionesEmpresa ?? "");
+
+  async function handleGuardar() {
+    setGuardando(true);
+    setMensaje(null);
+    try {
+      const actualizada = await actualizarPostulacion(postulacion.id, {
+        estado,
+        observacionesEmpresa: observaciones,
+      });
+      setEstado(actualizada.estado);
+      setObservaciones(actualizada.observacionesEmpresa ?? "");
+      onActualizada(actualizada);
+      setMensaje({ tipo: "ok", texto: "Cambios guardados." });
+    } catch (err) {
+      setMensaje({
+        tipo: "error",
+        texto: err.message || "No se pudo actualizar la postulación.",
+      });
+    } finally {
+      setGuardando(false);
+    }
+  }
+
+  async function handleDescargar() {
+    setDescargando(true);
+    setMensaje(null);
+    try {
+      const { archivo, nombre } = await descargarHojaVida(postulacion.id);
+      const enlace = document.createElement("a");
+      const url = URL.createObjectURL(archivo);
+      enlace.href = url;
+      enlace.download = nombre;
+      document.body.appendChild(enlace);
+      enlace.click();
+      enlace.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setMensaje({
+        tipo: "error",
+        texto: err.message || "No se pudo descargar la hoja de vida.",
+      });
+    } finally {
+      setDescargando(false);
+    }
+  }
+
+  return (
+    <article className="postulante-card">
+      <div className="postulante-card-encabezado">
+        <div className="postulante-avatar" aria-hidden="true">
+          {usuario.nombre?.charAt(0)?.toUpperCase() ?? "?"}
+        </div>
+        <div>
+          <h4>{usuario.nombre}</h4>
+          <p>{etiquetaPrograma(estudiante.programa)}</p>
+        </div>
+        <span
+          className={`postulante-estado postulante-estado-${estado.toLowerCase()}`}
+        >
+          {etiquetaEstado(estado)}
+        </span>
+      </div>
+
+      <dl className="postulante-datos">
+        <div>
+          <dt>Código</dt>
+          <dd>{estudiante.codigo}</dd>
+        </div>
+        <div>
+          <dt>Semestre</dt>
+          <dd>{estudiante.semestre ?? "No registrado"}</dd>
+        </div>
+        <div>
+          <dt>Correo</dt>
+          <dd>{usuario.email}</dd>
+        </div>
+        <div>
+          <dt>Postulación</dt>
+          <dd>{fechaLegible(postulacion.fecha)}</dd>
+        </div>
+      </dl>
+
+      <div className="postulante-contacto">
+        <a href={`mailto:${usuario.email}`}>Enviar correo</a>
+        <button
+          type="button"
+          onClick={handleDescargar}
+          disabled={descargando || !postulacion.tieneHojaVida}
+        >
+          {descargando ? "Descargando..." : "Descargar hoja de vida"}
+        </button>
+      </div>
+
+      <div className="postulante-gestion">
+        <label>
+          Estado del proceso
+          <select
+            value={estado}
+            onChange={(event) => setEstado(event.target.value)}
+          >
+            {ESTADOS_POSTULACION.map((item) => (
+              <option key={item.value} value={item.value}>
+                {item.label}
+              </option>
+            ))}
+          </select>
+        </label>
+
+        <label>
+          Observaciones internas
+          <textarea
+            value={observaciones}
+            onChange={(event) => setObservaciones(event.target.value)}
+            rows={4}
+            maxLength={2000}
+            placeholder="Notas privadas para el seguimiento de este candidato..."
+          />
+          <span className="postulante-contador">
+            {observaciones.length}/2000
+          </span>
+        </label>
+
+        <div className="postulante-guardar-fila">
+          {mensaje && (
+            <span
+              className={`postulante-mensaje postulante-mensaje-${mensaje.tipo}`}
+              role="status"
+            >
+              {mensaje.texto}
+            </span>
+          )}
+          <button
+            type="button"
+            className="postulante-guardar"
+            onClick={handleGuardar}
+            disabled={guardando || !hayCambios}
+          >
+            {guardando ? "Guardando..." : "Guardar seguimiento"}
+          </button>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function PanelPostulantes({ oferta, onVolver }) {
+  const [postulaciones, setPostulaciones] = useState(null);
+  const [error, setError] = useState(null);
+  const [filtroEstado, setFiltroEstado] = useState("TODOS");
+  const [busqueda, setBusqueda] = useState("");
+
+  useEffect(() => {
+    let activo = true;
+
+    listarPostulantesOferta(oferta.id)
+      .then((data) => {
+        if (activo) setPostulaciones(data);
+      })
+      .catch((err) => {
+        if (activo) {
+          setPostulaciones([]);
+          setError(err.message || "No se pudieron cargar los postulantes.");
+        }
+      });
+
+    return () => {
+      activo = false;
+    };
+  }, [oferta.id]);
+
+  function handleActualizada(actualizada) {
+    setPostulaciones((actuales) =>
+      actuales.map((item) =>
+        item.id === actualizada.id ? { ...item, ...actualizada } : item,
+      ),
+    );
+  }
+
+  const termino = busqueda.trim().toLocaleLowerCase("es");
+  const postulacionesVisibles = (postulaciones ?? []).filter((postulacion) => {
+    const coincideEstado =
+      filtroEstado === "TODOS" || postulacion.estado === filtroEstado;
+    const texto = [
+      postulacion.estudiante.usuario.nombre,
+      postulacion.estudiante.usuario.email,
+      postulacion.estudiante.codigo,
+      postulacion.estudiante.programa,
+    ]
+      .join(" ")
+      .toLocaleLowerCase("es");
+    return coincideEstado && (!termino || texto.includes(termino));
+  });
+
+  return (
+    <section className="postulantes-panel">
+      <div className="postulantes-panel-header">
+        <button type="button" className="postulantes-volver" onClick={onVolver}>
+          ← Volver a convocatorias
+        </button>
+        <div>
+          <span>Gestión de candidatos</span>
+          <h3>{oferta.titulo}</h3>
+          <p>
+            {postulaciones?.length ?? 0}{" "}
+            {(postulaciones?.length ?? 0) === 1 ? "postulante" : "postulantes"}
+          </p>
+        </div>
+      </div>
+
+      {error && <p className="empresa-error">{error}</p>}
+
+      {postulaciones === null ? (
+        <p className="dashboard-empresa-estado-vacio">
+          Cargando postulantes...
+        </p>
+      ) : postulaciones.length === 0 ? (
+        <p className="dashboard-empresa-estado-vacio">
+          Esta convocatoria todavía no tiene postulantes.
+        </p>
+      ) : (
+        <>
+          <div className="postulantes-filtros">
+            <label>
+              Buscar candidato
+              <input
+                type="search"
+                value={busqueda}
+                onChange={(event) => setBusqueda(event.target.value)}
+                placeholder="Nombre, correo o código"
+              />
+            </label>
+            <label>
+              Filtrar por estado
+              <select
+                value={filtroEstado}
+                onChange={(event) => setFiltroEstado(event.target.value)}
+              >
+                <option value="TODOS">Todos los estados</option>
+                {ESTADOS_POSTULACION.map((item) => (
+                  <option key={item.value} value={item.value}>
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          {postulacionesVisibles.length === 0 ? (
+            <p className="dashboard-empresa-estado-vacio">
+              No hay candidatos que coincidan con los filtros.
+            </p>
+          ) : (
+            <div className="postulantes-lista">
+              {postulacionesVisibles.map((postulacion) => (
+                <TarjetaPostulante
+                  key={postulacion.id}
+                  postulacion={postulacion}
+                  onActualizada={handleActualizada}
+                />
+              ))}
+            </div>
+          )}
+        </>
+      )}
+    </section>
+  );
+}
+
 export default function DashboardEmpresa() {
   const [perfil, setPerfil] = useState(null);
   const [ofertas, setOfertas] = useState(null);
   const [errorCarga, setErrorCarga] = useState(null);
   const [vista, setVista] = useState("ver");
   const [ofertaEnEdicion, setOfertaEnEdicion] = useState(null);
+  const [ofertaConPostulantes, setOfertaConPostulantes] = useState(null);
 
   async function cargarOfertas() {
     try {
@@ -419,12 +745,23 @@ export default function DashboardEmpresa() {
     obtenerPerfilEmpresa()
       .then(setPerfil)
       .catch(() => setPerfil(null));
-    cargarOfertas();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
+    listarOfertas()
+      .then((data) => {
+        setOfertas(data);
+        setErrorCarga(null);
+      })
+      .catch((err) => {
+        setOfertas([]);
+        setErrorCarga(
+          err.message || "No se pudieron cargar las convocatorias.",
+        );
+      });
   }, []);
 
   function irAVerConvocatorias() {
     setOfertaEnEdicion(null);
+    setOfertaConPostulantes(null);
     setVista("ver");
     cargarOfertas();
   }
@@ -437,6 +774,11 @@ export default function DashboardEmpresa() {
   function handleEditar(oferta) {
     setOfertaEnEdicion(oferta);
     setVista("crear");
+  }
+
+  function handleVerPostulantes(oferta) {
+    setOfertaConPostulantes(oferta);
+    setVista("postulantes");
   }
 
   async function handleEliminar(id) {
@@ -456,29 +798,41 @@ export default function DashboardEmpresa() {
   return (
     <section className="dashboard-empresa">
       <div className="dashboard-empresa-banner">
-        <h2>{perfil ? `Convocatorias de ${perfil.nombreEmpresa}` : "Convocatorias"}</h2>
+        <h2>
+          {perfil
+            ? `Convocatorias de ${perfil.nombreEmpresa}`
+            : "Convocatorias"}
+        </h2>
         <p>Publica, edita y da seguimiento a tus convocatorias de práctica.</p>
       </div>
 
-      <div className="dashboard-empresa-tabs">
-        <button
-          type="button"
-          className={vista === "ver" ? "activo" : ""}
-          onClick={irAVerConvocatorias}
-        >
-          Ver convocatorias
-        </button>
-        <button
-          type="button"
-          className={vista === "crear" ? "activo" : ""}
-          onClick={irAGenerarConvocatoria}
-        >
-          Generar convocatoria
-        </button>
-      </div>
+      {vista !== "postulantes" && (
+        <div className="dashboard-empresa-tabs">
+          <button
+            type="button"
+            className={vista === "ver" ? "activo" : ""}
+            onClick={irAVerConvocatorias}
+          >
+            Ver convocatorias
+          </button>
+          <button
+            type="button"
+            className={vista === "crear" ? "activo" : ""}
+            onClick={irAGenerarConvocatoria}
+          >
+            Generar convocatoria
+          </button>
+        </div>
+      )}
 
-      {vista === "crear" ? (
+      {vista === "postulantes" && ofertaConPostulantes ? (
+        <PanelPostulantes
+          oferta={ofertaConPostulantes}
+          onVolver={irAVerConvocatorias}
+        />
+      ) : vista === "crear" ? (
         <FormularioOferta
+          key={ofertaEnEdicion?.id ?? "nueva-oferta"}
           ofertaExistente={ofertaEnEdicion}
           onGuardada={irAVerConvocatorias}
           onCancelar={irAVerConvocatorias}
@@ -490,6 +844,7 @@ export default function DashboardEmpresa() {
             ofertas={ofertas}
             onEditar={handleEditar}
             onEliminar={handleEliminar}
+            onVerPostulantes={handleVerPostulantes}
           />
         </div>
       )}

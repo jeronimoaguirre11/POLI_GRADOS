@@ -8,7 +8,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 import { promises as fs } from 'node:fs';
-import { join } from 'node:path';
+import { basename, extname, join } from 'node:path';
 import { randomUUID } from 'node:crypto';
 import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -18,9 +18,15 @@ const TIPOS_IMAGEN_PERMITIDOS = {
     'image/webp': 'webp',
 };
 const TAMANO_MAXIMO_IMAGEN = 3 * 1024 * 1024;
+const TIPOS_HOJA_VIDA = {
+    '.pdf': 'application/pdf',
+    '.doc': 'application/msword',
+    '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+};
 let EmpresasService = class EmpresasService {
     prisma;
     directorioImagenes = join(process.cwd(), 'uploads', 'ofertas');
+    directorioHojasVida = join(process.cwd(), 'uploads', 'hojas-vida');
     constructor(prisma) {
         this.prisma = prisma;
     }
@@ -98,7 +104,109 @@ let EmpresasService = class EmpresasService {
         return this.prisma.oferta.findMany({
             where: { empresaId: empresa.id },
             orderBy: { fechaPublicacion: 'desc' },
+            include: {
+                _count: { select: { postulaciones: true } },
+            },
         });
+    }
+    async listarPostulantes(payload, ofertaId) {
+        this.asegurarRolEmpresa(payload);
+        const empresa = await this.obtenerEmpresaDelUsuario(payload.sub);
+        await this.obtenerOfertaPropia(empresa.id, ofertaId);
+        const postulaciones = await this.prisma.postulacion.findMany({
+            where: { ofertaId },
+            orderBy: { fecha: 'desc' },
+            select: {
+                id: true,
+                estado: true,
+                observacionesEmpresa: true,
+                fecha: true,
+                updatedAt: true,
+                hojaVidaUrl: true,
+                estudiante: {
+                    select: {
+                        codigo: true,
+                        programa: true,
+                        semestre: true,
+                        usuario: {
+                            select: { nombre: true, email: true },
+                        },
+                    },
+                },
+            },
+        });
+        return postulaciones.map(({ hojaVidaUrl, ...postulacion }) => ({
+            ...postulacion,
+            tieneHojaVida: Boolean(hojaVidaUrl),
+        }));
+    }
+    async actualizarPostulacion(payload, postulacionId, dto) {
+        this.asegurarRolEmpresa(payload);
+        const empresa = await this.obtenerEmpresaDelUsuario(payload.sub);
+        if (dto.estado === undefined && dto.observacionesEmpresa === undefined) {
+            throw new BadRequestException('Debes enviar un estado o una observacion');
+        }
+        const postulacion = await this.prisma.postulacion.findUnique({
+            where: { id: postulacionId },
+            select: {
+                id: true,
+                oferta: { select: { empresaId: true } },
+            },
+        });
+        if (!postulacion || postulacion.oferta.empresaId !== empresa.id) {
+            throw new NotFoundException('Postulacion no encontrada');
+        }
+        return this.prisma.postulacion.update({
+            where: { id: postulacionId },
+            data: {
+                ...(dto.estado !== undefined && { estado: dto.estado }),
+                ...(dto.observacionesEmpresa !== undefined && {
+                    observacionesEmpresa: dto.observacionesEmpresa.trim() || null,
+                }),
+            },
+            select: {
+                id: true,
+                estado: true,
+                observacionesEmpresa: true,
+                updatedAt: true,
+            },
+        });
+    }
+    async obtenerHojaVida(payload, postulacionId) {
+        this.asegurarRolEmpresa(payload);
+        const empresa = await this.obtenerEmpresaDelUsuario(payload.sub);
+        const postulacion = await this.prisma.postulacion.findUnique({
+            where: { id: postulacionId },
+            select: {
+                hojaVidaUrl: true,
+                oferta: { select: { empresaId: true } },
+                estudiante: { select: { codigo: true } },
+            },
+        });
+        if (!postulacion || postulacion.oferta.empresaId !== empresa.id) {
+            throw new NotFoundException('Postulacion no encontrada');
+        }
+        const nombreGuardado = basename(postulacion.hojaVidaUrl);
+        const extension = extname(nombreGuardado).toLowerCase();
+        const mimeType = TIPOS_HOJA_VIDA[extension];
+        if (!mimeType) {
+            throw new NotFoundException('Hoja de vida no disponible');
+        }
+        try {
+            const contenido = await fs.readFile(join(this.directorioHojasVida, nombreGuardado));
+            const codigoSeguro = postulacion.estudiante.codigo.replace(/[^a-zA-Z0-9_-]/g, '-');
+            return {
+                contenido,
+                mimeType,
+                nombreArchivo: `hoja-vida-${codigoSeguro}${extension}`,
+            };
+        }
+        catch (error) {
+            if (error?.code === 'ENOENT') {
+                throw new NotFoundException('Hoja de vida no disponible');
+            }
+            throw error;
+        }
     }
     async actualizarOferta(payload, ofertaId, dto, imagen) {
         this.asegurarRolEmpresa(payload);

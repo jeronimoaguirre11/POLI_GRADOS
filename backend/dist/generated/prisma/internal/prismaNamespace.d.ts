@@ -1130,7 +1130,9 @@ export declare const PostulacionScalarFieldEnum: {
     readonly estudianteId: "estudianteId";
     readonly hojaVidaUrl: "hojaVidaUrl";
     readonly estado: "estado";
+    readonly observacionesEmpresa: "observacionesEmpresa";
     readonly fecha: "fecha";
+    readonly updatedAt: "updatedAt";
 };
 export type PostulacionScalarFieldEnum = (typeof PostulacionScalarFieldEnum)[keyof typeof PostulacionScalarFieldEnum];
 export declare const SortOrder: {
