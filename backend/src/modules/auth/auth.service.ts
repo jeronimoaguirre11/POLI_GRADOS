@@ -2,6 +2,7 @@ import {
   BadRequestException,
   ConflictException,
   Injectable,
+  NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
@@ -9,6 +10,8 @@ import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
+import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto.js';
+import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 
 @Injectable()
 export class AuthService {
@@ -105,5 +108,56 @@ export class AuthService {
 
     const { password: _password, ...usuarioSinPassword } = usuario;
     return { usuario: usuarioSinPassword, token };
+  }
+
+  // Actualiza los datos comunes del Usuario (nombre, correo, contraseña).
+  // Los datos propios de cada rol (Empresa/Estudiante) se actualizan en sus
+  // propios modulos (PATCH /empresas/perfil, PATCH /estudiantes/perfil).
+  async actualizarPerfil(payload: JwtPayload, dto: ActualizarPerfilDto) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: payload.sub },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    const cambiaCredenciales = dto.email !== undefined || dto.password !== undefined;
+
+    if (cambiaCredenciales) {
+      if (!dto.passwordActual) {
+        throw new BadRequestException(
+          'Debes confirmar tu contraseña actual para cambiar el correo o la contraseña',
+        );
+      }
+
+      const passwordValida = await bcrypt.compare(dto.passwordActual, usuario.password);
+      if (!passwordValida) {
+        throw new UnauthorizedException('La contraseña actual no es correcta');
+      }
+    }
+
+    if (dto.email && dto.email !== usuario.email) {
+      const existente = await this.prisma.usuario.findUnique({
+        where: { email: dto.email },
+      });
+      if (existente) {
+        throw new ConflictException('Ya existe un usuario con ese correo');
+      }
+    }
+
+    const actualizado = await this.prisma.usuario.update({
+      where: { id: usuario.id },
+      data: {
+        ...(dto.nombre !== undefined && { nombre: dto.nombre }),
+        ...(dto.email !== undefined && { email: dto.email }),
+        ...(dto.password !== undefined && {
+          password: await bcrypt.hash(dto.password, 10),
+        }),
+      },
+    });
+
+    const { password, ...usuarioSinPassword } = actualizado;
+    return usuarioSinPassword;
   }
 }

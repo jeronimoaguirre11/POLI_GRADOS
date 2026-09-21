@@ -7,7 +7,7 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
-import { BadRequestException, ConflictException, Injectable, UnauthorizedException, } from '@nestjs/common';
+import { BadRequestException, ConflictException, Injectable, NotFoundException, UnauthorizedException, } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -82,6 +82,44 @@ let AuthService = class AuthService {
         const token = await this.jwtService.signAsync(payload);
         const { password: _password, ...usuarioSinPassword } = usuario;
         return { usuario: usuarioSinPassword, token };
+    }
+    async actualizarPerfil(payload, dto) {
+        const usuario = await this.prisma.usuario.findUnique({
+            where: { id: payload.sub },
+        });
+        if (!usuario) {
+            throw new NotFoundException('Usuario no encontrado');
+        }
+        const cambiaCredenciales = dto.email !== undefined || dto.password !== undefined;
+        if (cambiaCredenciales) {
+            if (!dto.passwordActual) {
+                throw new BadRequestException('Debes confirmar tu contraseña actual para cambiar el correo o la contraseña');
+            }
+            const passwordValida = await bcrypt.compare(dto.passwordActual, usuario.password);
+            if (!passwordValida) {
+                throw new UnauthorizedException('La contraseña actual no es correcta');
+            }
+        }
+        if (dto.email && dto.email !== usuario.email) {
+            const existente = await this.prisma.usuario.findUnique({
+                where: { email: dto.email },
+            });
+            if (existente) {
+                throw new ConflictException('Ya existe un usuario con ese correo');
+            }
+        }
+        const actualizado = await this.prisma.usuario.update({
+            where: { id: usuario.id },
+            data: {
+                ...(dto.nombre !== undefined && { nombre: dto.nombre }),
+                ...(dto.email !== undefined && { email: dto.email }),
+                ...(dto.password !== undefined && {
+                    password: await bcrypt.hash(dto.password, 10),
+                }),
+            },
+        });
+        const { password, ...usuarioSinPassword } = actualizado;
+        return usuarioSinPassword;
     }
 };
 AuthService = __decorate([

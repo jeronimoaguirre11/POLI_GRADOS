@@ -16,6 +16,7 @@ import { EmpresasService } from './empresas.service.js';
 import { CrearOfertaDto } from './dto/crear-oferta.dto.js';
 import { ActualizarOfertaDto } from './dto/actualizar-oferta.dto.js';
 import { ActualizarPostulacionDto } from './dto/actualizar-postulacion.dto.js';
+import { ActualizarPerfilEmpresaDto } from './dto/actualizar-perfil-empresa.dto.js';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
 let EmpresasController = class EmpresasController {
     empresasService;
@@ -24,6 +25,9 @@ let EmpresasController = class EmpresasController {
     }
     async obtenerPerfil(request) {
         return this.empresasService.obtenerPerfil(request.user);
+    }
+    async actualizarPerfil(request, dto) {
+        return this.empresasService.actualizarPerfil(request.user, dto);
     }
     async crearOferta(request, dto, imagen) {
         return this.empresasService.crearOferta(request.user, dto, imagen);
@@ -60,6 +64,14 @@ __decorate([
     __metadata("design:paramtypes", [Object]),
     __metadata("design:returntype", Promise)
 ], EmpresasController.prototype, "obtenerPerfil", null);
+__decorate([
+    Patch('perfil'),
+    __param(0, Req()),
+    __param(1, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, ActualizarPerfilEmpresaDto]),
+    __metadata("design:returntype", Promise)
+], EmpresasController.prototype, "actualizarPerfil", null);
 __decorate([
     Post('ofertas'),
     UseInterceptors(FileInterceptor('imagen')),

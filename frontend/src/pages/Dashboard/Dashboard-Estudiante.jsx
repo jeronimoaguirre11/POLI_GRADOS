@@ -75,13 +75,26 @@ import DashboardEmpresa from "./Dashboard-Empresa.jsx";
 import ConvocatoriasDisponibles from "./Convocatorias-Disponibles.jsx";
 import Investigacion from "./Investigacion.jsx";
 import Diplomado from "./Diplomado.jsx";
+import EditarPerfil from "./EditarPerfil.jsx";
 import "./Dashboard-Estudiante.css";
 
 export default function Dashboard() {
   const navigate = useNavigate();
-  const usuario = JSON.parse(localStorage.getItem("usuario"));
+  const [usuario, setUsuario] = useState(() =>
+    JSON.parse(localStorage.getItem("usuario")),
+  );
 
   const [vistaEstudiante, setVistaEstudiante] = useState("inicio");
+  const [mostrarPerfil, setMostrarPerfil] = useState(false);
+
+  // Se llama cuando EditarPerfil actualiza con exito los datos comunes de la
+  // cuenta (nombre/correo), para que el header y el resto del dashboard
+  // reflejen el cambio sin tener que volver a iniciar sesion.
+  function handlePerfilActualizado(usuarioActualizado) {
+    const usuarioCompleto = { ...usuario, ...usuarioActualizado };
+    setUsuario(usuarioCompleto);
+    localStorage.setItem("usuario", JSON.stringify(usuarioCompleto));
+  }
 
   function handleLogout() {
     localStorage.removeItem("token");
@@ -114,6 +127,14 @@ export default function Dashboard() {
 
           <button
             type="button"
+            onClick={() => setMostrarPerfil(true)}
+            className="btn-editar-perfil"
+          >
+            Editar perfil
+          </button>
+
+          <button
+            type="button"
             onClick={handleLogout}
             className="btn-logout"
           >
@@ -123,6 +144,14 @@ export default function Dashboard() {
       </header>
 
       <main className="dashboard-main">
+        {mostrarPerfil ? (
+          <EditarPerfil
+            usuario={usuario}
+            onVolver={() => setMostrarPerfil(false)}
+            onActualizado={handlePerfilActualizado}
+          />
+        ) : (
+          <>
         {usuario?.rol === "ESTUDIANTE" &&
           (vistaEstudiante === "investigacion" ? (
             <Investigacion
@@ -280,6 +309,8 @@ export default function Dashboard() {
               construir.
             </p>
           )}
+          </>
+        )}
       </main>
     </div>
   );

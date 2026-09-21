@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { CrearOfertaDto } from './dto/crear-oferta.dto.js';
 import { ActualizarOfertaDto } from './dto/actualizar-oferta.dto.js';
 import { ActualizarPostulacionDto } from './dto/actualizar-postulacion.dto.js';
+import { ActualizarPerfilEmpresaDto } from './dto/actualizar-perfil-empresa.dto.js';
 import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 
 const TIPOS_IMAGEN_PERMITIDOS: Record<string, string> = {
@@ -113,6 +114,20 @@ export class EmpresasService {
       nit: empresa.nit,
       sector: empresa.sector,
     };
+  }
+
+  // El NIT no se puede editar aqui: es un identificador legal de la empresa.
+  async actualizarPerfil(payload: JwtPayload, dto: ActualizarPerfilEmpresaDto) {
+    this.asegurarRolEmpresa(payload);
+    const empresa = await this.obtenerEmpresaDelUsuario(payload.sub);
+
+    return this.prisma.empresa.update({
+      where: { id: empresa.id },
+      data: {
+        ...(dto.nombreEmpresa !== undefined && { nombreEmpresa: dto.nombreEmpresa }),
+        ...(dto.sector !== undefined && { sector: dto.sector }),
+      },
+    });
   }
 
   async crearOferta(payload: JwtPayload, dto: CrearOfertaDto, imagen?: any) {

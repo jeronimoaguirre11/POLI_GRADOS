@@ -32,6 +32,15 @@ export async function obtenerPerfilEmpresa() {
   return manejarRespuesta(res);
 }
 
+export async function actualizarPerfilEmpresa(datos) {
+  const res = await fetch(`${API_URL}/empresas/perfil`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json', ...tokenHeader() },
+    body: JSON.stringify(datos),
+  })
+  return manejarRespuesta(res)
+}
+
 // Se envia como multipart/form-data porque "imagen" (opcional) es un archivo.
 // No se fija 'Content-Type' a mano: el navegador arma el boundary correcto.
 export async function crearOferta(datos) {

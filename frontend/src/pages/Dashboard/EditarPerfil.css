@@ -1,0 +1,173 @@
+.editar-perfil {
+  --ep-navy-900: #0f172a;
+  --ep-navy-700: #1e293b;
+  --ep-navy-500: #475569;
+  --ep-navy-300: #94a3b8;
+  --ep-border: #e2e8f0;
+  --ep-surface: #ffffff;
+  --ep-surface-muted: #f8fafc;
+  --ep-accent: #0d5904;
+  --ep-accent-dark: #0a4703;
+  --ep-accent-soft: #e6f4e6;
+  --ep-danger: #b3435c;
+  --ep-danger-soft: #fbe9ed;
+  --ep-radius: 14px;
+  --ep-radius-sm: 9px;
+  --ep-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.12);
+
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, system-ui, sans-serif;
+  color: var(--ep-navy-700);
+  max-width: 560px;
+  margin: 0 auto;
+}
+
+.editar-perfil-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.editar-perfil-header h2 {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--ep-navy-900);
+  letter-spacing: -0.01em;
+}
+
+.editar-perfil-header .volver {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid var(--ep-border);
+  border-radius: 999px;
+  background: var(--ep-surface);
+  cursor: pointer;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ep-navy-700);
+}
+
+.editar-perfil-header .volver:hover {
+  background: var(--ep-surface-muted);
+  border-color: var(--ep-navy-300);
+}
+
+.editar-perfil-estado {
+  text-align: center;
+  color: var(--ep-navy-500);
+  font-size: 0.9rem;
+  padding: 2.5rem 1.5rem;
+  border: 1px dashed var(--ep-border);
+  border-radius: var(--ep-radius);
+  background: var(--ep-surface-muted);
+}
+
+.perfil-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  background: var(--ep-surface);
+  border: 1px solid var(--ep-border);
+  border-radius: var(--ep-radius);
+  box-shadow: var(--ep-shadow);
+  padding: 2rem;
+}
+
+.perfil-form h3 {
+  margin: 0.6rem 0 0;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--ep-navy-900);
+  padding-top: 0.6rem;
+  border-top: 1px solid var(--ep-border);
+}
+
+.perfil-form h3:first-of-type {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.perfil-form label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--ep-navy-500);
+}
+
+.perfil-form input,
+.perfil-form select {
+  font: inherit;
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid var(--ep-border);
+  border-radius: var(--ep-radius-sm);
+  background: var(--ep-surface);
+  color: var(--ep-navy-900);
+  margin-top: 0.35rem;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.perfil-form input:focus,
+.perfil-form select:focus {
+  outline: none;
+  border-color: var(--ep-accent);
+  box-shadow: 0 0 0 3px var(--ep-accent-soft);
+}
+
+.perfil-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+.perfil-form button[type="submit"] {
+  margin-top: 0.4rem;
+  padding: 0.75rem;
+  background-color: var(--ep-accent);
+  color: white;
+  border: none;
+  border-radius: var(--ep-radius-sm);
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 0.92rem;
+  transition: background-color 0.15s ease, transform 0.1s ease;
+}
+
+.perfil-form button[type="submit"]:hover:not(:disabled) {
+  background-color: var(--ep-accent-dark);
+}
+
+.perfil-form button[type="submit"]:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.perfil-error {
+  color: var(--ep-danger);
+  background: var(--ep-danger-soft);
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--ep-radius-sm);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+.perfil-exito {
+  color: var(--ep-accent-dark);
+  background: var(--ep-accent-soft);
+  padding: 0.6rem 0.8rem;
+  border-radius: var(--ep-radius-sm);
+  font-size: 0.85rem;
+  margin: 0;
+}
+
+@media (max-width: 640px) {
+  .perfil-form {
+    padding: 1.4rem;
+  }
+
+  .perfil-form-grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -169,6 +169,28 @@
   border-color: #9ca3af;
 }
 
+.btn-editar-perfil {
+  padding: 0.55rem 1rem;
+
+  border: 1px solid #cfe8cd;
+  border-radius: 8px;
+
+  background-color: #e6f4e6;
+  color: #0a4703;
+
+  font-size: 0.82rem;
+  font-weight: 600;
+
+  transition:
+    background-color 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.btn-editar-perfil:hover {
+  background-color: #d5ecd3;
+  border-color: #0d5904;
+}
+
 .dashboard-main {
   max-width: 1180px;
   margin: 0 auto;

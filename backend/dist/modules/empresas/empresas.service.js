@@ -77,6 +77,17 @@ let EmpresasService = class EmpresasService {
             sector: empresa.sector,
         };
     }
+    async actualizarPerfil(payload, dto) {
+        this.asegurarRolEmpresa(payload);
+        const empresa = await this.obtenerEmpresaDelUsuario(payload.sub);
+        return this.prisma.empresa.update({
+            where: { id: empresa.id },
+            data: {
+                ...(dto.nombreEmpresa !== undefined && { nombreEmpresa: dto.nombreEmpresa }),
+                ...(dto.sector !== undefined && { sector: dto.sector }),
+            },
+        });
+    }
     async crearOferta(payload, dto, imagen) {
         this.asegurarRolEmpresa(payload);
         const empresa = await this.obtenerEmpresaDelUsuario(payload.sub);

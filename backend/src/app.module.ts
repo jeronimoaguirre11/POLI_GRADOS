@@ -4,6 +4,7 @@ import { AppService } from './app.service.js';
 import { PrismaModule } from './modules/prisma/prisma.module.js';
 import { AuthModule } from './modules/auth/auth.module.js';
 import { EmpresasModule } from './modules/empresas/empresas.module.js';
+import { EstudiantesModule } from './modules/estudiantes/estudiantes.module.js';
 import { OfertasModule } from './modules/ofertas/ofertas.module.js';
 import { PostulacionesModule } from './modules/postulaciones/postulaciones.module.js';
 
@@ -12,6 +13,7 @@ import { PostulacionesModule } from './modules/postulaciones/postulaciones.modul
     PrismaModule,
     AuthModule,
     EmpresasModule,
+    EstudiantesModule,
     OfertasModule,
     PostulacionesModule,
   ],

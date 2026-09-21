@@ -19,6 +19,7 @@ import { EmpresasService } from './empresas.service.js';
 import { CrearOfertaDto } from './dto/crear-oferta.dto.js';
 import { ActualizarOfertaDto } from './dto/actualizar-oferta.dto.js';
 import { ActualizarPostulacionDto } from './dto/actualizar-postulacion.dto.js';
+import { ActualizarPerfilEmpresaDto } from './dto/actualizar-perfil-empresa.dto.js';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
 
 @Controller('empresas')
@@ -29,6 +30,14 @@ export class EmpresasController {
   @Get('perfil')
   async obtenerPerfil(@Req() request: any) {
     return this.empresasService.obtenerPerfil(request.user);
+  }
+
+  @Patch('perfil')
+  async actualizarPerfil(
+    @Req() request: any,
+    @Body() dto: ActualizarPerfilEmpresaDto,
+  ) {
+    return this.empresasService.actualizarPerfil(request.user, dto);
   }
 
   @Post('ofertas')

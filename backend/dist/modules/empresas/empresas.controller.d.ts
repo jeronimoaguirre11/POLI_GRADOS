@@ -4,6 +4,7 @@ import { EmpresasService } from './empresas.service.js';
 import { CrearOfertaDto } from './dto/crear-oferta.dto.js';
 import { ActualizarOfertaDto } from './dto/actualizar-oferta.dto.js';
 import { ActualizarPostulacionDto } from './dto/actualizar-postulacion.dto.js';
+import { ActualizarPerfilEmpresaDto } from './dto/actualizar-perfil-empresa.dto.js';
 export declare class EmpresasController {
     private readonly empresasService;
     constructor(empresasService: EmpresasService);
@@ -12,8 +13,17 @@ export declare class EmpresasController {
         nit: string;
         sector: string;
     }>;
+    actualizarPerfil(request: any, dto: ActualizarPerfilEmpresaDto): Promise<{
+        id: string;
+        usuarioId: string;
+        nombreEmpresa: string;
+        nit: string;
+        sector: string;
+    }>;
     crearOferta(request: any, dto: CrearOfertaDto, imagen?: any): Promise<{
         id: string;
+        estado: string;
+        empresaId: string;
         titulo: string;
         descripcion: string;
         perfilBuscado: import("../../generated/prisma/enums.js").PerfilBuscado;
@@ -24,8 +34,6 @@ export declare class EmpresasController {
         fechaFinConvocatoria: Date;
         fechaInicioPractica: Date;
         duracionMeses: number;
-        estado: string;
-        empresaId: string;
         imagenUrl: string | null;
         fechaPublicacion: Date;
     }>;
@@ -35,6 +43,8 @@ export declare class EmpresasController {
         };
     } & {
         id: string;
+        estado: string;
+        empresaId: string;
         titulo: string;
         descripcion: string;
         perfilBuscado: import("../../generated/prisma/enums.js").PerfilBuscado;
@@ -45,27 +55,25 @@ export declare class EmpresasController {
         fechaFinConvocatoria: Date;
         fechaInicioPractica: Date;
         duracionMeses: number;
-        estado: string;
-        empresaId: string;
         imagenUrl: string | null;
         fechaPublicacion: Date;
     })[]>;
     listarPostulantes(request: any, ofertaId: string): Promise<{
         tieneHojaVida: boolean;
-        estudiante: {
-            usuario: {
-                email: string;
-                nombre: string;
-            };
-            codigo: string;
-            programa: string;
-            semestre: number | null;
-        };
         id: string;
         estado: string;
         observacionesEmpresa: string | null;
         fecha: Date;
         updatedAt: Date;
+        estudiante: {
+            codigo: string;
+            programa: string;
+            semestre: number | null;
+            usuario: {
+                email: string;
+                nombre: string;
+            };
+        };
     }[]>;
     actualizarPostulacion(request: any, postulacionId: string, dto: ActualizarPostulacionDto): Promise<{
         id: string;
@@ -76,6 +84,8 @@ export declare class EmpresasController {
     descargarHojaVida(request: any, postulacionId: string, response: Response): Promise<StreamableFile>;
     actualizarOferta(request: any, id: string, dto: ActualizarOfertaDto, imagen?: any): Promise<{
         id: string;
+        estado: string;
+        empresaId: string;
         titulo: string;
         descripcion: string;
         perfilBuscado: import("../../generated/prisma/enums.js").PerfilBuscado;
@@ -86,8 +96,6 @@ export declare class EmpresasController {
         fechaFinConvocatoria: Date;
         fechaInicioPractica: Date;
         duracionMeses: number;
-        estado: string;
-        empresaId: string;
         imagenUrl: string | null;
         fechaPublicacion: Date;
     }>;

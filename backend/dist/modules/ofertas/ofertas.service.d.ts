@@ -9,6 +9,8 @@ export declare class OfertasService {
         };
     } & {
         id: string;
+        estado: string;
+        empresaId: string;
         titulo: string;
         descripcion: string;
         perfilBuscado: import("../../generated/prisma/enums.js").PerfilBuscado;
@@ -19,8 +21,6 @@ export declare class OfertasService {
         fechaFinConvocatoria: Date;
         fechaInicioPractica: Date;
         duracionMeses: number;
-        estado: string;
-        empresaId: string;
         imagenUrl: string | null;
         fechaPublicacion: Date;
     })[]>;

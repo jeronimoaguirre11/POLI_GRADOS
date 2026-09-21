@@ -9,17 +9,18 @@ export declare class PostulacionesService {
     private guardarHojaVida;
     postularse(payload: JwtPayload, ofertaId: string, hojaVida: any): Promise<{
         id: string;
-        hojaVidaUrl: string;
+        estudianteId: string;
         estado: string;
+        ofertaId: string;
+        hojaVidaUrl: string;
         observacionesEmpresa: string | null;
         fecha: Date;
         updatedAt: Date;
-        ofertaId: string;
-        estudianteId: string;
     }>;
     listarMias(payload: JwtPayload): Promise<{
         id: string;
         estado: string;
+        ofertaId: string;
         fecha: Date;
         updatedAt: Date;
         oferta: {
@@ -32,7 +33,6 @@ export declare class PostulacionesService {
                 sector: string;
             };
         };
-        ofertaId: string;
     }[]>;
     cancelarPostulacion(payload: JwtPayload, postulacionId: string): Promise<{
         eliminado: boolean;

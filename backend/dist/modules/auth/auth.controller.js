@@ -10,10 +10,12 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 var __param = (this && this.__param) || function (paramIndex, decorator) {
     return function (target, key) { decorator(target, key, paramIndex); }
 };
-import { Controller, Post, Body } from '@nestjs/common';
+import { Body, Controller, Patch, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
+import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto.js';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
 let AuthController = class AuthController {
     authService;
     constructor(authService) {
@@ -24,6 +26,9 @@ let AuthController = class AuthController {
     }
     async login(dto) {
         return this.authService.login(dto);
+    }
+    async actualizarPerfil(request, dto) {
+        return this.authService.actualizarPerfil(request.user, dto);
     }
 };
 __decorate([
@@ -40,6 +45,15 @@ __decorate([
     __metadata("design:paramtypes", [LoginDto]),
     __metadata("design:returntype", Promise)
 ], AuthController.prototype, "login", null);
+__decorate([
+    Patch('perfil'),
+    UseGuards(JwtAuthGuard),
+    __param(0, Req()),
+    __param(1, Body()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, ActualizarPerfilDto]),
+    __metadata("design:returntype", Promise)
+], AuthController.prototype, "actualizarPerfil", null);
 AuthController = __decorate([
     Controller('auth'),
     __metadata("design:paramtypes", [AuthService])
