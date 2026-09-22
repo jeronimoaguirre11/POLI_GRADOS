@@ -11,6 +11,11 @@ services:
       - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      # Solo corre la primera vez que se crea el volumen (clon nuevo del
+      # proyecto). Si el volumen ya existe (como en tu maquina), las bases
+      # de datos nuevas se crean a mano una vez con `docker exec` (ver
+      # db-init/README.md).
+      - ./db-init:/docker-entrypoint-initdb.d
 
 volumes:
   postgres_data:

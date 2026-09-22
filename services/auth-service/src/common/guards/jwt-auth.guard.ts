@@ -1,0 +1,39 @@
+import {
+  CanActivate,
+  ExecutionContext,
+  Injectable,
+  UnauthorizedException,
+} from '@nestjs/common';
+import { JwtService } from '@nestjs/jwt';
+
+export interface JwtPayload {
+  sub: string;
+  email: string;
+  rol: 'ESTUDIANTE' | 'EMPRESA' | 'COORDINADOR' | 'DOCENTE';
+}
+
+// Igual al guard del backend monolitico original: cada microservicio lo
+// duplica y registra su propio JwtModule con el mismo JWT_SECRET, asi que
+// todos validan exactamente los mismos tokens que emite auth-service.
+@Injectable()
+export class JwtAuthGuard implements CanActivate {
+  constructor(private readonly jwtService: JwtService) {}
+
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const request = context.switchToHttp().getRequest();
+    const authHeader: string | undefined = request.headers?.authorization;
+
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      throw new UnauthorizedException('Token no proporcionado');
+    }
+
+    const token = authHeader.slice('Bearer '.length);
+
+    try {
+      request.user = await this.jwtService.verifyAsync<JwtPayload>(token);
+      return true;
+    } catch {
+      throw new UnauthorizedException('Token invalido o expirado');
+    }
+  }
+}

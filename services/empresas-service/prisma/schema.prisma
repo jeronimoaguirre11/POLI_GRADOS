@@ -1,0 +1,54 @@
+// Microservicio Empresas: dueño de Empresa y Oferta (siguen en la misma
+// base de datos entre si, asi que su relacion normal de Prisma se conserva).
+// Ya NO tiene Postulacion (vive en postulaciones-service) ni Usuario (vive
+// en auth-service) ni Practica (modelo sin modulo implementado todavia).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum PerfilBuscado {
+  TECNOLOGIA_AGROPECUARIA
+  ADMINISTRACION_EMPRESAS_AGROPECUARIAS
+  INGENIERO_AGROPECUARIO
+}
+
+enum ModalidadContratacion {
+  CONTRATO_SENA
+  CONVENIO
+  VOLUNTARIA
+}
+
+model Empresa {
+  id            String  @id @default(uuid())
+  usuarioId     String  @unique
+  nombreEmpresa String
+  nit           String  @unique
+  sector        String
+
+  ofertas Oferta[]
+}
+
+model Oferta {
+  id                      String                @id @default(uuid())
+  empresaId               String
+  empresa                 Empresa               @relation(fields: [empresaId], references: [id])
+  titulo                  String
+  descripcion             String
+  perfilBuscado           PerfilBuscado
+  modalidadContratacion   ModalidadContratacion
+  ubicacion               String
+  funciones               String
+  fechaInicioConvocatoria DateTime
+  fechaFinConvocatoria    DateTime
+  fechaInicioPractica     DateTime
+  duracionMeses           Int
+  imagenUrl               String?
+  estado                  String                @default("ABIERTA")
+  fechaPublicacion        DateTime              @default(now())
+}

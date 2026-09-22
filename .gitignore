@@ -1,0 +1,7 @@
+# Carpeta de salidas temporales generadas por Claude durante las sesiones de
+# migración: puede contener archivos con secretos (.env), nunca se versiona.
+Claude outputs/
+
+# Basura comun de SO/editor.
+.DS_Store
+Thumbs.db

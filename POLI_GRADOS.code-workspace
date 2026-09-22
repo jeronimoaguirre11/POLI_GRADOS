@@ -1,0 +1,37 @@
+{
+  "folders": [
+    { "name": "🗂️ Proyecto (raíz)", "path": "." },
+    { "name": "🚪 Gateway", "path": "gateway" },
+    { "name": "🔐 Auth service", "path": "services/auth-service" },
+    { "name": "🏢 Empresas service", "path": "services/empresas-service" },
+    { "name": "🎓 Estudiantes service", "path": "services/estudiantes-service" },
+    { "name": "📄 Postulaciones service", "path": "services/postulaciones-service" },
+    { "name": "💻 Frontend Auth", "path": "frontends/frontend-auth" },
+    { "name": "💻 Frontend Empresas", "path": "frontends/frontend-empresas" },
+    { "name": "💻 Frontend Estudiantes", "path": "frontends/frontend-estudiantes" },
+    { "name": "💻 Frontend Postulaciones", "path": "frontends/frontend-postulaciones" }
+  ],
+  "settings": {
+    "files.eol": "\n",
+    "editor.formatOnSave": true,
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+    "[javascript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+    "[javascriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+    "typescript.tsdk": "gateway/node_modules/typescript/lib",
+    "search.exclude": {
+      "**/node_modules": true,
+      "**/dist": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "Prisma.prisma",
+      "dbaeumer.vscode-eslint",
+      "esbenp.prettier-vscode",
+      "eamodio.gitlens",
+      "humao.rest-client",
+      "mikestead.dotenv"
+    ]
+  }
+}

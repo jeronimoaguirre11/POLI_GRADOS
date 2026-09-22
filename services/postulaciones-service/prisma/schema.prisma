@@ -1,0 +1,28 @@
+// Microservicio Postulaciones: dueño de Postulacion (y de los archivos de
+// hoja de vida en disco). Ya NO tiene Oferta (vive en empresas-service) ni
+// Estudiante (vive en estudiantes-service), asi que no hay relaciones de
+// Prisma hacia ellos: ofertaId y estudianteId son solo strings que se
+// resuelven llamando a esos servicios por HTTP.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Postulacion {
+  id                   String   @id @default(uuid())
+  ofertaId             String
+  estudianteId         String
+  hojaVidaUrl          String
+  estado               String   @default("PENDIENTE")
+  observacionesEmpresa String?
+  fecha                DateTime @default(now())
+  updatedAt            DateTime @default(now()) @updatedAt
+
+  // Un estudiante no puede postularse dos veces a la misma convocatoria.
+  @@unique([ofertaId, estudianteId])
+}

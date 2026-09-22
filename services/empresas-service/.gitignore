@@ -1,0 +1,8 @@
+node_modules
+dist
+.env
+
+/src/generated/prisma
+
+# Fotos subidas por las empresas al publicar convocatorias
+/uploads
