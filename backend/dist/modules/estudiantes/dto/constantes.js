@@ -1,6 +1,0 @@
-export const PROGRAMAS = [
-    'TECNOLOGIA_AGROPECUARIA',
-    'ADMINISTRACION_EMPRESAS_AGROPECUARIAS',
-    'INGENIERO_AGROPECUARIO',
-];
-//# sourceMappingURL=constantes.js.map

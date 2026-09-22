@@ -1,0 +1,20 @@
+// Microservicio Estudiantes: solo es dueño de Estudiante. Sin relaciones:
+// Usuario vive en auth-service y Postulacion en postulaciones-service, cada
+// uno en su propia base de datos.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Estudiante {
+  id        String  @id @default(uuid())
+  usuarioId String  @unique
+  codigo    String  @unique
+  programa  String
+  semestre  Int?
+}

@@ -1,0 +1,29 @@
+// Microservicio Auth: solo es dueño de Usuario. Empresa/Estudiante viven en
+// sus propias bases de datos (empresas-service / estudiantes-service), asi
+// que aqui ya no hay relaciones hacia ellos (no se puede hacer un join de
+// Prisma entre bases de datos distintas).
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Rol {
+  ESTUDIANTE
+  EMPRESA
+  COORDINADOR
+  DOCENTE
+}
+
+model Usuario {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  nombre    String
+  rol       Rol
+  createdAt DateTime @default(now())
+}
