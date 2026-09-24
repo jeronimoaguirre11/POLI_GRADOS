@@ -12,6 +12,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto.js';
+import { CrearCoordinadorDto } from './dto/crear-coordinador.dto.js';
 import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 
 @Injectable()
@@ -96,16 +97,14 @@ export class AuthService {
       await this.prisma.usuario.delete({ where: { id: usuario.id } });
 
       if (error?.response?.status === 409) {
-        throw new ConflictException(
-          'Ya existe un perfil con ese codigo o NIT',
-        );
+        throw new ConflictException('Ya existe un perfil con ese codigo o NIT');
       }
       throw new BadRequestException(
         'No se pudo crear el perfil del usuario, intenta de nuevo',
       );
     }
 
-    const { password, ...usuarioSinPassword } = usuario;
+    const { password: _, ...usuarioSinPassword } = usuario;
     return usuarioSinPassword;
   }
 
@@ -129,6 +128,40 @@ export class AuthService {
 
     const { password: _, ...usuarioSinPassword } = usuario;
     return { usuario: usuarioSinPassword, token };
+  }
+
+  // Los coordinadores no se pueden crear desde /auth/register. Este metodo
+  // solo se expone por la ruta interna protegida con x-internal-key y fija el
+  // rol en servidor, por lo que el cliente no puede elevar sus privilegios.
+  async crearCoordinador(dto: CrearCoordinadorDto) {
+    const existente = await this.prisma.usuario.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (existente) {
+      throw new ConflictException('Ya existe un usuario con ese email');
+    }
+
+    try {
+      const usuario = await this.prisma.usuario.create({
+        data: {
+          nombre: dto.nombre,
+          email: dto.email,
+          password: await bcrypt.hash(dto.password, 10),
+          rol: 'COORDINADOR',
+        },
+      });
+
+      const { password: _, ...usuarioSinPassword } = usuario;
+      return usuarioSinPassword;
+    } catch (error: any) {
+      // La verificacion anterior mejora el mensaje habitual, y capturar P2002
+      // tambien cubre dos solicitudes concurrentes con el mismo correo.
+      if (error?.code === 'P2002') {
+        throw new ConflictException('Ya existe un usuario con ese email');
+      }
+      throw error;
+    }
   }
 
   async actualizarPerfil(payload: JwtPayload, dto: ActualizarPerfilDto) {
@@ -179,7 +212,7 @@ export class AuthService {
       },
     });
 
-    const { password, ...usuarioSinPassword } = actualizado;
+    const { password: _, ...usuarioSinPassword } = actualizado;
     return usuarioSinPassword;
   }
 }

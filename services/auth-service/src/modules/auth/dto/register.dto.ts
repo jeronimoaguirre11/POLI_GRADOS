@@ -11,13 +11,10 @@ import {
   MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
+import { PASSWORD_MENSAJE, PASSWORD_REGEX } from './password.validation.js';
 
-// Al menos una mayuscula y un numero. Se repite igual en
-// ActualizarPerfilDto y en el formulario de registro/editar-perfil del
-// frontend, para que la regla sea la misma en todos lados.
-const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d).+$/;
-const PASSWORD_MENSAJE =
-  'La contraseña debe tener al menos una letra mayúscula y un número';
+// Regla compartida con ActualizarPerfilDto y CrearCoordinadorDto para que
+// todas las contraseñas creadas por el backend tengan la misma fortaleza.
 
 export class RegisterDto {
   @IsEmail()
@@ -35,8 +32,10 @@ export class RegisterDto {
   @MaxLength(50)
   nombre: string;
 
-  @IsIn(['ESTUDIANTE', 'EMPRESA', 'COORDINADOR', 'DOCENTE'])
-  rol: 'ESTUDIANTE' | 'EMPRESA' | 'COORDINADOR' | 'DOCENTE';
+  // El registro publico solo crea los dos tipos de cuenta de autoservicio.
+  // Coordinadores y docentes requieren un canal administrativo interno.
+  @IsIn(['ESTUDIANTE', 'EMPRESA'])
+  rol: 'ESTUDIANTE' | 'EMPRESA';
 
   // Requeridos solo cuando rol === 'EMPRESA': se envian a empresas-service
   // para crear el perfil de Empresa asociado (ver AuthService.register).

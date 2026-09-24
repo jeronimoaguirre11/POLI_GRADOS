@@ -328,22 +328,6 @@
   color: var(--cd-navy-900);
 }
 
-.postulacion-observacion {
-  margin: 0.6rem 0 0;
-  max-width: 42ch;
-  padding: 0.55rem 0.7rem;
-  background: var(--cd-surface-muted);
-  border: 1px dashed var(--cd-border);
-  border-radius: var(--cd-radius-sm);
-  font-size: 0.8rem;
-  line-height: 1.45;
-  color: var(--cd-navy-700);
-}
-
-.postulacion-observacion strong {
-  color: var(--cd-navy-900);
-}
-
 .postulacion-estado {
   font-size: 0.66rem;
   font-weight: 700;

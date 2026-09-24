@@ -46,7 +46,10 @@ export class EstudiantesService {
     };
   }
 
-  async actualizarPerfil(payload: JwtPayload, dto: ActualizarPerfilEstudianteDto) {
+  async actualizarPerfil(
+    payload: JwtPayload,
+    dto: ActualizarPerfilEstudianteDto,
+  ) {
     this.asegurarRolEstudiante(payload);
     const estudiante = await this.obtenerEstudianteDelUsuario(payload.sub);
 
@@ -75,6 +78,20 @@ export class EstudiantesService {
         programa: dto.programa,
         semestre: dto.semestre ?? null,
       },
+    });
+  }
+
+  // --- Llamado solo por coordinadores-service (ruta interna) ---
+  async listarTodos() {
+    return this.prisma.estudiante.findMany({
+      select: {
+        id: true,
+        usuarioId: true,
+        codigo: true,
+        programa: true,
+        semestre: true,
+      },
+      orderBy: { codigo: 'asc' },
     });
   }
 

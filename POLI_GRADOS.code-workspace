@@ -6,10 +6,12 @@
     { "name": "🏢 Empresas service", "path": "services/empresas-service" },
     { "name": "🎓 Estudiantes service", "path": "services/estudiantes-service" },
     { "name": "📄 Postulaciones service", "path": "services/postulaciones-service" },
+    { "name": "🧭 Coordinadores service", "path": "services/coordinadores-service" },
     { "name": "💻 Frontend Auth", "path": "frontends/frontend-auth" },
     { "name": "💻 Frontend Empresas", "path": "frontends/frontend-empresas" },
     { "name": "💻 Frontend Estudiantes", "path": "frontends/frontend-estudiantes" },
-    { "name": "💻 Frontend Postulaciones", "path": "frontends/frontend-postulaciones" }
+    { "name": "💻 Frontend Postulaciones", "path": "frontends/frontend-postulaciones" },
+    { "name": "💻 Frontend Coordinadores", "path": "frontends/frontend-coordinadores" }
   ],
   "settings": {
     "files.eol": "\n",
