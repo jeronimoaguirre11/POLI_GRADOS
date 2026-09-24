@@ -31,6 +31,11 @@ export class InternalController {
     return this.postulacionesService.obtenerConteoPorOfertas(ids);
   }
 
+  @Get('postulaciones')
+  async listarParaCoordinador() {
+    return this.postulacionesService.listarParaCoordinador();
+  }
+
   @Get('por-oferta/:ofertaId')
   async porOferta(@Param('ofertaId') ofertaId: string) {
     return this.postulacionesService.obtenerPorOferta(ofertaId);

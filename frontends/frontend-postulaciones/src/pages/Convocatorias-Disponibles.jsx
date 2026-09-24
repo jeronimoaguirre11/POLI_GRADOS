@@ -194,13 +194,6 @@ function ListaMisPostulaciones({ postulaciones, onCancelar, cancelandoId }) {
             <p className="convocatoria-card-descripcion">
               Postulado el {postulacion.fecha?.slice(0, 10)}
             </p>
-
-            {postulacion.observacionesEmpresa && (
-              <p className="postulacion-observacion">
-                <strong>Comentario de la empresa:</strong>{" "}
-                {postulacion.observacionesEmpresa}
-              </p>
-            )}
           </div>
 
           <div className="postulacion-card-acciones">

@@ -27,6 +27,13 @@ export class InternalController {
     return this.estudiantesService.crearPerfil(dto);
   }
 
+  // Inventario seguro que usa coordinadores-service para construir su panel.
+  // Solo contiene datos academicos; nombre y correo se resuelven en auth.
+  @Get()
+  async listarTodos() {
+    return this.estudiantesService.listarTodos();
+  }
+
   @Get('lote')
   async obtenerPorLote(@Query('ids') ids: string) {
     const listaIds = (ids ?? '').split(',').filter(Boolean);
@@ -36,7 +43,8 @@ export class InternalController {
   // --- Llamado solo por postulaciones-service (postularse) ---
   @Get('por-usuario/:usuarioId')
   async obtenerPorUsuario(@Param('usuarioId') usuarioId: string) {
-    const estudiante = await this.estudiantesService.obtenerPorUsuario(usuarioId);
+    const estudiante =
+      await this.estudiantesService.obtenerPorUsuario(usuarioId);
     if (!estudiante) {
       throw new NotFoundException(
         'Este usuario no tiene un perfil de estudiante asociado',
