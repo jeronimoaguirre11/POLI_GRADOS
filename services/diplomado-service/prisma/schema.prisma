@@ -1,0 +1,48 @@
+// services/diplomado-service/prisma/schema.prisma
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EstadoDiplomado {
+  ACTIVO
+  INACTIVO
+}
+
+enum EstadoInscripcion {
+  INSCRITO
+  CANCELADO
+}
+
+model Diplomado {
+  id                String            @id @default(uuid())
+  nombre            String
+  descripcion       String
+  duracionHoras     Int
+  fechaInicio       DateTime
+  cuposTotales      Int
+  cuposDisponibles  Int
+  estado            EstadoDiplomado   @default(ACTIVO)
+  creadoPorId       String            // id del coordinador (viene del JWT, no hay FK real entre servicios)
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  inscripciones     Inscripcion[]
+}
+
+model Inscripcion {
+  id              String             @id @default(uuid())
+  diplomadoId     String
+  estudianteId    String             // id del estudiante (viene del JWT / estudiantes-service)
+  estado          EstadoInscripcion  @default(INSCRITO)
+  fechaInscripcion DateTime          @default(now())
+
+  diplomado       Diplomado          @relation(fields: [diplomadoId], references: [id])
+
+  @@unique([diplomadoId, estudianteId]) // un estudiante no puede inscribirse dos veces al mismo diplomado
+}
