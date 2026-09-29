@@ -4,7 +4,9 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
+import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CrearDiplomadoDto } from './dto/crear-diplomado.dto.js';
 import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
@@ -63,6 +65,26 @@ export class DiplomadoService {
   async inscribirse(payload: JwtPayload, diplomadoId: string) {
     this.asegurarRolEstudiante(payload);
 
+    const inscripcionActivaExistente = await this.prisma.inscripcion.findFirst({
+      where: {
+        estudianteId: payload.sub,
+        estado: 'INSCRITO',
+        diplomadoId: { not: diplomadoId },
+      },
+    });
+
+    if (inscripcionActivaExistente) {
+      throw new ConflictException(
+        'Ya estas inscrito en otro diplomado este semestre. Cancela esa inscripcion antes de elegir uno nuevo.',
+      );
+    }
+
+    if (await this.estaComprometidoEnPracticas(payload.sub)) {
+      throw new ConflictException(
+        'Ya fuiste seleccionado en Practicas Profesionales este semestre, por lo que no puedes inscribirte a un diplomado.',
+      );
+    }
+
     return this.prisma.$transaction(async (tx) => {
       const actualizado = await tx.diplomado.updateMany({
         where: {
@@ -74,10 +96,10 @@ export class DiplomadoService {
       });
 
       if (actualizado.count === 0) {
-        const existe = await tx.diplomado.findUnique({
+        const existeDiplomado = await tx.diplomado.findUnique({
           where: { id: diplomadoId },
         });
-        if (!existe) {
+        if (!existeDiplomado) {
           throw new NotFoundException('Diplomado no encontrado');
         }
         throw new ConflictException(
@@ -85,16 +107,26 @@ export class DiplomadoService {
         );
       }
 
-      try {
-        return await tx.inscripcion.create({
-          data: { diplomadoId, estudianteId: payload.sub },
-        });
-      } catch (error: any) {
-        if (error?.code === 'P2002') {
+      const inscripcionExistente = await tx.inscripcion.findUnique({
+        where: {
+          diplomadoId_estudianteId: { diplomadoId, estudianteId: payload.sub },
+        },
+      });
+
+      if (inscripcionExistente) {
+        if (inscripcionExistente.estado === 'INSCRITO') {
           throw new ConflictException('Ya estas inscrito en este diplomado');
         }
-        throw error;
+        // Estaba cancelada: reactivamos la misma fila en vez de crear otra.
+        return tx.inscripcion.update({
+          where: { id: inscripcionExistente.id },
+          data: { estado: 'INSCRITO', fechaInscripcion: new Date() },
+        });
       }
+
+      return tx.inscripcion.create({
+        data: { diplomadoId, estudianteId: payload.sub },
+      });
     });
   }
 
@@ -129,5 +161,50 @@ export class DiplomadoService {
 
       return { cancelado: true };
     });
+  }
+
+  async obtenerMisInscripciones(payload: JwtPayload) {
+    this.asegurarRolEstudiante(payload);
+
+    const inscripciones = await this.prisma.inscripcion.findMany({
+      where: { estudianteId: payload.sub, estado: 'INSCRITO' },
+      include: { diplomado: true },
+      orderBy: { fechaInscripcion: 'desc' },
+    });
+
+    return inscripciones.map(({ diplomado, ...inscripcion }) => ({
+      id: inscripcion.id,
+      diplomadoId: inscripcion.diplomadoId,
+      fechaInscripcion: inscripcion.fechaInscripcion,
+      diplomado,
+    }));
+  }
+
+  async obtenerCompromisoInterno(estudianteId: string) {
+    const inscripcion = await this.prisma.inscripcion.findFirst({
+      where: { estudianteId, estado: 'INSCRITO' },
+      select: { diplomadoId: true },
+    });
+
+    return {
+      comprometido: Boolean(inscripcion),
+      diplomadoId: inscripcion?.diplomadoId ?? null,
+    };
+  }
+
+  private async estaComprometidoEnPracticas(
+    usuarioId: string,
+  ): Promise<boolean> {
+    try {
+      const { data } = await axios.get(
+        `${process.env.POSTULACIONES_SERVICE_URL}/internal/estudiante/${usuarioId}/comprometido`,
+        { headers: { 'x-internal-key': process.env.INTERNAL_API_KEY ?? '' } },
+      );
+      return data.comprometido === true;
+    } catch {
+      throw new ServiceUnavailableException(
+        'No se pudo verificar tu estado en Practicas Profesionales. Intenta de nuevo en unos minutos.',
+      );
+    }
   }
 }
