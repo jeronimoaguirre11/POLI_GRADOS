@@ -36,6 +36,11 @@ export class InternalController {
     return this.postulacionesService.obtenerPorOferta(ofertaId);
   }
 
+  @Get('estudiante/:usuarioId/comprometido')
+  async comprometido(@Param('usuarioId') usuarioId: string) {
+    return this.postulacionesService.obtenerCompromisoInterno(usuarioId);
+  }
+
   @Get(':id/archivo')
   async archivo(@Param('id') id: string) {
     return this.postulacionesService.obtenerArchivo(id);
@@ -49,6 +54,11 @@ export class InternalController {
     }
     return postulacion;
   }
+  /*
+  @Get('estudiante/:usuarioId/comprometido')
+  async comprometido(@Param('usuarioId') usuarioId: string) {
+    return this.postulacionesService.obtenerCompromisoInterno(usuarioId);
+  } lo cambie de lado, para probar algo antes de recibir el id*/
 
   @Patch(':id')
   async actualizar(

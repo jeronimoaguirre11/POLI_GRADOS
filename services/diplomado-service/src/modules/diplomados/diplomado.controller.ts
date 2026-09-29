@@ -31,6 +31,11 @@ export class DiplomadoController {
     return this.diplomadoService.listar();
   }
 
+  @Get('mias')
+  async misInscripciones(@Req() request: any) {
+    return this.diplomadoService.obtenerMisInscripciones(request.user);
+  }
+
   @Get(':id')
   async obtenerUno(@Param('id') id: string) {
     return this.diplomadoService.obtenerPorId(id);
