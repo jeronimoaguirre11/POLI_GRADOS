@@ -7,6 +7,7 @@ import {
   ForbiddenException,
   Injectable,
   NotFoundException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -80,6 +81,10 @@ export class PostulacionesService {
 
   private urlEstudiantes(path: string) {
     return `${process.env.ESTUDIANTES_SERVICE_URL}${path}`;
+  }
+
+  private urlDiplomado(path: string) {
+    return `${process.env.DIPLOMADO_SERVICE_URL}${path}`;
   }
 
   // El perfil de Estudiante ya no vive en esta base de datos: se resuelve el
@@ -159,6 +164,21 @@ export class PostulacionesService {
     );
 
     return `/uploads/hojas-vida/${nombreArchivo}`;
+  }
+
+  // helper nuevo
+  private async obtenerUsuarioIdDeEstudiante(
+    estudianteId: string,
+  ): Promise<string | null> {
+    try {
+      const { data } = await axios.get(
+        this.urlEstudiantes(`/internal/estudiantes/lote?ids=${estudianteId}`),
+        { headers: this.headersInternos() },
+      );
+      return data[0]?.usuarioId ?? null;
+    } catch {
+      return null;
+    }
   }
 
   async postularse(payload: JwtPayload, ofertaId: string, hojaVida: any) {
@@ -351,6 +371,26 @@ export class PostulacionesService {
   }
 
   async actualizarInterna(id: string, dto: ActualizarPostulacionInternaDto) {
+    if (dto.estado === 'SELECCIONADO') {
+      const postulacion = await this.prisma.postulacion.findUnique({
+        where: { id },
+        select: { estudianteId: true },
+      });
+
+      if (!postulacion) {
+        throw new NotFoundException('Postulacion no encontrada');
+      }
+
+      const usuarioId = await this.obtenerUsuarioIdDeEstudiante(
+        postulacion.estudianteId,
+      );
+
+      if (usuarioId && (await this.estaComprometidoEnDiplomado(usuarioId))) {
+        throw new ConflictException(
+          'Este estudiante ya esta inscrito en un diplomado este semestre, no puede ser seleccionado para practicas.',
+        );
+      }
+    }
     try {
       return await this.prisma.postulacion.update({
         where: { id },
@@ -412,6 +452,46 @@ export class PostulacionesService {
         throw new NotFoundException('Hoja de vida no disponible');
       }
       throw error;
+    }
+  }
+
+  async obtenerCompromisoInterno(usuarioId: string) {
+    let estudiante: EstudianteInterno;
+    try {
+      estudiante = await this.obtenerEstudianteDelUsuario(usuarioId);
+    } catch (error) {
+      // Sin perfil de estudiante no puede estar comprometido. Cualquier otro
+      // error (por ejemplo estudiantes-service caido) se propaga a proposito.
+      if (error instanceof NotFoundException) {
+        return { comprometido: false, postulacionId: null };
+      }
+      throw error;
+    }
+
+    const postulacion = await this.prisma.postulacion.findFirst({
+      where: { estudianteId: estudiante.id, estado: 'SELECCIONADO' },
+      select: { id: true },
+    });
+
+    return {
+      comprometido: Boolean(postulacion),
+      postulacionId: postulacion?.id ?? null,
+    };
+  }
+
+  private async estaComprometidoEnDiplomado(
+    usuarioId: string,
+  ): Promise<boolean> {
+    try {
+      const { data } = await axios.get(
+        this.urlDiplomado(`/internal/estudiante/${usuarioId}/comprometido`),
+        { headers: this.headersInternos() },
+      );
+      return data.comprometido === true;
+    } catch {
+      throw new ServiceUnavailableException(
+        'No se pudo verificar el estado del estudiante en Diplomado. Intenta de nuevo en unos minutos.',
+      );
     }
   }
 }
