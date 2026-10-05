@@ -13,6 +13,7 @@ import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
 import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto.js';
 import { CrearCoordinadorDto } from './dto/crear-coordinador.dto.js';
+import { CrearDocenteDto } from './dto/crear-docente.dto.js';
 import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 
 @Injectable()
@@ -162,6 +163,57 @@ export class AuthService {
       }
       throw error;
     }
+  }
+
+  async crearDocente(dto: CrearDocenteDto) {
+    const existente = await this.prisma.usuario.findUnique({
+      where: { email: dto.email },
+    });
+
+    if (existente) {
+      throw new ConflictException('Ya existe un usuario con ese email');
+    }
+
+    const usuario = await this.prisma.usuario.create({
+      data: {
+        nombre: dto.nombre,
+        email: dto.email,
+        password: await bcrypt.hash(dto.password, 10),
+        rol: 'DOCENTE',
+      },
+    });
+
+    try {
+      await axios.post(
+        `${process.env.DOCENTES_SERVICE_URL}/internal/docentes`,
+        {
+          usuarioId: usuario.id,
+          identificacion: dto.identificacion,
+          programa: dto.programa,
+          especialidad: dto.especialidad,
+        },
+        {
+          headers: this.headersInternos(),
+        },
+      );
+    } catch (error: any) {
+      await this.prisma.usuario.delete({
+        where: { id: usuario.id },
+      });
+
+      if (error?.response?.status === 409) {
+        throw new ConflictException(
+          'Ya existe un docente con esa identificación',
+        );
+      }
+
+      throw new BadRequestException(
+        'No se pudo crear el perfil del docente, intenta de nuevo',
+      );
+    }
+
+    const { password: _, ...usuarioSinPassword } = usuario;
+    return usuarioSinPassword;
   }
 
   async actualizarPerfil(payload: JwtPayload, dto: ActualizarPerfilDto) {

@@ -3,6 +3,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { InternalAuthGuard } from '../../common/guards/internal-auth.guard.js';
 import { AuthService } from './auth.service.js';
 import { CrearCoordinadorDto } from './dto/crear-coordinador.dto.js';
+import { CrearDocenteDto } from './dto/crear-docente.dto.js';
 
 // Rutas que SOLO llaman otros microservicios (nunca el gateway ni un
 // frontend). El gateway no reenvia nada bajo /internal, y ademas este guard
@@ -20,6 +21,11 @@ export class InternalController {
   @Post('coordinador')
   async crearCoordinador(@Body() dto: CrearCoordinadorDto) {
     return this.authService.crearCoordinador(dto);
+  }
+
+  @Post('docente')
+  async crearDocente(@Body() dto: CrearDocenteDto) {
+    return this.authService.crearDocente(dto);
   }
 
   // La usa coordinadores-service para asociar los perfiles distribuidos con

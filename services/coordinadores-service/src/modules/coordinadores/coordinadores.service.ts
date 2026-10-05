@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import axios from 'axios';
 import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
+import { CrearDocenteDto } from './dto/crear-docente.dto.js';
 
 interface UsuarioInterno {
   id: string;
@@ -203,5 +204,19 @@ export class CoordinadoresService {
       },
       estudiantes,
     };
+  }
+
+  async crearDocente(payload: JwtPayload, dto: CrearDocenteDto) {
+    this.asegurarRolCoordinador(payload);
+
+    const respuesta = await axios.post(
+      `${this.urlServicio('AUTH_SERVICE_URL')}/internal/usuarios/docente`,
+      dto,
+      {
+        headers: this.headersInternos(),
+      },
+    );
+
+    return respuesta.data;
   }
 }
