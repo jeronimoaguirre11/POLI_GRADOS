@@ -1,7 +1,6 @@
 import { useState } from "react";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import Investigacion from "./pages/Dashboard/Investigacion.jsx";
-import Diplomado from "./pages/Dashboard/Diplomado.jsx";
 import EditarPerfil from "./pages/Dashboard/EditarPerfil.jsx";
 import "./pages/Dashboard/Dashboard-Estudiante.css";
 
@@ -9,6 +8,8 @@ const AUTH_APP_URL =
   import.meta.env.VITE_AUTH_APP_URL || "http://localhost:5173";
 const POSTULACIONES_APP_URL =
   import.meta.env.VITE_POSTULACIONES_APP_URL || "http://localhost:5176";
+const DIPLOMADO_APP_URL =
+  import.meta.env.VITE_DIPLOMADO_APP_URL || "http://localhost:5178";
 
 function obtenerUsuarioInicial() {
   try {
@@ -52,6 +53,17 @@ function AppShell() {
     window.location.href = `${POSTULACIONES_APP_URL}/?${params.toString()}`;
   }
 
+  // "Diplomado" ahora vive en su propia app, igual que Practicas.
+  function irADiplomado() {
+    const token = localStorage.getItem("token");
+    const usuarioGuardado = localStorage.getItem("usuario");
+    const params = new URLSearchParams({
+      token: token ?? "",
+      usuario: usuarioGuardado ?? "",
+    });
+    window.location.href = `${DIPLOMADO_APP_URL}/?${params.toString()}`;
+  }
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -93,8 +105,6 @@ function AppShell() {
           />
         ) : vistaEstudiante === "investigacion" ? (
           <Investigacion onVolver={() => setVistaEstudiante("inicio")} />
-        ) : vistaEstudiante === "diplomado" ? (
-          <Diplomado onVolver={() => setVistaEstudiante("inicio")} />
         ) : (
           <>
             <section className="bienvenida">
@@ -106,9 +116,9 @@ function AppShell() {
                 <h1>Hola, {usuario?.nombre?.split(" ")[0]}</h1>
 
                 <p>
-                  Consulta las diferentes modalidades disponibles para
-                  realizar tu trabajo de grado y conoce el proceso
-                  correspondiente a cada una.
+                  Consulta las diferentes modalidades disponibles para realizar
+                  tu trabajo de grado y conoce el proceso correspondiente a cada
+                  una.
                 </p>
               </div>
             </section>
@@ -129,9 +139,8 @@ function AppShell() {
                     <span className="card-tipo">Investigación</span>
                     <h3>Trabajo de Investigación</h3>
                     <p>
-                      Desarrolla tu proyecto dentro de un grupo de
-                      investigación y realiza el proceso académico
-                      correspondiente.
+                      Desarrolla tu proyecto dentro de un grupo de investigación
+                      y realiza el proceso académico correspondiente.
                     </p>
                   </div>
 
@@ -160,7 +169,7 @@ function AppShell() {
                   <button
                     type="button"
                     className="card-action card-action-active"
-                    onClick={() => setVistaEstudiante("diplomado")}
+                    onClick={irADiplomado}
                   >
                     Ver modalidad
                     <span>→</span>
@@ -171,9 +180,7 @@ function AppShell() {
                   <div className="card-icon">03</div>
 
                   <div className="card-content">
-                    <span className="card-tipo">
-                      Experiencia profesional
-                    </span>
+                    <span className="card-tipo">Experiencia profesional</span>
                     <h3>Prácticas Profesionales</h3>
                     <p>
                       Explora las convocatorias publicadas por las empresas y
@@ -199,8 +206,8 @@ function AppShell() {
               <div>
                 <h3>Antes de comenzar</h3>
                 <p>
-                  Revisa cuidadosamente los requisitos de cada modalidad
-                  antes de iniciar tu proceso de trabajo de grado.
+                  Revisa cuidadosamente los requisitos de cada modalidad antes
+                  de iniciar tu proceso de trabajo de grado.
                 </p>
               </div>
             </section>
