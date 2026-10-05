@@ -50,7 +50,8 @@ $backends = @(
     @{ Nombre = "Estudiantes Service"; Ruta = "services/estudiantes-service" },
     @{ Nombre = "Postulaciones Service"; Ruta = "services/postulaciones-service" },
     @{ Nombre = "Coordinadores Service"; Ruta = "services/coordinadores-service" },
-    @{ Nombre = "Diplomado Service"; Ruta = "services/diplomado-service" }
+    @{ Nombre = "Diplomado Service"; Ruta = "services/diplomado-service" },
+    @{ Nombre = "Docentes Service"; Ruta = "services/docentes-service" }
 )
 
 foreach ($app in $backends) {
@@ -119,6 +120,7 @@ Write-Host "  Estudiantes:   3003"
 Write-Host "  Postulaciones: 3004"
 Write-Host "  Coordinadores: 3005"
 Write-Host "  Diplomado:     3006"
+Write-Host "  Docentes:      3007"
 Write-Host ""
 Write-Host "Frontends:" -ForegroundColor Cyan
 Write-Host "  Auth/Home:     http://localhost:5173"
