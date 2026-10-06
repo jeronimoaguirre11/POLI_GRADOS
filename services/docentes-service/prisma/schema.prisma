@@ -1,7 +1,3 @@
-// Microservicio Docentes: administra el perfil academico del docente.
-// Usuario y autenticacion pertenecen a auth-service, por lo que aqui
-// solamente almacenamos usuarioId para relacionar ambos microservicios.
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -12,9 +8,21 @@ datasource db {
 }
 
 model Docente {
-  id           String  @id @default(uuid())
-  usuarioId    String  @unique
-  identificacion String @unique
-  programa     String?
-  especialidad String?
+  id             String              @id @default(uuid())
+  usuarioId      String              @unique
+  identificacion String              @unique
+  programa       String?
+  especialidad   String?
+  asignaciones   AsignacionDocente[]
+}
+
+model AsignacionDocente {
+  id              String   @id @default(uuid())
+  docenteId       String
+  estudianteId    String   @unique
+  fechaAsignacion DateTime @default(now())
+
+  docente Docente @relation(fields: [docenteId], references: [id], onDelete: Cascade)
+
+  @@index([docenteId])
 }

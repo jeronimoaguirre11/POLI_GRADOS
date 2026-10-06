@@ -72,4 +72,56 @@ export class DocentesService {
       data: dto,
     });
   }
+
+  async asignarEstudiante(docenteId: string, estudianteId: string) {
+    const docente = await this.prisma.docente.findUnique({
+      where: { id: docenteId },
+    });
+
+    if (!docente) {
+      throw new NotFoundException('Docente no encontrado');
+    }
+
+    const asignacionExistente =
+      await this.prisma.asignacionDocente.findUnique({
+        where: { estudianteId },
+      });
+
+    if (asignacionExistente) {
+      throw new ConflictException(
+        'El estudiante ya tiene un docente asignado',
+      );
+    }
+
+    return this.prisma.asignacionDocente.create({
+      data: {
+        docenteId,
+        estudianteId,
+      },
+    });
+  }
+
+  async listarAsignaciones() {
+    return this.prisma.asignacionDocente.findMany({
+      include: {
+        docente: true,
+      },
+      orderBy: {
+        fechaAsignacion: 'desc',
+      },
+    });
+  }
+
+  async listarEstudiantesAsignados(docenteId: string) {
+    await this.obtenerPorId(docenteId);
+
+    return this.prisma.asignacionDocente.findMany({
+      where: {
+        docenteId,
+      },
+      orderBy: {
+        fechaAsignacion: 'desc',
+      },
+    });
+  }
 }

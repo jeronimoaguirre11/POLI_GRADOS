@@ -1,11 +1,8 @@
-import {
-  ForbiddenException,
-  Injectable,
-  InternalServerErrorException,
-} from '@nestjs/common';
+import { ForbiddenException, HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
 import axios from 'axios';
 import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 import { CrearDocenteDto } from './dto/crear-docente.dto.js';
+import { AsignarDocenteDto } from './dto/asignar-docente.dto.js';
 
 interface UsuarioInterno {
   id: string;
@@ -218,5 +215,59 @@ export class CoordinadoresService {
     );
 
     return respuesta.data;
+  }
+
+  async asignarDocente(
+    payload: JwtPayload,
+    dto: AsignarDocenteDto,
+  ) {
+    this.asegurarRolCoordinador(payload);
+
+    const respuestaEstudiantes = await axios.get<EstudianteInterno[]>(
+      `${this.urlServicio('ESTUDIANTES_SERVICE_URL')}/internal/estudiantes`,
+      {
+        headers: this.headersInternos(),
+      },
+    );
+
+    const estudianteExiste = respuestaEstudiantes.data.some(
+      (estudiante) => estudiante.id === dto.estudianteId,
+    );
+
+    if (!estudianteExiste) {
+      throw new NotFoundException('Estudiante no encontrado');
+    }
+
+    try {
+      const respuesta = await axios.post(
+        `${this.urlServicio('DOCENTES_SERVICE_URL')}/internal/docentes/asignaciones`,
+        {
+          docenteId: dto.docenteId,
+          estudianteId: dto.estudianteId,
+        },
+        {
+          headers: this.headersInternos(),
+        },
+      );
+
+      return respuesta.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const status = error.response.status;
+
+        const data = error.response.data as {
+          message?: string | string[];
+        };
+
+        throw new HttpException(
+          data?.message ?? 'Error al asignar el docente',
+          status,
+        );
+      }
+
+      throw new InternalServerErrorException(
+        'No fue posible comunicarse con docentes-service',
+      );
+    }
   }
 }
