@@ -20,7 +20,8 @@ $puertos = @(
     5175,
     5176,
     5177,
-    5178
+    5178,
+    5179
 )
 
 foreach ($puerto in $puertos) {

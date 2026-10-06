@@ -84,6 +84,8 @@ $frontends = @(
     @{ Nombre = "Frontend Postulaciones"; Ruta = "frontends/frontend-postulaciones" },
     @{ Nombre = "Frontend Coordinadores"; Ruta = "frontends/frontend-coordinadores" },
     @{ Nombre = "Frontend Diplomado"; Ruta = "frontends/frontend-diplomado" }
+    @{ Nombre = "Frontend Docentes"; Ruta = "frontends/frontend-docentes" }
+
 )
 
 foreach ($app in $frontends) {
@@ -129,5 +131,6 @@ Write-Host "  Estudiantes:   http://localhost:5175"
 Write-Host "  Postulaciones: http://localhost:5176"
 Write-Host "  Coordinadores: http://localhost:5177"
 Write-Host "  Diplomado:     http://localhost:5178"
+Write-Host "  Docentes:      http://localhost:5179"
 Write-Host ""
 Write-Host "Proyecto iniciado correctamente." -ForegroundColor Green
