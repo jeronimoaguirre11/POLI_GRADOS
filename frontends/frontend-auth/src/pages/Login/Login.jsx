@@ -9,11 +9,14 @@ import "./Login.css";
 // guarda en su propio localStorage (ver components/ProtectedRoute.jsx de
 // cada una).
 const DESTINOS_POR_ROL = {
-  EMPRESA: import.meta.env.VITE_EMPRESAS_APP_URL || "http://localhost:5174",
+  EMPRESA: 
+    import.meta.env.VITE_EMPRESAS_APP_URL || "http://localhost:5174",
   ESTUDIANTE:
     import.meta.env.VITE_ESTUDIANTES_APP_URL || "http://localhost:5175",
   COORDINADOR:
     import.meta.env.VITE_COORDINADORES_APP_URL || "http://localhost:5177",
+  DOCENTE:
+    import.meta.env.VITE_DOCENTES_APP_URL || "http://localhost:5179",
 };
 
 export default function Login() {

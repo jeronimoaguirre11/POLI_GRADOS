@@ -1,0 +1,28 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Docente {
+  id             String              @id @default(uuid())
+  usuarioId      String              @unique
+  identificacion String              @unique
+  programa       String?
+  especialidad   String?
+  asignaciones   AsignacionDocente[]
+}
+
+model AsignacionDocente {
+  id              String   @id @default(uuid())
+  docenteId       String
+  estudianteId    String   @unique
+  fechaAsignacion DateTime @default(now())
+
+  docente Docente @relation(fields: [docenteId], references: [id], onDelete: Cascade)
+
+  @@index([docenteId])
+}
