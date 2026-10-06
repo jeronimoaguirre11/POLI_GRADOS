@@ -1,44 +1,24 @@
 import {
-  Body,
   Controller,
   Get,
-  Param,
-  Patch,
-  Post,
+  Req,
+  UseGuards,
 } from '@nestjs/common';
 import { DocentesService } from './docentes.service.js';
-import { CreateDocenteDto } from './dto/create-docente.dto.js';
-import { UpdateDocenteDto } from './dto/update-docente.dto.js';
+import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
 
 @Controller('docentes')
+@UseGuards(JwtAuthGuard)
 export class DocentesController {
   constructor(private readonly docentesService: DocentesService) {}
 
-  @Post()
-  crear(@Body() dto: CreateDocenteDto) {
-    return this.docentesService.crear(dto);
+  @Get('me')
+  async obtenerMiPerfil(@Req() request: any) {
+    return this.docentesService.obtenerMiPerfil(request.user);
   }
 
-  @Get()
-  listar() {
-    return this.docentesService.listar();
-  }
-
-  @Get('usuario/:usuarioId')
-  obtenerPorUsuarioId(@Param('usuarioId') usuarioId: string) {
-    return this.docentesService.obtenerPorUsuarioId(usuarioId);
-  }
-
-  @Get(':id')
-  obtenerPorId(@Param('id') id: string) {
-    return this.docentesService.obtenerPorId(id);
-  }
-
-  @Patch(':id')
-  actualizar(
-    @Param('id') id: string,
-    @Body() dto: UpdateDocenteDto,
-  ) {
-    return this.docentesService.actualizar(id, dto);
+  @Get('me/estudiantes')
+  async obtenerMisEstudiantes(@Req() request: any) {
+    return this.docentesService.obtenerMisEstudiantes(request.user);
   }
 }

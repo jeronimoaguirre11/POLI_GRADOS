@@ -1,15 +1,45 @@
 import {
   ConflictException,
+  ForbiddenException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
+import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateDocenteDto } from './dto/create-docente.dto.js';
 import { UpdateDocenteDto } from './dto/update-docente.dto.js';
+import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 
 @Injectable()
 export class DocentesService {
   constructor(private readonly prisma: PrismaService) {}
+
+  private asegurarRolDocente(payload: JwtPayload) {
+    if (payload.rol !== 'DOCENTE') {
+      throw new ForbiddenException(
+        'Solo las cuentas de docente pueden usar este recurso',
+      );
+    }
+  }
+
+  private urlEstudiantes() {
+    const valor = process.env.ESTUDIANTES_SERVICE_URL;
+
+    if (!valor) {
+      throw new InternalServerErrorException(
+        'ESTUDIANTES_SERVICE_URL no esta configurada',
+      );
+    }
+
+    return valor.replace(/\/$/, '');
+  }
+
+  private headersInternos() {
+    return {
+      'x-internal-key': process.env.INTERNAL_API_KEY ?? '',
+    };
+  }
 
   async crear(dto: CreateDocenteDto) {
     const existente = await this.prisma.docente.findFirst({
@@ -123,5 +153,59 @@ export class DocentesService {
         fechaAsignacion: 'desc',
       },
     });
+  }
+
+  async obtenerMiPerfil(payload: JwtPayload) {
+    this.asegurarRolDocente(payload);
+
+    const docente = await this.obtenerPorUsuarioId(payload.sub);
+
+    return {
+      id: docente.id,
+      identificacion: docente.identificacion,
+      programa: docente.programa,
+      especialidad: docente.especialidad,
+    };
+  }
+
+  async obtenerMisEstudiantes(payload: JwtPayload) {
+    this.asegurarRolDocente(payload);
+
+    const docente = await this.obtenerPorUsuarioId(payload.sub);
+
+    const asignaciones = await this.prisma.asignacionDocente.findMany({
+      where: {
+        docenteId: docente.id,
+      },
+      orderBy: {
+        fechaAsignacion: 'desc',
+      },
+    });
+
+    if (asignaciones.length === 0) {
+      return [];
+    }
+
+    const ids = asignaciones.map(
+      (asignacion) => asignacion.estudianteId,
+    );
+
+    try {
+      const respuesta = await axios.get(
+        `${this.urlEstudiantes()}/internal/estudiantes/lote`,
+        {
+          params: {
+            ids: ids.join(','),
+          },
+          headers: this.headersInternos(),
+        },
+      );
+
+      return respuesta.data;
+    } catch {
+      throw new InternalServerErrorException(
+        'No fue posible consultar los estudiantes asignados',
+      );
+    }
   }
 }

@@ -21,6 +21,10 @@ function construirRutas(): Array<{ prefijo: string; destino: string }> {
       prefijo: '/coordinadores',
       destino: process.env.COORDINADORES_SERVICE_URL,
     },
+    {
+      prefijo: '/docentes',
+      destino: process.env.DOCENTES_SERVICE_URL,
+    },
     // El listado publico de convocatorias abiertas vive en empresas-service,
     // pero su ruta (heredada del monolito, ver ofertas.controller.ts) es
     // /ofertas y no /empresas/ofertas, asi que necesita su propio prefijo.
