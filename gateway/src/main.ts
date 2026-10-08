@@ -21,11 +21,19 @@ function construirRutas(): Array<{ prefijo: string; destino: string }> {
       prefijo: '/coordinadores',
       destino: process.env.COORDINADORES_SERVICE_URL,
     },
+    {
+      prefijo: '/docentes',
+      destino: process.env.DOCENTES_SERVICE_URL,
+    },
     // El listado publico de convocatorias abiertas vive en empresas-service,
     // pero su ruta (heredada del monolito, ver ofertas.controller.ts) es
     // /ofertas y no /empresas/ofertas, asi que necesita su propio prefijo.
     { prefijo: '/ofertas', destino: process.env.EMPRESAS_SERVICE_URL },
     { prefijo: '/diplomados', destino: process.env.DIPLOMADO_SERVICE_URL },
+    {
+      prefijo: '/investigaciones',
+      destino: process.env.INVESTIGACION_SERVICE_URL,
+    },
   ];
 
   return rutas.map(({ prefijo, destino }) => {
@@ -54,6 +62,8 @@ async function bootstrap() {
       process.env.FRONTEND_POSTULACIONES_URL,
       process.env.FRONTEND_COORDINADORES_URL,
       process.env.FRONTEND_DIPLOMADO_URL,
+      process.env.FRONTEND_INVESTIGACION_URL,
+      process.env.FRONTEND_DOCENTES_URL,
     ].filter((origen): origen is string => Boolean(origen)),
     // Necesario para que el frontend pueda leer el nombre del archivo al
     // descargar la hoja de vida (ver empresas.controller.ts).

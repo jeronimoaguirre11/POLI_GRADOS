@@ -87,6 +87,10 @@ export class PostulacionesService {
     return `${process.env.DIPLOMADO_SERVICE_URL}${path}`;
   }
 
+  private urlInvestigacion(path: string) {
+    return `${process.env.INVESTIGACION_SERVICE_URL}${path}`;
+  }
+
   // El perfil de Estudiante ya no vive en esta base de datos: se resuelve el
   // usuarioId del token contra estudiantes-service.
   private async obtenerEstudianteDelUsuario(
@@ -390,6 +394,15 @@ export class PostulacionesService {
           'Este estudiante ya esta inscrito en un diplomado este semestre, no puede ser seleccionado para practicas.',
         );
       }
+
+      if (
+        usuarioId &&
+        (await this.estaComprometidoEnInvestigacion(usuarioId))
+      ) {
+        throw new ConflictException(
+          'Este estudiante ya tiene una investigacion aprobada este semestre, no puede ser seleccionado para practicas.',
+        );
+      }
     }
     try {
       return await this.prisma.postulacion.update({
@@ -491,6 +504,22 @@ export class PostulacionesService {
     } catch {
       throw new ServiceUnavailableException(
         'No se pudo verificar el estado del estudiante en Diplomado. Intenta de nuevo en unos minutos.',
+      );
+    }
+  }
+
+  private async estaComprometidoEnInvestigacion(
+    usuarioId: string,
+  ): Promise<boolean> {
+    try {
+      const { data } = await axios.get(
+        this.urlInvestigacion(`/internal/estudiante/${usuarioId}/comprometido`),
+        { headers: this.headersInternos() },
+      );
+      return data.comprometido === true;
+    } catch {
+      throw new ServiceUnavailableException(
+        'No se pudo verificar el estado del estudiante en Investigacion. Intenta de nuevo en unos minutos.',
       );
     }
   }

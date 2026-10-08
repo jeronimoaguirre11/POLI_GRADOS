@@ -1,0 +1,242 @@
+.docente-app {
+  min-height: 100vh;
+  background: #f4f7f5;
+  color: #18332a;
+}
+
+.docente-header {
+  min-height: 76px;
+  padding: 0 6%;
+  background: #ffffff;
+  border-bottom: 1px solid #dfe8e3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.marca,
+.usuario-header {
+  display: flex;
+  align-items: center;
+}
+
+.marca {
+  gap: 12px;
+}
+
+.marca-icono {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: #176b4d;
+  color: white;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+
+.marca h1 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.marca span,
+.usuario-datos span {
+  color: #6d8078;
+  font-size: 12px;
+}
+
+.usuario-header {
+  gap: 20px;
+}
+
+.usuario-datos {
+  display: flex;
+  flex-direction: column;
+  text-align: right;
+}
+
+.boton-salir {
+  border: 1px solid #cbd9d2;
+  background: white;
+  color: #294c3f;
+  border-radius: 9px;
+  padding: 9px 14px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.boton-salir:hover {
+  background: #f0f6f3;
+}
+
+.docente-contenido {
+  width: min(1120px, 88%);
+  margin: 0 auto;
+  padding: 48px 0 70px;
+}
+
+.bienvenida {
+  margin-bottom: 32px;
+}
+
+.etiqueta,
+.subtitulo {
+  color: #176b4d;
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.bienvenida h2 {
+  margin: 8px 0;
+  font-size: clamp(28px, 4vw, 42px);
+}
+
+.bienvenida p {
+  max-width: 700px;
+  color: #63756e;
+  line-height: 1.6;
+}
+
+.tarjeta {
+  background: white;
+  border: 1px solid #dfe8e3;
+  border-radius: 16px;
+  padding: 26px;
+  margin-top: 22px;
+  box-shadow: 0 5px 18px rgba(25, 70, 53, 0.04);
+}
+
+.tarjeta-encabezado {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.tarjeta h3 {
+  margin: 5px 0 0;
+  font-size: 21px;
+}
+
+.perfil-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.dato {
+  padding: 18px;
+  border-radius: 12px;
+  background: #f6f9f7;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.dato span {
+  color: #70827a;
+  font-size: 13px;
+}
+
+.dato strong {
+  font-size: 16px;
+}
+
+.contador-estudiantes {
+  min-width: 42px;
+  height: 42px;
+  padding: 0 12px;
+  border-radius: 21px;
+  background: #e4f2eb;
+  color: #176b4d;
+  display: grid;
+  place-items: center;
+  font-weight: 800;
+}
+
+.tabla-contenedor {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  padding: 15px;
+  text-align: left;
+  border-bottom: 1px solid #e7eeea;
+}
+
+th {
+  color: #61756c;
+  background: #f6f9f7;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+td {
+  color: #294c3f;
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.sin-estudiantes,
+.estado-mensaje {
+  padding: 22px;
+  border-radius: 12px;
+  background: #f6f9f7;
+  color: #61756c;
+}
+
+.estado-error {
+  background: #fff0f0;
+  color: #9d3434;
+  border: 1px solid #f1cccc;
+}
+
+@media (max-width: 760px) {
+  .docente-header {
+    padding: 14px 5%;
+    align-items: flex-start;
+  }
+
+  .usuario-header {
+    gap: 8px;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .perfil-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .docente-contenido {
+    width: 90%;
+    padding-top: 32px;
+  }
+
+  .tarjeta {
+    padding: 18px;
+  }
+}
+
+@media (max-width: 520px) {
+  .marca span,
+  .usuario-datos {
+    display: none;
+  }
+
+  .docente-header {
+    align-items: center;
+  }
+}
