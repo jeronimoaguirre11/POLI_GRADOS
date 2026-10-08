@@ -19,6 +19,42 @@ export class OfertasService {
     });
   }
 
+  // Vista administrativa usada por coordinadores-service para construir el
+  // reporte institucional. Selecciona solo los campos que deben aparecer en
+  // el PDF y evita transferir imagenes, funciones o descripciones extensas.
+  async listarActivasParaReporte() {
+    const ahora = new Date();
+
+    return this.prisma.oferta.findMany({
+      where: {
+        estado: 'ABIERTA',
+        fechaInicioConvocatoria: { lte: ahora },
+        fechaFinConvocatoria: { gte: ahora },
+      },
+      orderBy: [{ fechaFinConvocatoria: 'asc' }, { fechaPublicacion: 'desc' }],
+      select: {
+        id: true,
+        titulo: true,
+        perfilBuscado: true,
+        modalidadContratacion: true,
+        ubicacion: true,
+        fechaInicioConvocatoria: true,
+        fechaFinConvocatoria: true,
+        fechaInicioPractica: true,
+        duracionMeses: true,
+        estado: true,
+        fechaPublicacion: true,
+        empresa: {
+          select: {
+            nombreEmpresa: true,
+            nit: true,
+            sector: true,
+          },
+        },
+      },
+    });
+  }
+
   // --- Llamado solo por postulaciones-service (rutas internas) ---
 
   // La usa `postularse` para validar que la convocatoria exista y este

@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   asignarDocente,
   crearDocente,
+  descargarReporteConvocatoriasActivas,
   obtenerGestionDocentes,
   obtenerPanelCoordinador,
   retirarAsignacionDocente,
@@ -852,6 +853,8 @@ export default function DashboardCoordinador({ usuario }) {
   const [gestionDocentes, setGestionDocentes] = useState(null);
   const [cargandoDocentes, setCargandoDocentes] = useState(false);
   const [errorDocentes, setErrorDocentes] = useState("");
+  const [descargandoReporte, setDescargandoReporte] = useState(false);
+  const [errorReporte, setErrorReporte] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [programa, setPrograma] = useState("TODOS");
   const [estado, setEstado] = useState("TODOS");
@@ -950,6 +953,33 @@ export default function DashboardCoordinador({ usuario }) {
     window.location.href = AUTH_APP_URL;
   }
 
+  async function descargarReporte() {
+    setDescargandoReporte(true);
+    setErrorReporte("");
+
+    try {
+      const reporte = await descargarReporteConvocatoriasActivas();
+      const url = URL.createObjectURL(reporte.archivo);
+      const enlace = document.createElement("a");
+      enlace.href = url;
+      enlace.download = reporte.nombre;
+      document.body.appendChild(enlace);
+      enlace.click();
+      enlace.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      if (err.status === 401 || err.status === 403) {
+        irAlLogin();
+        return;
+      }
+      setErrorReporte(
+        err.message || "No fue posible descargar el reporte en PDF.",
+      );
+    } finally {
+      setDescargandoReporte(false);
+    }
+  }
+
   return (
     <div className="coordinator-dashboard">
       <header className="dashboard-header">
@@ -997,6 +1027,22 @@ export default function DashboardCoordinador({ usuario }) {
                 Consulta el avance de las postulaciones y acompaña el proceso
                 académico de los estudiantes desde un solo lugar.
               </p>
+              <button
+                type="button"
+                className="report-button"
+                onClick={descargarReporte}
+                disabled={descargandoReporte}
+              >
+                <span aria-hidden="true">↓</span>
+                {descargandoReporte
+                  ? "Generando reporte…"
+                  : "Descargar convocatorias activas (PDF)"}
+              </button>
+              {errorReporte && (
+                <p className="report-error" role="alert">
+                  {errorReporte}
+                </p>
+              )}
             </div>
             <div className="hero-mark" aria-hidden="true">
               <span>CO</span>

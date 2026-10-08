@@ -166,6 +166,7 @@ El rol `COORDINADOR` dispone de un panel de seguimiento institucional en
 - `POST /coordinadores/asignaciones-docentes`
 - `PUT /coordinadores/asignaciones-docentes`
 - `DELETE /coordinadores/asignaciones-docentes/:estudianteId`
+- `GET /coordinadores/reportes/convocatorias-activas.pdf`
 
 El servicio valida el JWT y rechaza cualquier rol diferente de
 `COORDINADOR`. Luego obtiene estudiantes, usuarios, postulaciones y ofertas
@@ -182,7 +183,9 @@ El panel permite:
   estado;
 - registrar cuentas de docentes con sus datos académicos;
 - consultar los docentes y sus estudiantes asignados;
-- asignar, reasignar o retirar el docente responsable de un estudiante.
+- asignar, reasignar o retirar el docente responsable de un estudiante;
+- descargar en PDF el reporte de convocatorias activas, con empresa, perfil,
+  modalidad, vigencia, duración y total de postulaciones.
 
 El coordinador no cambia las decisiones de las empresas y no recibe
 observaciones privadas ni archivos de hojas de vida. La gestión de docentes se

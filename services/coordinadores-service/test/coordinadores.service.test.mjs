@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import axios from 'axios';
 import { CoordinadoresService } from '../dist/modules/coordinadores/coordinadores.service.js';
+import { ReportesService } from '../dist/modules/coordinadores/reportes.service.js';
 
 const configurarEntorno = () => {
   process.env.INTERNAL_API_KEY = 'clave-interna-prueba';
@@ -264,4 +265,77 @@ test('lista docentes con sus estudiantes y las asignaciones disponibles', async 
   } finally {
     axios.get = getOriginal;
   }
+});
+
+test('genera un PDF con todas las convocatorias activas', async () => {
+  configurarEntorno();
+  const service = new ReportesService();
+  const getOriginal = axios.get;
+
+  axios.get = async (url, config = {}) => {
+    assert.equal(config.headers['x-internal-key'], 'clave-interna-prueba');
+
+    if (url === 'http://empresas/internal/ofertas/activas-reporte') {
+      return {
+        data: [
+          {
+            id: 'oferta-1',
+            titulo: 'Practicante de gestión ambiental',
+            perfilBuscado: 'INGENIERO_AGROPECUARIO',
+            modalidadContratacion: 'CONVENIO',
+            ubicacion: 'Medellín',
+            fechaInicioConvocatoria: '2026-10-01T00:00:00.000Z',
+            fechaFinConvocatoria: '2026-10-30T00:00:00.000Z',
+            fechaInicioPractica: '2026-11-15T00:00:00.000Z',
+            duracionMeses: 6,
+            estado: 'ABIERTA',
+            fechaPublicacion: '2026-10-01T00:00:00.000Z',
+            empresa: {
+              nombreEmpresa: 'Agro Prueba',
+              nit: '900123456',
+              sector: 'Agroindustria',
+            },
+          },
+        ],
+      };
+    }
+
+    if (url === 'http://postulaciones/internal/conteo-por-ofertas') {
+      assert.equal(config.params.ofertaIds, 'oferta-1');
+      return { data: { 'oferta-1': 3 } };
+    }
+
+    throw new Error(`URL inesperada en prueba: ${url}`);
+  };
+
+  try {
+    const reporte = await service.generarConvocatoriasActivas({
+      sub: 'coordinador-1',
+      email: 'coordinador@prueba.com',
+      rol: 'COORDINADOR',
+    });
+
+    assert.equal(Buffer.isBuffer(reporte.archivo), true);
+    assert.equal(reporte.archivo.subarray(0, 5).toString(), '%PDF-');
+    assert.ok(reporte.archivo.length > 1500);
+    assert.match(
+      reporte.nombreArchivo,
+      /^convocatorias-activas-\d{4}-\d{2}-\d{2}\.pdf$/,
+    );
+  } finally {
+    axios.get = getOriginal;
+  }
+});
+
+test('impide que un rol no coordinador genere el PDF', async () => {
+  const service = new ReportesService();
+
+  await assert.rejects(
+    service.generarConvocatoriasActivas({
+      sub: 'estudiante-1',
+      email: 'estudiante@prueba.com',
+      rol: 'ESTUDIANTE',
+    }),
+    (error) => error?.getStatus?.() === 403,
+  );
 });
