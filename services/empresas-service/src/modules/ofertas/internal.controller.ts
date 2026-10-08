@@ -18,6 +18,11 @@ import { InternalAuthGuard } from '../../common/guards/internal-auth.guard.js';
 export class InternalController {
   constructor(private readonly ofertasService: OfertasService) {}
 
+  @Get('activas-reporte')
+  async listarActivasParaReporte() {
+    return this.ofertasService.listarActivasParaReporte();
+  }
+
   @Get('lote')
   async obtenerPorLote(@Query('ids') ids: string) {
     const listaIds = (ids ?? '').split(',').filter(Boolean);

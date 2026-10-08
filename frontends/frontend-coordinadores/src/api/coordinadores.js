@@ -53,3 +53,31 @@ export function retirarAsignacionDocente(estudianteId) {
     { method: "DELETE" },
   );
 }
+
+export async function descargarReporteConvocatoriasActivas() {
+  const token = localStorage.getItem("token");
+  const respuesta = await fetch(
+    `${API_URL}/coordinadores/reportes/convocatorias-activas.pdf`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+    },
+  );
+
+  if (!respuesta.ok) {
+    const cuerpo = await respuesta.json().catch(() => null);
+    const mensaje = cuerpo?.message || `Error ${respuesta.status}`;
+    const error = new Error(
+      Array.isArray(mensaje) ? mensaje.join(", ") : mensaje,
+    );
+    error.status = respuesta.status;
+    throw error;
+  }
+
+  const disposicion = respuesta.headers.get("Content-Disposition") || "";
+  const coincidencia = disposicion.match(/filename="?([^";]+)"?/i);
+
+  return {
+    archivo: await respuesta.blob(),
+    nombre: coincidencia?.[1] || "convocatorias-activas.pdf",
+  };
+}

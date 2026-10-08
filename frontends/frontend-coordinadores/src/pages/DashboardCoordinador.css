@@ -181,6 +181,50 @@
   line-height: 1.65;
 }
 
+.report-button {
+  margin-top: 1.2rem;
+  padding: 0.72rem 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.32);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+  font-size: 0.76rem;
+  font-weight: 750;
+  backdrop-filter: blur(8px);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  transition:
+    background-color 0.15s ease,
+    transform 0.15s ease;
+}
+
+.report-button span {
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.14);
+  display: grid;
+  place-items: center;
+  font-size: 0.95rem;
+}
+
+.report-button:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.2);
+  transform: translateY(-1px);
+}
+
+.report-button:disabled {
+  cursor: wait;
+  opacity: 0.7;
+}
+
+.hero .report-error {
+  margin-top: 0.7rem;
+  color: #ffe1e1;
+  font-size: 0.72rem;
+}
+
 .hero-mark {
   position: relative;
   z-index: 1;
