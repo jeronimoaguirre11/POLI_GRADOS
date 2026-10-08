@@ -1,6 +1,5 @@
 import { useState } from "react";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
-import Investigacion from "./pages/Dashboard/Investigacion.jsx";
 import EditarPerfil from "./pages/Dashboard/EditarPerfil.jsx";
 import "./pages/Dashboard/Dashboard-Estudiante.css";
 
@@ -10,6 +9,8 @@ const POSTULACIONES_APP_URL =
   import.meta.env.VITE_POSTULACIONES_APP_URL || "http://localhost:5176";
 const DIPLOMADO_APP_URL =
   import.meta.env.VITE_DIPLOMADO_APP_URL || "http://localhost:5178";
+const INVESTIGACION_APP_URL =
+  import.meta.env.VITE_INVESTIGACION_APP_URL || "http://localhost:5179";
 
 function obtenerUsuarioInicial() {
   try {
@@ -64,6 +65,16 @@ function AppShell() {
     window.location.href = `${DIPLOMADO_APP_URL}/?${params.toString()}`;
   }
 
+  function irAInvestigacion() {
+    const token = localStorage.getItem("token");
+    const usuarioGuardado = localStorage.getItem("usuario");
+    const params = new URLSearchParams({
+      token: token ?? "",
+      usuario: usuarioGuardado ?? "",
+    });
+    window.location.href = `${INVESTIGACION_APP_URL}/?${params.toString()}`;
+  }
+
   return (
     <div className="dashboard">
       <header className="dashboard-header">
@@ -103,8 +114,6 @@ function AppShell() {
             onVolver={() => setMostrarPerfil(false)}
             onActualizado={handlePerfilActualizado}
           />
-        ) : vistaEstudiante === "investigacion" ? (
-          <Investigacion onVolver={() => setVistaEstudiante("inicio")} />
         ) : (
           <>
             <section className="bienvenida">
@@ -147,7 +156,7 @@ function AppShell() {
                   <button
                     type="button"
                     className="card-action card-action-active"
-                    onClick={() => setVistaEstudiante("investigacion")}
+                    onClick={irAInvestigacion}
                   >
                     Ver modalidad
                     <span>→</span>

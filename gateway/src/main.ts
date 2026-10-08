@@ -30,6 +30,10 @@ function construirRutas(): Array<{ prefijo: string; destino: string }> {
     // /ofertas y no /empresas/ofertas, asi que necesita su propio prefijo.
     { prefijo: '/ofertas', destino: process.env.EMPRESAS_SERVICE_URL },
     { prefijo: '/diplomados', destino: process.env.DIPLOMADO_SERVICE_URL },
+    {
+      prefijo: '/investigaciones',
+      destino: process.env.INVESTIGACION_SERVICE_URL,
+    },
   ];
 
   return rutas.map(({ prefijo, destino }) => {
@@ -58,6 +62,7 @@ async function bootstrap() {
       process.env.FRONTEND_POSTULACIONES_URL,
       process.env.FRONTEND_COORDINADORES_URL,
       process.env.FRONTEND_DIPLOMADO_URL,
+      process.env.FRONTEND_INVESTIGACION_URL,
       process.env.FRONTEND_DOCENTES_URL,
     ].filter((origen): origen is string => Boolean(origen)),
     // Necesario para que el frontend pueda leer el nombre del archivo al

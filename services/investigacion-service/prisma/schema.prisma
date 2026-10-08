@@ -1,0 +1,29 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum EstadoInvestigacion {
+  PENDIENTE
+  APROBADA
+  RECHAZADA
+  CANCELADA
+}
+
+model Investigacion {
+  id            String              @id @default(uuid())
+  nombre        String
+  duracionMeses Int
+  metodologia   String
+  objetivos     String
+  sector        String
+  resumen       String
+  estado        EstadoInvestigacion @default(PENDIENTE)
+  estudianteId  String
+  createdAt     DateTime            @default(now())
+  updatedAt     DateTime            @updatedAt
+}
