@@ -19,8 +19,12 @@ export class CrearDocenteDto {
   email: string;
 
   @IsString()
-  @MinLength(8)
+  @MinLength(8, { message: 'La contraseña debe tener al menos 8 caracteres' })
   @MaxLength(15)
+  @Matches(/^(?=.*[A-Z])(?=.*\d).+$/, {
+    message:
+      'La contraseña debe tener al menos una letra mayúscula y un número',
+  })
   password: string;
 
   @IsString()

@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Param, Post, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  UseGuards,
+} from '@nestjs/common';
 import { InternalAuthGuard } from '../../common/guards/internal-auth.guard.js';
 import { DocentesService } from './docentes.service.js';
 import { CreateDocenteDto } from './dto/create-docente.dto.js';
@@ -14,6 +24,11 @@ export class InternalDocentesController {
     return this.docentesService.crear(dto);
   }
 
+  @Get()
+  listar() {
+    return this.docentesService.listar();
+  }
+
   @Post('asignaciones')
   asignarEstudiante(@Body() dto: AsignarEstudianteDto) {
     return this.docentesService.asignarEstudiante(
@@ -22,15 +37,28 @@ export class InternalDocentesController {
     );
   }
 
+  @Put('asignaciones')
+  reasignarEstudiante(@Body() dto: AsignarEstudianteDto) {
+    return this.docentesService.reasignarEstudiante(
+      dto.docenteId,
+      dto.estudianteId,
+    );
+  }
+
+  @Delete('asignaciones/:estudianteId')
+  retirarAsignacion(
+    @Param('estudianteId', new ParseUUIDPipe()) estudianteId: string,
+  ) {
+    return this.docentesService.retirarAsignacion(estudianteId);
+  }
+
   @Get('asignaciones')
   listarAsignaciones() {
     return this.docentesService.listarAsignaciones();
   }
 
   @Get(':docenteId/asignaciones')
-  listarEstudiantesAsignados(
-    @Param('docenteId') docenteId: string,
-  ) {
+  listarEstudiantesAsignados(@Param('docenteId') docenteId: string) {
     return this.docentesService.listarEstudiantesAsignados(docenteId);
   }
 }

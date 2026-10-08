@@ -1,5 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { obtenerPanelCoordinador } from "../api/coordinadores.js";
+import {
+  asignarDocente,
+  crearDocente,
+  obtenerGestionDocentes,
+  obtenerPanelCoordinador,
+  retirarAsignacionDocente,
+} from "../api/coordinadores.js";
 import { irAlLogin } from "../components/ProtectedRoute.jsx";
 import "./DashboardCoordinador.css";
 
@@ -396,6 +402,433 @@ function DetalleEstudiante({ estudiante, onCerrar }) {
   );
 }
 
+const DOCENTE_INICIAL = {
+  nombre: "",
+  email: "",
+  password: "",
+  identificacion: "",
+  programa: "",
+  especialidad: "",
+};
+
+function GestionDocentes({ gestion, cargando, error, onRecargar }) {
+  const [formulario, setFormulario] = useState(DOCENTE_INICIAL);
+  const [estudianteId, setEstudianteId] = useState("");
+  const [docenteId, setDocenteId] = useState("");
+  const [guardandoDocente, setGuardandoDocente] = useState(false);
+  const [guardandoAsignacion, setGuardandoAsignacion] = useState(false);
+  const [mensaje, setMensaje] = useState(null);
+
+  const estudianteSeleccionado = gestion?.estudiantes.find(
+    (estudiante) => estudiante.id === estudianteId,
+  );
+
+  function cambiarCampo(event) {
+    const { name, value } = event.target;
+    setFormulario((actual) => ({ ...actual, [name]: value }));
+  }
+
+  async function enviarDocente(event) {
+    event.preventDefault();
+    setGuardandoDocente(true);
+    setMensaje(null);
+
+    try {
+      await crearDocente({
+        ...formulario,
+        nombre: formulario.nombre.trim(),
+        email: formulario.email.trim().toLowerCase(),
+        identificacion: formulario.identificacion.trim(),
+        programa: formulario.programa || undefined,
+        especialidad: formulario.especialidad.trim() || undefined,
+      });
+      setFormulario(DOCENTE_INICIAL);
+      setMensaje({ tipo: "exito", texto: "Docente creado correctamente." });
+      await onRecargar();
+    } catch (err) {
+      setMensaje({
+        tipo: "error",
+        texto: err.message || "No fue posible crear el docente.",
+      });
+    } finally {
+      setGuardandoDocente(false);
+    }
+  }
+
+  async function enviarAsignacion(event) {
+    event.preventDefault();
+    if (!estudianteSeleccionado || !docenteId) return;
+
+    const esReasignacion = Boolean(estudianteSeleccionado.docente);
+    setGuardandoAsignacion(true);
+    setMensaje(null);
+
+    try {
+      await asignarDocente({ docenteId, estudianteId }, esReasignacion);
+      setMensaje({
+        tipo: "exito",
+        texto: esReasignacion
+          ? "Docente reasignado correctamente."
+          : "Docente asignado correctamente.",
+      });
+      setEstudianteId("");
+      setDocenteId("");
+      await onRecargar();
+    } catch (err) {
+      setMensaje({
+        tipo: "error",
+        texto: err.message || "No fue posible guardar la asignación.",
+      });
+    } finally {
+      setGuardandoAsignacion(false);
+    }
+  }
+
+  async function retirar(estudiante) {
+    const confirmado = window.confirm(
+      `¿Retirar la asignación de ${estudiante.nombre}?`,
+    );
+    if (!confirmado) return;
+
+    setGuardandoAsignacion(true);
+    setMensaje(null);
+    try {
+      await retirarAsignacionDocente(estudiante.id);
+      setMensaje({
+        tipo: "exito",
+        texto: "La asignación fue retirada correctamente.",
+      });
+      await onRecargar();
+    } catch (err) {
+      setMensaje({
+        tipo: "error",
+        texto: err.message || "No fue posible retirar la asignación.",
+      });
+    } finally {
+      setGuardandoAsignacion(false);
+    }
+  }
+
+  if (cargando || !gestion) {
+    return (
+      <section className="management-loading" aria-live="polite">
+        <div className="loader" />
+        <p>Cargando docentes y asignaciones…</p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="feedback-card management-error" role="alert">
+        <span aria-hidden="true">!</span>
+        <div>
+          <h2>No pudimos cargar la gestión de docentes</h2>
+          <p>{error}</p>
+          <button type="button" onClick={onRecargar}>
+            Intentar de nuevo
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="teacher-management" aria-label="Gestión de docentes">
+      <div className="section-heading management-heading">
+        <div>
+          <span className="eyebrow">Administración académica</span>
+          <h2>Gestión de docentes</h2>
+          <p>Crea cuentas y administra la asignación de estudiantes.</p>
+        </div>
+      </div>
+
+      {mensaje && (
+        <div
+          className={`management-message message-${mensaje.tipo}`}
+          role={mensaje.tipo === "error" ? "alert" : "status"}
+        >
+          {mensaje.texto}
+          <button type="button" onClick={() => setMensaje(null)}>
+            ×
+          </button>
+        </div>
+      )}
+
+      <div className="management-summary">
+        <article>
+          <span>Docentes registrados</span>
+          <strong>{gestion.resumen.totalDocentes}</strong>
+        </article>
+        <article>
+          <span>Estudiantes asignados</span>
+          <strong>{gestion.resumen.estudiantesAsignados}</strong>
+        </article>
+        <article>
+          <span>Estudiantes sin docente</span>
+          <strong>{gestion.resumen.estudiantesSinAsignar}</strong>
+        </article>
+      </div>
+
+      <div className="management-forms">
+        <form className="management-form" onSubmit={enviarDocente}>
+          <div className="form-heading">
+            <span aria-hidden="true">＋</span>
+            <div>
+              <h3>Registrar docente</h3>
+              <p>
+                La cuenta quedará habilitada para ingresar al panel docente.
+              </p>
+            </div>
+          </div>
+
+          <div className="form-grid">
+            <label>
+              <span>Nombre completo</span>
+              <input
+                name="nombre"
+                value={formulario.nombre}
+                onChange={cambiarCampo}
+                maxLength="50"
+                required
+              />
+            </label>
+            <label>
+              <span>Identificación</span>
+              <input
+                name="identificacion"
+                value={formulario.identificacion}
+                onChange={cambiarCampo}
+                maxLength="20"
+                required
+              />
+            </label>
+            <label className="full-field">
+              <span>Correo institucional</span>
+              <input
+                type="email"
+                name="email"
+                value={formulario.email}
+                onChange={cambiarCampo}
+                maxLength="50"
+                required
+              />
+            </label>
+            <label>
+              <span>Programa</span>
+              <select
+                name="programa"
+                value={formulario.programa}
+                onChange={cambiarCampo}
+              >
+                <option value="">Sin programa específico</option>
+                {Object.entries(PROGRAMAS).map(([valor, etiqueta]) => (
+                  <option key={valor} value={valor}>
+                    {etiqueta}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label>
+              <span>Especialidad</span>
+              <input
+                name="especialidad"
+                value={formulario.especialidad}
+                onChange={cambiarCampo}
+                maxLength="100"
+              />
+            </label>
+            <label className="full-field">
+              <span>Contraseña temporal</span>
+              <input
+                type="password"
+                name="password"
+                value={formulario.password}
+                onChange={cambiarCampo}
+                minLength="8"
+                maxLength="15"
+                pattern="(?=.*[A-Z])(?=.*[0-9]).+"
+                title="Debe tener entre 8 y 15 caracteres, una mayúscula y un número"
+                autoComplete="new-password"
+                required
+              />
+              <small>8 a 15 caracteres, con una mayúscula y un número.</small>
+            </label>
+          </div>
+
+          <button className="primary-button" disabled={guardandoDocente}>
+            {guardandoDocente ? "Creando…" : "Crear docente"}
+          </button>
+        </form>
+
+        <form className="management-form" onSubmit={enviarAsignacion}>
+          <div className="form-heading">
+            <span aria-hidden="true">↔</span>
+            <div>
+              <h3>Asignar estudiante</h3>
+              <p>
+                También puedes cambiar el docente de una asignación existente.
+              </p>
+            </div>
+          </div>
+
+          <div className="assignment-fields">
+            <label>
+              <span>Estudiante</span>
+              <select
+                value={estudianteId}
+                onChange={(event) => {
+                  const nuevoId = event.target.value;
+                  const estudiante = gestion.estudiantes.find(
+                    (item) => item.id === nuevoId,
+                  );
+                  setEstudianteId(nuevoId);
+                  setDocenteId(estudiante?.docente?.id || "");
+                }}
+                required
+              >
+                <option value="">Selecciona un estudiante</option>
+                {gestion.estudiantes.map((estudiante) => (
+                  <option key={estudiante.id} value={estudiante.id}>
+                    {estudiante.nombre} · {estudiante.codigo}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            {estudianteSeleccionado?.docente && (
+              <div className="current-assignment">
+                <span>Asignación actual</span>
+                <strong>{estudianteSeleccionado.docente.nombre}</strong>
+                <button
+                  type="button"
+                  disabled={guardandoAsignacion}
+                  onClick={() => retirar(estudianteSeleccionado)}
+                >
+                  Retirar asignación
+                </button>
+              </div>
+            )}
+
+            <label>
+              <span>Docente responsable</span>
+              <select
+                value={docenteId}
+                onChange={(event) => setDocenteId(event.target.value)}
+                required
+              >
+                <option value="">Selecciona un docente</option>
+                {gestion.docentes.map((docente) => (
+                  <option key={docente.id} value={docente.id}>
+                    {docente.nombre} ({docente.estudiantes.length} estudiantes)
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+
+          <button
+            className="primary-button"
+            disabled={
+              guardandoAsignacion ||
+              gestion.docentes.length === 0 ||
+              !estudianteId ||
+              !docenteId ||
+              estudianteSeleccionado?.docente?.id === docenteId
+            }
+          >
+            {guardandoAsignacion
+              ? "Guardando…"
+              : estudianteSeleccionado?.docente
+                ? "Cambiar docente"
+                : "Asignar docente"}
+          </button>
+        </form>
+      </div>
+
+      <div className="teacher-list-heading">
+        <div>
+          <h3>Docentes registrados</h3>
+          <p>{gestion.docentes.length} cuentas disponibles.</p>
+        </div>
+        <button type="button" onClick={onRecargar}>
+          Actualizar
+        </button>
+      </div>
+
+      {gestion.docentes.length === 0 ? (
+        <div className="management-empty">
+          <span aria-hidden="true">◎</span>
+          <p>
+            Aún no hay docentes registrados. Crea el primero con el formulario.
+          </p>
+        </div>
+      ) : (
+        <div className="teacher-grid">
+          {gestion.docentes.map((docente) => (
+            <article className="teacher-card" key={docente.id}>
+              <div className="teacher-card-heading">
+                <span aria-hidden="true">
+                  {docente.nombre
+                    .split(" ")
+                    .slice(0, 2)
+                    .map((parte) => parte[0])
+                    .join("")
+                    .toUpperCase()}
+                </span>
+                <div>
+                  <h4>{docente.nombre}</h4>
+                  <p>{docente.email}</p>
+                </div>
+                <strong>{docente.estudiantes.length}</strong>
+              </div>
+              <dl>
+                <div>
+                  <dt>Identificación</dt>
+                  <dd>{docente.identificacion}</dd>
+                </div>
+                <div>
+                  <dt>Programa</dt>
+                  <dd>{etiquetaPrograma(docente.programa)}</dd>
+                </div>
+                <div>
+                  <dt>Especialidad</dt>
+                  <dd>{docente.especialidad || "Sin registrar"}</dd>
+                </div>
+              </dl>
+              <div className="assigned-students">
+                <span>Estudiantes asignados</span>
+                {docente.estudiantes.length === 0 ? (
+                  <p>Sin estudiantes asignados.</p>
+                ) : (
+                  <ul>
+                    {docente.estudiantes.map((estudiante) => (
+                      <li key={estudiante.id}>
+                        <span>
+                          <strong>{estudiante.nombre}</strong>
+                          <small>{estudiante.codigo}</small>
+                        </span>
+                        <button
+                          type="button"
+                          disabled={guardandoAsignacion}
+                          onClick={() => retirar(estudiante)}
+                          aria-label={`Retirar asignación de ${estudiante.nombre}`}
+                        >
+                          ×
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+            </article>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function LoadingState() {
   return (
     <main className="dashboard-main" aria-live="polite">
@@ -412,9 +845,13 @@ function LoadingState() {
 }
 
 export default function DashboardCoordinador({ usuario }) {
+  const [seccion, setSeccion] = useState("estudiantes");
   const [panel, setPanel] = useState(null);
   const [cargando, setCargando] = useState(true);
   const [error, setError] = useState("");
+  const [gestionDocentes, setGestionDocentes] = useState(null);
+  const [cargandoDocentes, setCargandoDocentes] = useState(false);
+  const [errorDocentes, setErrorDocentes] = useState("");
   const [busqueda, setBusqueda] = useState("");
   const [programa, setPrograma] = useState("TODOS");
   const [estado, setEstado] = useState("TODOS");
@@ -442,6 +879,31 @@ export default function DashboardCoordinador({ usuario }) {
   useEffect(() => {
     cargarPanel();
   }, [cargarPanel]);
+
+  const cargarDocentes = useCallback(async () => {
+    setCargandoDocentes(true);
+    setErrorDocentes("");
+    try {
+      const datos = await obtenerGestionDocentes();
+      setGestionDocentes(datos);
+    } catch (err) {
+      if (err.status === 401 || err.status === 403) {
+        irAlLogin();
+        return;
+      }
+      setErrorDocentes(
+        err.message || "No fue posible cargar la gestión de docentes.",
+      );
+    } finally {
+      setCargandoDocentes(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (seccion === "docentes" && !gestionDocentes && !cargandoDocentes) {
+      cargarDocentes();
+    }
+  }, [cargarDocentes, cargandoDocentes, gestionDocentes, seccion]);
 
   const programas = useMemo(
     () =>
@@ -542,56 +1004,84 @@ export default function DashboardCoordinador({ usuario }) {
             </div>
           </section>
 
-          <Resumen resumen={panel.resumen} />
+          <nav className="dashboard-tabs" aria-label="Secciones del panel">
+            <button
+              type="button"
+              className={seccion === "estudiantes" ? "active" : ""}
+              onClick={() => setSeccion("estudiantes")}
+            >
+              Seguimiento de estudiantes
+            </button>
+            <button
+              type="button"
+              className={seccion === "docentes" ? "active" : ""}
+              onClick={() => setSeccion("docentes")}
+            >
+              Gestión de docentes
+            </button>
+          </nav>
 
-          <Filtros
-            busqueda={busqueda}
-            setBusqueda={setBusqueda}
-            programa={programa}
-            setPrograma={setPrograma}
-            estado={estado}
-            setEstado={setEstado}
-            programas={programas}
-            cantidad={estudiantesFiltrados.length}
-            total={panel.estudiantes.length}
-          />
-
-          {panel.estudiantes.length === 0 ? (
-            <section className="feedback-card empty-card">
-              <span aria-hidden="true">◎</span>
-              <div>
-                <h2>Aún no hay estudiantes registrados</h2>
-                <p>
-                  Los estudiantes aparecerán aquí cuando existan perfiles
-                  creados.
-                </p>
-              </div>
-            </section>
-          ) : estudiantesFiltrados.length === 0 ? (
-            <section className="feedback-card empty-card">
-              <span aria-hidden="true">⌕</span>
-              <div>
-                <h2>No encontramos resultados</h2>
-                <p>Prueba con otro nombre, programa o estado.</p>
-              </div>
-            </section>
+          {seccion === "docentes" ? (
+            <GestionDocentes
+              gestion={gestionDocentes}
+              cargando={cargandoDocentes}
+              error={errorDocentes}
+              onRecargar={cargarDocentes}
+            />
           ) : (
             <>
-              <TablaEstudiantes
-                estudiantes={estudiantesFiltrados}
-                seleccionadoId={seleccionadoId}
-                onSeleccionar={alternarDetalle}
+              <Resumen resumen={panel.resumen} />
+
+              <Filtros
+                busqueda={busqueda}
+                setBusqueda={setBusqueda}
+                programa={programa}
+                setPrograma={setPrograma}
+                estado={estado}
+                setEstado={setEstado}
+                programas={programas}
+                cantidad={estudiantesFiltrados.length}
+                total={panel.estudiantes.length}
               />
-              <TarjetasEstudiantes
-                estudiantes={estudiantesFiltrados}
-                seleccionadoId={seleccionadoId}
-                onSeleccionar={alternarDetalle}
-              />
-              {estudianteSeleccionado && (
-                <DetalleEstudiante
-                  estudiante={estudianteSeleccionado}
-                  onCerrar={() => setSeleccionadoId(null)}
-                />
+
+              {panel.estudiantes.length === 0 ? (
+                <section className="feedback-card empty-card">
+                  <span aria-hidden="true">◎</span>
+                  <div>
+                    <h2>Aún no hay estudiantes registrados</h2>
+                    <p>
+                      Los estudiantes aparecerán aquí cuando existan perfiles
+                      creados.
+                    </p>
+                  </div>
+                </section>
+              ) : estudiantesFiltrados.length === 0 ? (
+                <section className="feedback-card empty-card">
+                  <span aria-hidden="true">⌕</span>
+                  <div>
+                    <h2>No encontramos resultados</h2>
+                    <p>Prueba con otro nombre, programa o estado.</p>
+                  </div>
+                </section>
+              ) : (
+                <>
+                  <TablaEstudiantes
+                    estudiantes={estudiantesFiltrados}
+                    seleccionadoId={seleccionadoId}
+                    onSeleccionar={alternarDetalle}
+                  />
+                  <TarjetasEstudiantes
+                    estudiantes={estudiantesFiltrados}
+                    seleccionadoId={seleccionadoId}
+                    onSeleccionar={alternarDetalle}
+                  />
+                  {estudianteSeleccionado && (
+                    <DetalleEstudiante
+                      estudiante={estudianteSeleccionado}
+                      onCerrar={() => setSeleccionadoId(null)}
+                    />
+                  )}
+                </>
               )}
             </>
           )}

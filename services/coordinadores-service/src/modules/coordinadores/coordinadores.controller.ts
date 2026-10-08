@@ -1,4 +1,15 @@
-import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Post,
+  Put,
+  Req,
+  UseGuards,
+} from '@nestjs/common';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard.js';
 import { CoordinadoresService } from './coordinadores.service.js';
 import { CrearDocenteDto } from './dto/crear-docente.dto.js';
@@ -15,21 +26,33 @@ export class CoordinadoresController {
   }
 
   @Post('docentes')
-  async crearDocente(
-    @Req() request: any,
-    @Body() dto: CrearDocenteDto,
-  ) {
+  async crearDocente(@Req() request: any, @Body() dto: CrearDocenteDto) {
     return this.coordinadoresService.crearDocente(request.user, dto);
   }
 
+  @Get('docentes')
+  async listarDocentes(@Req() request: any) {
+    return this.coordinadoresService.listarDocentes(request.user);
+  }
+
   @Post('asignaciones-docentes')
-  async asignarDocente(
+  async asignarDocente(@Req() request: any, @Body() dto: AsignarDocenteDto) {
+    return this.coordinadoresService.asignarDocente(request.user, dto);
+  }
+
+  @Put('asignaciones-docentes')
+  async reasignarDocente(@Req() request: any, @Body() dto: AsignarDocenteDto) {
+    return this.coordinadoresService.reasignarDocente(request.user, dto);
+  }
+
+  @Delete('asignaciones-docentes/:estudianteId')
+  async retirarAsignacion(
     @Req() request: any,
-    @Body() dto: AsignarDocenteDto,
+    @Param('estudianteId', new ParseUUIDPipe()) estudianteId: string,
   ) {
-    return this.coordinadoresService.asignarDocente(
+    return this.coordinadoresService.retirarAsignacion(
       request.user,
-      dto,
+      estudianteId,
     );
   }
 }

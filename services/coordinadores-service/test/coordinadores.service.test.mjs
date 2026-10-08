@@ -9,6 +9,7 @@ const configurarEntorno = () => {
   process.env.EMPRESAS_SERVICE_URL = 'http://empresas';
   process.env.ESTUDIANTES_SERVICE_URL = 'http://estudiantes';
   process.env.POSTULACIONES_SERVICE_URL = 'http://postulaciones';
+  process.env.DOCENTES_SERVICE_URL = 'http://docentes';
 };
 
 test('rechaza usuarios que no tienen rol COORDINADOR', async () => {
@@ -154,6 +155,112 @@ test('arma el panel ordenado y no filtra observaciones ni datos del CV', async (
     assert.equal(respuestaSerializada.includes('observacionesEmpresa'), false);
     assert.equal(respuestaSerializada.includes('hojaVidaUrl'), false);
     assert.equal(respuestaSerializada.includes('updatedAt'), false);
+  } finally {
+    axios.get = getOriginal;
+  }
+});
+
+test('lista docentes con sus estudiantes y las asignaciones disponibles', async () => {
+  configurarEntorno();
+  const service = new CoordinadoresService();
+  const getOriginal = axios.get;
+
+  axios.get = async (url, config = {}) => {
+    assert.equal(config.headers['x-internal-key'], 'clave-interna-prueba');
+
+    if (url === 'http://auth/internal/usuarios') {
+      return {
+        data: [
+          {
+            id: 'usuario-docente',
+            nombre: 'Carlos Docente',
+            email: 'carlos@prueba.com',
+            rol: 'DOCENTE',
+          },
+          {
+            id: 'usuario-estudiante-1',
+            nombre: 'Ana Estudiante',
+            email: 'ana@prueba.com',
+            rol: 'ESTUDIANTE',
+          },
+          {
+            id: 'usuario-estudiante-2',
+            nombre: 'Zoe Estudiante',
+            email: 'zoe@prueba.com',
+            rol: 'ESTUDIANTE',
+          },
+        ],
+      };
+    }
+
+    if (url === 'http://estudiantes/internal/estudiantes') {
+      return {
+        data: [
+          {
+            id: 'estudiante-1',
+            usuarioId: 'usuario-estudiante-1',
+            codigo: '001',
+            programa: 'INGENIERO_AGROPECUARIO',
+            semestre: 9,
+          },
+          {
+            id: 'estudiante-2',
+            usuarioId: 'usuario-estudiante-2',
+            codigo: '002',
+            programa: 'TECNOLOGIA_AGROPECUARIA',
+            semestre: 7,
+          },
+        ],
+      };
+    }
+
+    if (url === 'http://docentes/internal/docentes') {
+      return {
+        data: [
+          {
+            id: 'docente-1',
+            usuarioId: 'usuario-docente',
+            identificacion: '12345',
+            programa: 'INGENIERO_AGROPECUARIO',
+            especialidad: 'Suelos',
+          },
+        ],
+      };
+    }
+
+    if (url === 'http://docentes/internal/docentes/asignaciones') {
+      return {
+        data: [
+          {
+            id: 'asignacion-1',
+            docenteId: 'docente-1',
+            estudianteId: 'estudiante-1',
+            fechaAsignacion: '2026-10-08T10:00:00.000Z',
+          },
+        ],
+      };
+    }
+
+    throw new Error(`URL inesperada en prueba: ${url}`);
+  };
+
+  try {
+    const gestion = await service.listarDocentes({
+      sub: 'coordinador-1',
+      email: 'coordinador@prueba.com',
+      rol: 'COORDINADOR',
+    });
+
+    assert.deepEqual(gestion.resumen, {
+      totalDocentes: 1,
+      estudiantesAsignados: 1,
+      estudiantesSinAsignar: 1,
+    });
+    assert.equal(gestion.docentes[0].nombre, 'Carlos Docente');
+    assert.equal(gestion.docentes[0].estudiantes[0].nombre, 'Ana Estudiante');
+    assert.equal(gestion.estudiantes[0].docente.nombre, 'Carlos Docente');
+    assert.equal(gestion.estudiantes[1].docente, null);
+    assert.equal(JSON.stringify(gestion).includes('password'), false);
   } finally {
     axios.get = getOriginal;
   }

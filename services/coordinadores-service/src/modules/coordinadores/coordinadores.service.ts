@@ -1,4 +1,10 @@
-import { ForbiddenException, HttpException, Injectable, InternalServerErrorException, NotFoundException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  HttpException,
+  Injectable,
+  InternalServerErrorException,
+  NotFoundException,
+} from '@nestjs/common';
 import axios from 'axios';
 import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 import { CrearDocenteDto } from './dto/crear-docente.dto.js';
@@ -34,6 +40,21 @@ interface OfertaInterna {
     nombreEmpresa: string;
     sector: string;
   };
+}
+
+interface DocenteInterno {
+  id: string;
+  usuarioId: string;
+  identificacion: string;
+  programa: string | null;
+  especialidad: string | null;
+}
+
+interface AsignacionDocenteInterna {
+  id: string;
+  docenteId: string;
+  estudianteId: string;
+  fechaAsignacion: string;
 }
 
 @Injectable()
@@ -206,23 +227,162 @@ export class CoordinadoresService {
   async crearDocente(payload: JwtPayload, dto: CrearDocenteDto) {
     this.asegurarRolCoordinador(payload);
 
-    const respuesta = await axios.post(
-      `${this.urlServicio('AUTH_SERVICE_URL')}/internal/usuarios/docente`,
-      dto,
-      {
-        headers: this.headersInternos(),
-      },
-    );
+    try {
+      const respuesta = await axios.post(
+        `${this.urlServicio('AUTH_SERVICE_URL')}/internal/usuarios/docente`,
+        dto,
+        {
+          headers: this.headersInternos(),
+        },
+      );
 
-    return respuesta.data;
+      return respuesta.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const data = error.response.data as { message?: string | string[] };
+        throw new HttpException(
+          data?.message ?? 'Error al crear el docente',
+          error.response.status,
+        );
+      }
+
+      throw new InternalServerErrorException(
+        'No fue posible comunicarse con auth-service',
+      );
+    }
   }
 
-  async asignarDocente(
-    payload: JwtPayload,
-    dto: AsignarDocenteDto,
-  ) {
+  async listarDocentes(payload: JwtPayload) {
     this.asegurarRolCoordinador(payload);
 
+    const [
+      respuestaUsuarios,
+      respuestaEstudiantes,
+      respuestaDocentes,
+      respuestaAsignaciones,
+    ] = await Promise.all([
+      axios.get<UsuarioInterno[]>(
+        `${this.urlServicio('AUTH_SERVICE_URL')}/internal/usuarios`,
+        { headers: this.headersInternos() },
+      ),
+      axios.get<EstudianteInterno[]>(
+        `${this.urlServicio('ESTUDIANTES_SERVICE_URL')}/internal/estudiantes`,
+        { headers: this.headersInternos() },
+      ),
+      axios.get<DocenteInterno[]>(
+        `${this.urlServicio('DOCENTES_SERVICE_URL')}/internal/docentes`,
+        { headers: this.headersInternos() },
+      ),
+      axios.get<AsignacionDocenteInterna[]>(
+        `${this.urlServicio('DOCENTES_SERVICE_URL')}/internal/docentes/asignaciones`,
+        { headers: this.headersInternos() },
+      ),
+    ]);
+
+    const usuariosPorId = new Map(
+      respuestaUsuarios.data.map((usuario) => [usuario.id, usuario]),
+    );
+    const estudiantesPorId = new Map(
+      respuestaEstudiantes.data.map((estudiante) => [
+        estudiante.id,
+        estudiante,
+      ]),
+    );
+    const docentesPorId = new Map(
+      respuestaDocentes.data.map((docente) => [docente.id, docente]),
+    );
+    const asignacionesPorEstudiante = new Map(
+      respuestaAsignaciones.data.map((asignacion) => [
+        asignacion.estudianteId,
+        asignacion,
+      ]),
+    );
+
+    const docentes = respuestaDocentes.data
+      .map((docente) => {
+        const usuario = usuariosPorId.get(docente.usuarioId);
+        const estudiantes = respuestaAsignaciones.data
+          .filter((asignacion) => asignacion.docenteId === docente.id)
+          .map((asignacion) => {
+            const estudiante = estudiantesPorId.get(asignacion.estudianteId);
+            const usuarioEstudiante = estudiante
+              ? usuariosPorId.get(estudiante.usuarioId)
+              : undefined;
+
+            return {
+              id: asignacion.estudianteId,
+              nombre: usuarioEstudiante?.nombre ?? 'Estudiante no disponible',
+              email: usuarioEstudiante?.email ?? '',
+              codigo: estudiante?.codigo ?? '',
+              programa: estudiante?.programa ?? '',
+              semestre: estudiante?.semestre ?? null,
+              fechaAsignacion: asignacion.fechaAsignacion,
+            };
+          })
+          .sort((a, b) =>
+            a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }),
+          );
+
+        return {
+          id: docente.id,
+          usuarioId: docente.usuarioId,
+          nombre: usuario?.nombre ?? 'Docente no disponible',
+          email: usuario?.email ?? '',
+          identificacion: docente.identificacion,
+          programa: docente.programa,
+          especialidad: docente.especialidad,
+          estudiantes,
+        };
+      })
+      .sort((a, b) =>
+        a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }),
+      );
+
+    const estudiantes = respuestaEstudiantes.data
+      .map((estudiante) => {
+        const usuario = usuariosPorId.get(estudiante.usuarioId);
+        const asignacion = asignacionesPorEstudiante.get(estudiante.id);
+        const docente = asignacion
+          ? docentesPorId.get(asignacion.docenteId)
+          : undefined;
+        const usuarioDocente = docente
+          ? usuariosPorId.get(docente.usuarioId)
+          : undefined;
+
+        return {
+          id: estudiante.id,
+          nombre: usuario?.nombre ?? 'Estudiante no disponible',
+          email: usuario?.email ?? '',
+          codigo: estudiante.codigo,
+          programa: estudiante.programa,
+          semestre: estudiante.semestre,
+          docente: docente
+            ? {
+                id: docente.id,
+                nombre: usuarioDocente?.nombre ?? 'Docente no disponible',
+              }
+            : null,
+          fechaAsignacion: asignacion?.fechaAsignacion ?? null,
+        };
+      })
+      .sort((a, b) =>
+        a.nombre.localeCompare(b.nombre, 'es', { sensitivity: 'base' }),
+      );
+
+    return {
+      resumen: {
+        totalDocentes: docentes.length,
+        estudiantesAsignados: respuestaAsignaciones.data.length,
+        estudiantesSinAsignar: estudiantes.filter(
+          (estudiante) => !estudiante.docente,
+        ).length,
+      },
+      docentes,
+      estudiantes,
+    };
+  }
+
+  private async asegurarEstudianteExiste(estudianteId: string) {
     const respuestaEstudiantes = await axios.get<EstudianteInterno[]>(
       `${this.urlServicio('ESTUDIANTES_SERVICE_URL')}/internal/estudiantes`,
       {
@@ -231,12 +391,18 @@ export class CoordinadoresService {
     );
 
     const estudianteExiste = respuestaEstudiantes.data.some(
-      (estudiante) => estudiante.id === dto.estudianteId,
+      (estudiante) => estudiante.id === estudianteId,
     );
 
     if (!estudianteExiste) {
       throw new NotFoundException('Estudiante no encontrado');
     }
+  }
+
+  async asignarDocente(payload: JwtPayload, dto: AsignarDocenteDto) {
+    this.asegurarRolCoordinador(payload);
+
+    await this.asegurarEstudianteExiste(dto.estudianteId);
 
     try {
       const respuesta = await axios.post(
@@ -262,6 +428,59 @@ export class CoordinadoresService {
         throw new HttpException(
           data?.message ?? 'Error al asignar el docente',
           status,
+        );
+      }
+
+      throw new InternalServerErrorException(
+        'No fue posible comunicarse con docentes-service',
+      );
+    }
+  }
+
+  async reasignarDocente(payload: JwtPayload, dto: AsignarDocenteDto) {
+    this.asegurarRolCoordinador(payload);
+    await this.asegurarEstudianteExiste(dto.estudianteId);
+
+    try {
+      const respuesta = await axios.put(
+        `${this.urlServicio('DOCENTES_SERVICE_URL')}/internal/docentes/asignaciones`,
+        dto,
+        { headers: this.headersInternos() },
+      );
+
+      return respuesta.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const data = error.response.data as { message?: string | string[] };
+        throw new HttpException(
+          data?.message ?? 'Error al reasignar el docente',
+          error.response.status,
+        );
+      }
+
+      throw new InternalServerErrorException(
+        'No fue posible comunicarse con docentes-service',
+      );
+    }
+  }
+
+  async retirarAsignacion(payload: JwtPayload, estudianteId: string) {
+    this.asegurarRolCoordinador(payload);
+    await this.asegurarEstudianteExiste(estudianteId);
+
+    try {
+      const respuesta = await axios.delete(
+        `${this.urlServicio('DOCENTES_SERVICE_URL')}/internal/docentes/asignaciones/${estudianteId}`,
+        { headers: this.headersInternos() },
+      );
+
+      return respuesta.data;
+    } catch (error) {
+      if (axios.isAxiosError(error) && error.response) {
+        const data = error.response.data as { message?: string | string[] };
+        throw new HttpException(
+          data?.message ?? 'Error al retirar la asignación',
+          error.response.status,
         );
       }
 
