@@ -12,7 +12,10 @@ const payloadDocente = {
 function crearPrisma() {
   return {
     docente: {
-      findUnique: async () => ({ id: 'docente-1', usuarioId: payloadDocente.sub }),
+      findUnique: async () => ({
+        id: 'docente-1',
+        usuarioId: payloadDocente.sub,
+      }),
     },
     asignacionDocente: {
       findMany: async () => [
@@ -163,4 +166,61 @@ test('conserva los datos disponibles y avisa cuando falla un modulo', async () =
   } finally {
     axios.get = getOriginal
   }
+})
+
+test('reasigna un estudiante sin crear una asignacion duplicada', async () => {
+  const operaciones = []
+  const prisma = {
+    docente: {
+      findUnique: async ({ where }) =>
+        where.id === 'docente-nuevo' ? { id: 'docente-nuevo' } : null,
+    },
+    asignacionDocente: {
+      findUnique: async () => ({
+        id: 'asignacion-1',
+        docenteId: 'docente-anterior',
+        estudianteId: 'estudiante-1',
+      }),
+      update: async (operacion) => {
+        operaciones.push(operacion)
+        return { id: 'asignacion-1', ...operacion.data }
+      },
+    },
+  }
+
+  const servicio = new DocentesService(prisma)
+  const resultado = await servicio.reasignarEstudiante(
+    'docente-nuevo',
+    'estudiante-1',
+  )
+
+  assert.equal(operaciones.length, 1)
+  assert.deepEqual(operaciones[0].where, { estudianteId: 'estudiante-1' })
+  assert.equal(operaciones[0].data.docenteId, 'docente-nuevo')
+  assert.ok(operaciones[0].data.fechaAsignacion instanceof Date)
+  assert.equal(resultado.docenteId, 'docente-nuevo')
+})
+
+test('retira una asignacion existente por estudiante', async () => {
+  let eliminado = null
+  const asignacion = {
+    id: 'asignacion-1',
+    docenteId: 'docente-1',
+    estudianteId: 'estudiante-1',
+  }
+  const prisma = {
+    asignacionDocente: {
+      findUnique: async () => asignacion,
+      delete: async (operacion) => {
+        eliminado = operacion
+        return asignacion
+      },
+    },
+  }
+
+  const servicio = new DocentesService(prisma)
+  const resultado = await servicio.retirarAsignacion('estudiante-1')
+
+  assert.deepEqual(eliminado, { where: { estudianteId: 'estudiante-1' } })
+  assert.deepEqual(resultado, asignacion)
 })

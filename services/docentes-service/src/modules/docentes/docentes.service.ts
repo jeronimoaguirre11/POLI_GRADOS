@@ -156,15 +156,12 @@ export class DocentesService {
       throw new NotFoundException('Docente no encontrado');
     }
 
-    const asignacionExistente =
-      await this.prisma.asignacionDocente.findUnique({
-        where: { estudianteId },
-      });
+    const asignacionExistente = await this.prisma.asignacionDocente.findUnique({
+      where: { estudianteId },
+    });
 
     if (asignacionExistente) {
-      throw new ConflictException(
-        'El estudiante ya tiene un docente asignado',
-      );
+      throw new ConflictException('El estudiante ya tiene un docente asignado');
     }
 
     return this.prisma.asignacionDocente.create({
@@ -172,6 +169,50 @@ export class DocentesService {
         docenteId,
         estudianteId,
       },
+    });
+  }
+
+  async reasignarEstudiante(docenteId: string, estudianteId: string) {
+    const docente = await this.prisma.docente.findUnique({
+      where: { id: docenteId },
+    });
+
+    if (!docente) {
+      throw new NotFoundException('Docente no encontrado');
+    }
+
+    const asignacion = await this.prisma.asignacionDocente.findUnique({
+      where: { estudianteId },
+    });
+
+    if (!asignacion) {
+      throw new NotFoundException('El estudiante no tiene un docente asignado');
+    }
+
+    if (asignacion.docenteId === docenteId) {
+      return asignacion;
+    }
+
+    return this.prisma.asignacionDocente.update({
+      where: { estudianteId },
+      data: {
+        docenteId,
+        fechaAsignacion: new Date(),
+      },
+    });
+  }
+
+  async retirarAsignacion(estudianteId: string) {
+    const asignacion = await this.prisma.asignacionDocente.findUnique({
+      where: { estudianteId },
+    });
+
+    if (!asignacion) {
+      throw new NotFoundException('El estudiante no tiene un docente asignado');
+    }
+
+    return this.prisma.asignacionDocente.delete({
+      where: { estudianteId },
     });
   }
 
@@ -230,9 +271,7 @@ export class DocentesService {
       return [];
     }
 
-    const ids = asignaciones.map(
-      (asignacion) => asignacion.estudianteId,
-    );
+    const ids = asignaciones.map((asignacion) => asignacion.estudianteId);
 
     try {
       const respuesta = await axios.get(
@@ -255,17 +294,15 @@ export class DocentesService {
       const idsUsuarios = estudiantes.map((estudiante) => estudiante.usuarioId);
 
       const resultados = await Promise.allSettled([
-        this.consultarResumen<ResumenPracticas>(
-          'POSTULACIONES_SERVICE_URL',
-          { estudianteIds: idsEstudiantes.join(',') },
-        ),
+        this.consultarResumen<ResumenPracticas>('POSTULACIONES_SERVICE_URL', {
+          estudianteIds: idsEstudiantes.join(','),
+        }),
         this.consultarResumen<ResumenPorUsuario>('DIPLOMADO_SERVICE_URL', {
           usuarioIds: idsUsuarios.join(','),
         }),
-        this.consultarResumen<ResumenPorUsuario>(
-          'INVESTIGACION_SERVICE_URL',
-          { usuarioIds: idsUsuarios.join(',') },
-        ),
+        this.consultarResumen<ResumenPorUsuario>('INVESTIGACION_SERVICE_URL', {
+          usuarioIds: idsUsuarios.join(','),
+        }),
       ]);
 
       const nombresServicios: ResumenModalidad['tipo'][] = [

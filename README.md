@@ -161,6 +161,11 @@ El rol `COORDINADOR` dispone de un panel de seguimiento institucional en
 `http://localhost:5177`. El frontend consulta, siempre a través del gateway:
 
 - `GET /coordinadores/panel`
+- `GET /coordinadores/docentes`
+- `POST /coordinadores/docentes`
+- `POST /coordinadores/asignaciones-docentes`
+- `PUT /coordinadores/asignaciones-docentes`
+- `DELETE /coordinadores/asignaciones-docentes/:estudianteId`
 
 El servicio valida el JWT y rechaza cualquier rol diferente de
 `COORDINADOR`. Luego obtiene estudiantes, usuarios, postulaciones y ofertas
@@ -174,10 +179,15 @@ El panel permite:
 - buscar por nombre, correo o código;
 - filtrar por programa y estado;
 - desplegar las postulaciones de cada estudiante con oferta, empresa, fecha y
-  estado.
+  estado;
+- registrar cuentas de docentes con sus datos académicos;
+- consultar los docentes y sus estudiantes asignados;
+- asignar, reasignar o retirar el docente responsable de un estudiante.
 
-El coordinador es de solo lectura: no cambia las decisiones de las empresas y
-no recibe observaciones privadas ni archivos de hojas de vida.
+El coordinador no cambia las decisiones de las empresas y no recibe
+observaciones privadas ni archivos de hojas de vida. La gestión de docentes se
+realiza mediante llamadas internas protegidas entre `coordinadores-service`,
+`auth-service`, `estudiantes-service` y `docentes-service`.
 
 ## Módulo de docentes
 
