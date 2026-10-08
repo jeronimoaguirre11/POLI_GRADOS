@@ -4,8 +4,8 @@ Plataforma para conectar empresas que publican convocatorias de práctica con
 estudiantes que desean postularse.
 
 El proyecto está construido como una **arquitectura de microservicios**: un
-API Gateway, cuatro servicios dueños de datos y un servicio coordinador que
-integra información de los demás dominios, junto con cinco frontends
+API Gateway, siete servicios dueños de datos y un servicio coordinador que
+integra información de los demás dominios, junto con ocho frontends
 independientes. Todo corre localmente sin contenedores salvo la instancia
 compartida de PostgreSQL.
 
@@ -14,7 +14,7 @@ compartida de PostgreSQL.
 ```
 POLI_GRADOS/
   docker-compose.yml            → Postgres compartido (una base por servicio)
-  db-init/                      → script de creación de las 4 bases al clonar de cero
+  db-init/                      → script de creación de las 7 bases al clonar de cero
   gateway/                      → API Gateway (NestJS), puerto 3000
   services/
     auth-service/                puerto 3001 · DB auth_db          → Usuario
@@ -22,18 +22,24 @@ POLI_GRADOS/
     estudiantes-service/         puerto 3003 · DB estudiantes_db   → Estudiante
     postulaciones-service/       puerto 3004 · DB postulaciones_db → Postulacion
     coordinadores-service/       puerto 3005 · sin DB propia       → seguimiento institucional
+    diplomado-service/           puerto 3006 · DB diplomados_db    → Diplomado, Inscripcion
+    investigacion-service/       puerto 3007 · DB investigacion_db → Investigacion
+    docentes-service/            puerto 3008 · DB docentes_db      → Docente, AsignacionDocente
   frontends/
     frontend-auth/                puerto 5173 — Home, Login, Registro
     frontend-empresas/             puerto 5174 — Dashboard de empresa (perfil, ofertas, postulantes)
     frontend-estudiantes/          puerto 5175 — Dashboard de estudiante (perfil, modalidades)
     frontend-postulaciones/        puerto 5176 — Convocatorias disponibles / mis postulaciones
     frontend-coordinadores/        puerto 5177 — Panel general de seguimiento
+    frontend-diplomado/            puerto 5178 — Oferta e inscripción a diplomados
+    frontend-investigacion/        puerto 5179 — Propuestas de investigación
+    frontend-docentes/             puerto 5180 — Seguimiento de estudiantes asignados
 ```
 
-El **gateway** es el único punto de entrada para los 5 frontends: reenvía
+El **gateway** es el único punto de entrada para los 8 frontends: reenvía
 `/auth`, `/empresas`, `/ofertas`, `/estudiantes`, `/postulaciones` y
-`/coordinadores` al backend correspondiente. Ningún frontend le habla directo
-a un microservicio.
+`/coordinadores`, `/diplomados`, `/investigaciones` y `/docentes` al backend
+correspondiente. Ningún frontend le habla directo a un microservicio.
 
 Cada backend valida el JWT con el mismo `JWT_SECRET` (no hay llamada a
 auth-service para validar tokens), y las llamadas entre servicios (por
@@ -49,8 +55,8 @@ auth-service).
 
 ## Cómo levantar el proyecto
 
-Se necesitan **11 procesos** corriendo en paralelo, cada uno en su propia
-terminal.
+Se necesitan **17 procesos de aplicación** corriendo en paralelo: el gateway,
+ocho microservicios y ocho frontends, además de PostgreSQL en Docker.
 
 ### 1. Base de datos
 
@@ -60,11 +66,11 @@ docker compose up -d
 
 Esto levanta Postgres en el puerto `5433` con el contenedor
 `trabajo-grado-db`. Si es la primera vez que se crea el volumen, `db-init/`
-crea las 4 bases automáticamente. Si el volumen ya existía de una versión
+crea las 7 bases automáticamente. Si el volumen ya existía de una versión
 anterior del proyecto (monolítica), las bases nuevas se crean una sola vez a
 mano — ver `db-init/README.md`.
 
-### 2. Backends (gateway + 5 microservicios)
+### 2. Backends (gateway + 8 microservicios)
 
 Para cada carpeta en `gateway/` y `services/*`:
 
@@ -72,12 +78,12 @@ Para cada carpeta en `gateway/` y `services/*`:
 cd gateway   # o cualquiera de las carpetas services/*
 npm install
 # Crear el .env de ese servicio (ver la sección de variables de entorno)
-npx prisma generate       # solo en los 4 servicios que tienen prisma/
-npx prisma migrate deploy # solo en esos 4 servicios
+npx prisma generate       # solo en los 7 servicios que tienen prisma/
+npx prisma migrate deploy # solo en esos 7 servicios
 npm run start:dev
 ```
 
-Variables de entorno compartidas entre los 5 microservicios (deben ser
+Variables de entorno compartidas entre los microservicios (deben ser
 **idénticas** en todos):
 
 ```
@@ -88,11 +94,10 @@ INTERNAL_API_KEY="<CLAVE_INTERNA_LARGA_Y_ALEATORIA>"
 No reutilices literalmente los marcadores anteriores. Genera dos valores
 distintos para tu entorno local y no los subas al repositorio.
 
-Además cada servicio de datos tiene su propio `PORT` y `DATABASE_URL`
-apuntando a su base (`auth_db`, `empresas_db`, `estudiantes_db`,
-`postulaciones_db`). `coordinadores-service` no usa Prisma: consulta a los
-otros servicios mediante sus rutas internas. El gateway tiene las cinco
-`*_SERVICE_URL` apuntando a `http://localhost:<puerto>`.
+Además cada servicio de datos tiene su propio `PORT` y `DATABASE_URL`.
+`coordinadores-service` no usa Prisma: consulta a los otros servicios mediante
+sus rutas internas. El gateway tiene las URL de los ocho servicios apuntando
+a `http://localhost:<puerto>`.
 
 ### 3. Frontends
 
@@ -174,6 +179,24 @@ El panel permite:
 El coordinador es de solo lectura: no cambia las decisiones de las empresas y
 no recibe observaciones privadas ni archivos de hojas de vida.
 
+## Módulo de docentes
+
+El rol `DOCENTE` dispone de un panel en `http://localhost:5180`. Además de su
+perfil, puede consultar los estudiantes que le fueron asignados y el proceso
+de grado activo de cada uno:
+
+- prácticas profesionales, mostrando la convocatoria y la empresa cuando el
+  estudiante fue seleccionado;
+- diplomado, mostrando el nombre, la duración y el estado de la inscripción;
+- investigación, mostrando el nombre, el sector y si está pendiente o
+  aprobada.
+
+`docentes-service` obtiene esos datos por rutas internas protegidas de
+Postulaciones, Diplomado e Investigación. Solo recibe un resumen académico:
+no expone hojas de vida, observaciones empresariales, metodología, objetivos
+ni el contenido de la propuesta. Si uno de los módulos no está disponible,
+el panel conserva los datos de los otros y avisa cuál no pudo verificarse.
+
 ### Crear una cuenta de coordinador
 
 El registro público solo permite cuentas de estudiante y empresa. Una cuenta
@@ -198,11 +221,6 @@ sprints para el semestre (autenticación, catálogo de servicios, módulos de
 investigación/diplomado/prácticas, empresas, coordinador). Los módulos de
 **Auth**, **Estudiantes**, **Empresas** y **Postulaciones** se implementaron
 primero en el monolito y luego se migraron a la arquitectura de
-microservicios descrita arriba. El panel de seguimiento de **Coordinación** se
-agregó después como un servicio de integración sobre esos dominios, para
-cumplir con el requisito del curso de dividir el sistema en varios backends y
-frontends independientes. Investigación, Diplomado y la asignación de
-docentes aún no tienen un flujo backend completo. Cuando se implementen sus modelos
-`Investigacion`, `Diplomado`, `Practica`, `Docente` y `ProcesoGrado`, el panel
-de coordinación podrá incorporar ese seguimiento sin mezclar las bases de
-datos de los dominios.
+microservicios descrita arriba. Después se agregaron Coordinación, Diplomado,
+Investigación y Docentes como módulos independientes. El seguimiento del
+docente integra esos dominios por HTTP sin mezclar sus bases de datos.

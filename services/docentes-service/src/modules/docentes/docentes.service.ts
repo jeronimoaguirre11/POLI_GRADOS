@@ -11,6 +11,30 @@ import { CreateDocenteDto } from './dto/create-docente.dto.js';
 import { UpdateDocenteDto } from './dto/update-docente.dto.js';
 import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 
+export interface EstudianteInterno {
+  id: string;
+  usuarioId: string;
+  codigo: string;
+  programa: string;
+  semestre: number | null;
+}
+
+export interface ResumenModalidad {
+  tipo: 'PRACTICAS' | 'DIPLOMADO' | 'INVESTIGACION';
+  estado: string;
+  titulo: string;
+  detalle: string | null;
+  fecha: string | Date;
+}
+
+interface ResumenPracticas extends ResumenModalidad {
+  estudianteId: string;
+}
+
+interface ResumenPorUsuario extends ResumenModalidad {
+  usuarioId: string;
+}
+
 @Injectable()
 export class DocentesService {
   constructor(private readonly prisma: PrismaService) {}
@@ -23,12 +47,12 @@ export class DocentesService {
     }
   }
 
-  private urlEstudiantes() {
-    const valor = process.env.ESTUDIANTES_SERVICE_URL;
+  private urlServicio(nombreVariable: string) {
+    const valor = process.env[nombreVariable];
 
     if (!valor) {
       throw new InternalServerErrorException(
-        'ESTUDIANTES_SERVICE_URL no esta configurada',
+        `${nombreVariable} no esta configurada`,
       );
     }
 
@@ -39,6 +63,26 @@ export class DocentesService {
     return {
       'x-internal-key': process.env.INTERNAL_API_KEY ?? '',
     };
+  }
+
+  private async consultarResumen<T>(
+    nombreVariable: string,
+    parametros: Record<string, string>,
+  ): Promise<T[]> {
+    const respuesta = await axios.get(
+      `${this.urlServicio(nombreVariable)}/internal/resumen-docente`,
+      {
+        params: parametros,
+        headers: this.headersInternos(),
+        timeout: 5000,
+      },
+    );
+
+    if (!Array.isArray(respuesta.data)) {
+      throw new Error(`Respuesta invalida de ${nombreVariable}`);
+    }
+
+    return respuesta.data as T[];
   }
 
   async crear(dto: CreateDocenteDto) {
@@ -192,16 +236,81 @@ export class DocentesService {
 
     try {
       const respuesta = await axios.get(
-        `${this.urlEstudiantes()}/internal/estudiantes/lote`,
+        `${this.urlServicio('ESTUDIANTES_SERVICE_URL')}/internal/estudiantes/lote`,
         {
           params: {
             ids: ids.join(','),
           },
           headers: this.headersInternos(),
+          timeout: 5000,
         },
       );
 
-      return respuesta.data;
+      if (!Array.isArray(respuesta.data)) {
+        throw new Error('Respuesta invalida de estudiantes-service');
+      }
+
+      const estudiantes = respuesta.data as EstudianteInterno[];
+      const idsEstudiantes = estudiantes.map((estudiante) => estudiante.id);
+      const idsUsuarios = estudiantes.map((estudiante) => estudiante.usuarioId);
+
+      const resultados = await Promise.allSettled([
+        this.consultarResumen<ResumenPracticas>(
+          'POSTULACIONES_SERVICE_URL',
+          { estudianteIds: idsEstudiantes.join(',') },
+        ),
+        this.consultarResumen<ResumenPorUsuario>('DIPLOMADO_SERVICE_URL', {
+          usuarioIds: idsUsuarios.join(','),
+        }),
+        this.consultarResumen<ResumenPorUsuario>(
+          'INVESTIGACION_SERVICE_URL',
+          { usuarioIds: idsUsuarios.join(',') },
+        ),
+      ]);
+
+      const nombresServicios: ResumenModalidad['tipo'][] = [
+        'PRACTICAS',
+        'DIPLOMADO',
+        'INVESTIGACION',
+      ];
+      const serviciosModalidadNoDisponibles = resultados
+        .map((resultado, indice) =>
+          resultado.status === 'rejected' ? nombresServicios[indice] : null,
+        )
+        .filter(
+          (nombre): nombre is ResumenModalidad['tipo'] => nombre !== null,
+        );
+
+      const practicas =
+        resultados[0].status === 'fulfilled' ? resultados[0].value : [];
+      const diplomados =
+        resultados[1].status === 'fulfilled' ? resultados[1].value : [];
+      const investigaciones =
+        resultados[2].status === 'fulfilled' ? resultados[2].value : [];
+
+      return estudiantes.map((estudiante) => {
+        const modalidades: ResumenModalidad[] = [
+          ...practicas
+            .filter((resumen) => resumen.estudianteId === estudiante.id)
+            .map(({ estudianteId: _estudianteId, ...resumen }) => resumen),
+          ...diplomados
+            .filter((resumen) => resumen.usuarioId === estudiante.usuarioId)
+            .map(({ usuarioId: _usuarioId, ...resumen }) => resumen),
+          ...investigaciones
+            .filter((resumen) => resumen.usuarioId === estudiante.usuarioId)
+            .map(({ usuarioId: _usuarioId, ...resumen }) => resumen),
+        ].sort((a, b) => {
+          const fechaA = new Date(a.fecha).getTime() || 0;
+          const fechaB = new Date(b.fecha).getTime() || 0;
+          return fechaB - fechaA;
+        });
+
+        return {
+          ...estudiante,
+          modalidades,
+          serviciosModalidadNoDisponibles,
+        };
+      });
     } catch {
       throw new InternalServerErrorException(
         'No fue posible consultar los estudiantes asignados',

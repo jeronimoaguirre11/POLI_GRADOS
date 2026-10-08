@@ -330,6 +330,45 @@ export class PostulacionesService {
     });
   }
 
+  async obtenerResumenParaDocente(estudianteIds: string[]) {
+    const ids = [...new Set(estudianteIds)].filter(Boolean);
+    if (ids.length === 0) return [];
+
+    const postulaciones = await this.prisma.postulacion.findMany({
+      where: {
+        estudianteId: { in: ids },
+        estado: 'SELECCIONADO',
+      },
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        estudianteId: true,
+        ofertaId: true,
+        estado: true,
+        updatedAt: true,
+      },
+    });
+
+    if (postulaciones.length === 0) return [];
+
+    const ofertas = await this.obtenerOfertasPorLote(
+      postulaciones.map((postulacion) => postulacion.ofertaId),
+    );
+    const ofertasPorId = new Map(ofertas.map((oferta) => [oferta.id, oferta]));
+
+    return postulaciones.map((postulacion) => {
+      const oferta = ofertasPorId.get(postulacion.ofertaId);
+
+      return {
+        estudianteId: postulacion.estudianteId,
+        tipo: 'PRACTICAS',
+        estado: postulacion.estado,
+        titulo: oferta?.titulo ?? 'Practicas profesionales',
+        detalle: oferta?.empresa?.nombreEmpresa ?? null,
+        fecha: postulacion.updatedAt,
+      };
+    });
+  }
+
   // No expone hojaVidaUrl (es un detalle de disco de este servicio): solo
   // dice si existe, vía tieneHojaVida.
   async obtenerPorOferta(ofertaId: string) {
