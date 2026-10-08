@@ -85,6 +85,12 @@ export class DiplomadoService {
       );
     }
 
+    if (await this.estaComprometidoEnInvestigacion(payload.sub)) {
+      throw new ConflictException(
+        'Ya tienes una investigacion aprobada este semestre, por lo que no puedes inscribirte a un diplomado.',
+      );
+    }
+
     return this.prisma.$transaction(async (tx) => {
       const actualizado = await tx.diplomado.updateMany({
         where: {
@@ -204,6 +210,22 @@ export class DiplomadoService {
     } catch {
       throw new ServiceUnavailableException(
         'No se pudo verificar tu estado en Practicas Profesionales. Intenta de nuevo en unos minutos.',
+      );
+    }
+  }
+
+  private async estaComprometidoEnInvestigacion(
+    usuarioId: string,
+  ): Promise<boolean> {
+    try {
+      const { data } = await axios.get(
+        `${process.env.INVESTIGACION_SERVICE_URL}/internal/estudiante/${usuarioId}/comprometido`,
+        { headers: { 'x-internal-key': process.env.INTERNAL_API_KEY ?? '' } },
+      );
+      return data.comprometido === true;
+    } catch {
+      throw new ServiceUnavailableException(
+        'No se pudo verificar tu estado en Investigacion. Intenta de nuevo en unos minutos.',
       );
     }
   }
