@@ -1,0 +1,9 @@
+node_modules
+dist
+generar-token.js
+.env
+
+/src/generated/prisma
+
+# Hojas de vida subidas por los estudiantes al postularse
+/uploads
