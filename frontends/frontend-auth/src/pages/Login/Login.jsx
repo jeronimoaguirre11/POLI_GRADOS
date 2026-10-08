@@ -9,9 +9,14 @@ import "./Login.css";
 // guarda en su propio localStorage (ver components/ProtectedRoute.jsx de
 // cada una).
 const DESTINOS_POR_ROL = {
-  EMPRESA: import.meta.env.VITE_EMPRESAS_APP_URL || "http://localhost:5174",
+  EMPRESA: 
+    import.meta.env.VITE_EMPRESAS_APP_URL || "http://localhost:5174",
   ESTUDIANTE:
     import.meta.env.VITE_ESTUDIANTES_APP_URL || "http://localhost:5175",
+  COORDINADOR:
+    import.meta.env.VITE_COORDINADORES_APP_URL || "http://localhost:5177",
+  DOCENTE:
+    import.meta.env.VITE_DOCENTES_APP_URL || "http://localhost:5179",
 };
 
 export default function Login() {
@@ -63,17 +68,14 @@ export default function Login() {
         </Link>
 
         <div className="auth-info-content">
-          <span className="auth-info-label">
-            Gestión académica
-          </span>
+          <span className="auth-info-label">Gestión académica</span>
 
-          <h2>
-            Todo tu proceso de grado en un solo lugar.
-          </h2>
+          <h2>Todo tu proceso de grado en un solo lugar.</h2>
 
           <p>
             Consulta modalidades, procesos, convocatorias y realiza el
-            seguimiento de tu trabajo de grado desde una plataforma centralizada.
+            seguimiento de tu trabajo de grado desde una plataforma
+            centralizada.
           </p>
 
           <div className="auth-benefits">
@@ -94,9 +96,7 @@ export default function Login() {
           </div>
         </div>
 
-        <p className="auth-info-footer">
-          Proyecto académico · 2026
-        </p>
+        <p className="auth-info-footer">Proyecto académico · 2026</p>
       </section>
 
       <section className="auth-form-section">
@@ -111,9 +111,7 @@ export default function Login() {
 
               <h1>Iniciar sesión</h1>
 
-              <p>
-                Ingresa tus datos para acceder a tu cuenta.
-              </p>
+              <p>Ingresa tus datos para acceder a tu cuenta.</p>
             </div>
 
             {error && <p className="error">{error}</p>}
@@ -146,19 +144,12 @@ export default function Login() {
               />
             </div>
 
-            <button
-              type="submit"
-              className="auth-submit"
-              disabled={cargando}
-            >
+            <button type="submit" className="auth-submit" disabled={cargando}>
               {cargando ? "Ingresando..." : "Iniciar sesión"}
             </button>
 
             <p className="switch-auth">
-              ¿No tienes una cuenta?{" "}
-              <Link to="/registro">
-                Regístrate
-              </Link>
+              ¿No tienes una cuenta? <Link to="/registro">Regístrate</Link>
             </p>
           </form>
         </div>

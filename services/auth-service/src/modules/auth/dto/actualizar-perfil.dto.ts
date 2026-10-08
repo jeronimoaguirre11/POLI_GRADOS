@@ -6,11 +6,9 @@ import {
   MaxLength,
   MinLength,
 } from 'class-validator';
+import { PASSWORD_MENSAJE, PASSWORD_REGEX } from './password.validation.js';
 
-// Misma regla que en RegisterDto: al menos una mayuscula y un numero.
-const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*\d).+$/;
-const PASSWORD_MENSAJE =
-  'La contraseña debe tener al menos una letra mayúscula y un número';
+// Misma regla compartida que en RegisterDto: mayuscula, numero y 8-15 chars.
 
 export class ActualizarPerfilDto {
   @IsOptional()

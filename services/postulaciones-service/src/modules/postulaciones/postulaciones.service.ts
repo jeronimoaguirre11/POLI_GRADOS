@@ -197,13 +197,31 @@ export class PostulacionesService {
     const hojaVidaUrl = await this.guardarHojaVida(hojaVida);
 
     try {
-      return await this.prisma.postulacion.create({
+      const postulacion = await this.prisma.postulacion.create({
         data: {
           ofertaId,
           estudianteId: estudiante.id,
           hojaVidaUrl,
         },
+        // La respuesta vuelve directamente al estudiante. La ruta fisica del
+        // CV, las observaciones internas y los identificadores de otros
+        // dominios no forman parte del contrato publico.
+        select: {
+          id: true,
+          ofertaId: true,
+          estado: true,
+          fecha: true,
+          updatedAt: true,
+        },
       });
+
+      return {
+        id: postulacion.id,
+        ofertaId: postulacion.ofertaId,
+        estado: postulacion.estado,
+        fecha: postulacion.fecha,
+        updatedAt: postulacion.updatedAt,
+      };
     } catch (error: any) {
       // Si la insercion falla, evita dejar hojas de vida huerfanas en disco.
       await fs.unlink(join(process.cwd(), hojaVidaUrl)).catch(() => {});
@@ -226,11 +244,13 @@ export class PostulacionesService {
     const postulaciones = await this.prisma.postulacion.findMany({
       where: { estudianteId: estudiante.id },
       orderBy: { fecha: 'desc' },
+      // Esta es una respuesta publica para el estudiante. Mantener una lista
+      // positiva de campos evita filtrar notas internas o la ruta fisica del
+      // archivo si el modelo Postulacion crece en el futuro.
       select: {
         id: true,
         ofertaId: true,
         estado: true,
-        observacionesEmpresa: true,
         fecha: true,
         updatedAt: true,
       },
@@ -250,7 +270,6 @@ export class PostulacionesService {
         id: postulacion.id,
         ofertaId: postulacion.ofertaId,
         estado: postulacion.estado,
-        observacionesEmpresa: postulacion.observacionesEmpresa,
         fecha: postulacion.fecha,
         updatedAt: postulacion.updatedAt,
         oferta: oferta
@@ -293,7 +312,23 @@ export class PostulacionesService {
     return { eliminado: true };
   }
 
-  // --- Llamado solo por empresas-service (rutas internas) ---
+  // --- Llamados por empresas-service y coordinadores-service (rutas internas) ---
+
+  // Vista minima para coordinadores-service. Se mantiene separada de las
+  // consultas empresariales para que el coordinador no reciba observaciones
+  // privadas, rutas de archivos ni metadatos que no necesita.
+  async listarParaCoordinador() {
+    return this.prisma.postulacion.findMany({
+      orderBy: { fecha: 'desc' },
+      select: {
+        id: true,
+        ofertaId: true,
+        estudianteId: true,
+        estado: true,
+        fecha: true,
+      },
+    });
+  }
 
   // No expone hojaVidaUrl (es un detalle de disco de este servicio): solo
   // dice si existe, vía tieneHojaVida.
