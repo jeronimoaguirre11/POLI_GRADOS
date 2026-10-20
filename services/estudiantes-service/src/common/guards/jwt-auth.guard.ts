@@ -18,16 +18,13 @@ export class JwtAuthGuard implements CanActivate {
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
     const request = context.switchToHttp().getRequest();
-    const authHeader: string | undefined = request.headers?.authorization;
+    const token: string | undefined = request.cookies?.token; //desde la cookie obtenemos el token (inicio)
 
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+    if (!token) {
       throw new UnauthorizedException('Token no proporcionado');
     }
-
-    const token = authHeader.slice('Bearer '.length);
-
     try {
-      request.user = await this.jwtService.verifyAsync<JwtPayload>(token);
+      request.user = await this.jwtService.verifyAsync<JwtPayload>(token); //modificamos la captura del token (fin)
       return true;
     } catch {
       throw new UnauthorizedException('Token invalido o expirado');

@@ -106,7 +106,7 @@ export class AuthService {
     }
 
     const { password: _, ...usuarioSinPassword } = usuario;
-    return usuarioSinPassword;
+    return { message: 'Usuario registrado exitosamente' };
   }
 
   async login(dto: LoginDto) {
@@ -127,8 +127,20 @@ export class AuthService {
     const payload = { sub: usuario.id, email: usuario.email, rol: usuario.rol };
     const token = await this.jwtService.signAsync(payload);
 
-    const { password: _, ...usuarioSinPassword } = usuario;
-    return { usuario: usuarioSinPassword, token };
+    return { token };
+  }
+
+  async obtenerPerfil(payload: JwtPayload) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id: payload.sub },
+      select: { nombre: true, email: true, rol: true },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    return usuario;
   }
 
   // Los coordinadores no se pueden crear desde /auth/register. Este metodo
@@ -253,7 +265,7 @@ export class AuthService {
       }
     }
 
-    const actualizado = await this.prisma.usuario.update({
+    await this.prisma.usuario.update({
       where: { id: usuario.id },
       data: {
         ...(dto.nombre !== undefined && { nombre: dto.nombre }),
@@ -264,7 +276,6 @@ export class AuthService {
       },
     });
 
-    const { password: _, ...usuarioSinPassword } = actualizado;
-    return usuarioSinPassword;
+    return { message: 'Perfil actualizado correctamente' };
   }
 }

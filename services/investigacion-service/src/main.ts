@@ -4,11 +4,12 @@ import 'dotenv/config';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
+import cookieParser from 'cookie-parser'; // lo añadimos por seguridad, para poder leer cookies firmadas en las peticiones entrantes
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(cookieParser()); // lo añadimos por seguridad, para poder leer cookies firmadas en las peticiones entrantes
   // Permite que el gateway y los frontends (otros puertos) llamen a esta API.
-  app.enableCors();
   // Valida y limpia automaticamente el body de cada request contra los DTO.
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   // No sirve nada estatico: la hoja de vida solo se entrega a traves de la

@@ -5,11 +5,12 @@ import 'dotenv/config';
 import { ValidationPipe } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
+import cookieParser from 'cookie-parser'; // lo añadimos por seguridad, para poder leer cookies firmadas en las peticiones entrantes
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  app.use(cookieParser()); //tambien lo añadimos por seguridad, para poder leer cookies firmadas en las peticiones entrantes
   // Los frontends (otros puertos) y el gateway llaman a este servicio.
-  app.enableCors();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   await app.listen(process.env.PORT ?? 3001);
 }
