@@ -1,43 +1,35 @@
 import { useEffect, useState } from "react";
+import { obtenerSesion } from "../api/sesion.js";
 
 const AUTH_APP_URL =
   import.meta.env.VITE_AUTH_APP_URL || "http://localhost:5173";
 
-// Esta app vive en su propio origen (puerto distinto a frontend-auth), asi
-// que localStorage no se comparte entre ambas. Cuando frontend-auth redirige
-// aca tras el login de una cuenta EMPRESA, pasa el token y el usuario por la
-// URL; aca los guardamos en el localStorage propio de esta app y limpiamos
-// la URL para que no quede el token visible en el historial.
-export default function ProtectedRoute({ children }) {
-  const [listo, setListo] = useState(false);
+// La sesion vive en una cookie httpOnly que pone auth-service al iniciar
+// sesion. Aqui no se guarda nada: se pregunta a /auth/me quien es el usuario
+// y se entrega a los hijos como funcion. Si no hay sesion, o el rol no
+// corresponde a este panel, se manda al login.
+export default function ProtectedRoute({ rol, children }) {
+  const [usuario, setUsuario] = useState(null);
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const tokenQS = params.get("token");
-    const usuarioQS = params.get("usuario");
+    let cancelado = false;
 
-    if (tokenQS) {
-      localStorage.setItem("token", tokenQS);
-      if (usuarioQS) {
-        localStorage.setItem("usuario", usuarioQS);
+    obtenerSesion().then((sesion) => {
+      if (cancelado) return;
+
+      if (!sesion || (rol && sesion.rol !== rol)) {
+        window.location.href = `${AUTH_APP_URL}/login`;
+        return;
       }
+      setUsuario(sesion);
+    });
 
-      const url = new URL(window.location.href);
-      url.searchParams.delete("token");
-      url.searchParams.delete("usuario");
-      window.history.replaceState({}, "", url.toString());
-    }
+    return () => {
+      cancelado = true;
+    };
+  }, [rol]);
 
-    setListo(true);
-  }, []);
+  if (!usuario) return null;
 
-  if (!listo) return null;
-
-  const token = localStorage.getItem("token");
-  if (!token) {
-    window.location.href = `${AUTH_APP_URL}/login`;
-    return null;
-  }
-
-  return children;
+  return children(usuario);
 }

@@ -1,52 +1,35 @@
 import { useEffect, useState } from "react";
+import { obtenerSesion } from "../api/sesion.js";
 
 const AUTH_APP_URL =
   import.meta.env.VITE_AUTH_APP_URL || "http://localhost:5173";
 
-function leerUsuario(crudo) {
-  try {
-    return crudo ? JSON.parse(crudo) : null;
-  } catch {
-    return null;
-  }
-}
-
+// Se exporta porque otros archivos la usan al detectar una sesión inválida.
+// Ya no toca localStorage: la sesión vive en una cookie httpOnly.
 function irAlLogin() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("usuario");
   window.location.replace(`${AUTH_APP_URL}/login`);
 }
 
-export default function ProtectedRoute({ children }) {
+export default function ProtectedRoute({ rol, children }) {
   const [sesion, setSesion] = useState({ comprobando: true, usuario: null });
 
   useEffect(() => {
-    const parametros = new URLSearchParams(window.location.search);
-    const tokenRecibido = parametros.get("token");
-    const usuarioRecibido = parametros.get("usuario");
+    let cancelado = false;
 
-    if (tokenRecibido) {
-      localStorage.setItem("token", tokenRecibido);
-      if (usuarioRecibido) {
-        localStorage.setItem("usuario", usuarioRecibido);
+    obtenerSesion().then((usuario) => {
+      if (cancelado) return;
+
+      if (!usuario || (rol && usuario.rol !== rol)) {
+        irAlLogin();
+        return;
       }
+      setSesion({ comprobando: false, usuario });
+    });
 
-      const urlLimpia = new URL(window.location.href);
-      urlLimpia.searchParams.delete("token");
-      urlLimpia.searchParams.delete("usuario");
-      window.history.replaceState({}, "", urlLimpia.toString());
-    }
-
-    const token = localStorage.getItem("token");
-    const usuario = leerUsuario(localStorage.getItem("usuario"));
-
-    if (!token || usuario?.rol !== "COORDINADOR") {
-      irAlLogin();
-      return;
-    }
-
-    setSesion({ comprobando: false, usuario });
-  }, []);
+    return () => {
+      cancelado = true;
+    };
+  }, [rol]);
 
   if (sesion.comprobando) {
     return (

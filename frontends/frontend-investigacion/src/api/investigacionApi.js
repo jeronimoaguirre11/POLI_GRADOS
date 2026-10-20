@@ -9,14 +9,9 @@ async function manejarRespuesta(res) {
   return res.json();
 }
 
-function tokenHeader() {
-  const token = localStorage.getItem("token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 export async function misInvestigaciones() {
   const res = await fetch(`${API_URL}/investigaciones/mias`, {
-    headers: tokenHeader(),
+    credentials: "include",
   });
   return manejarRespuesta(res);
 }
@@ -24,7 +19,8 @@ export async function misInvestigaciones() {
 export async function proponerInvestigacion(datos) {
   const res = await fetch(`${API_URL}/investigaciones`, {
     method: "POST",
-    headers: { ...tokenHeader(), "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(datos),
   });
   return manejarRespuesta(res);
@@ -33,7 +29,7 @@ export async function proponerInvestigacion(datos) {
 export async function cancelarInvestigacion(id) {
   const res = await fetch(`${API_URL}/investigaciones/${id}`, {
     method: "DELETE",
-    headers: tokenHeader(),
+    credentials: "include",
   });
   return manejarRespuesta(res);
 }
