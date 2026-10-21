@@ -1,22 +1,21 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { iniciarSesion } from "../../api/auth.js";
+import { obtenerSesion, cerrarSesion } from "../../api/sesion.js";
 import "./Login.css";
 
-// A donde mandar a cada rol despues de iniciar sesion. Cada app vive en su
-// propio origen (puerto distinto), asi que localStorage no se comparte: el
-// token y los datos del usuario viajan por la URL, y la app destino los
-// guarda en su propio localStorage (ver components/ProtectedRoute.jsx de
-// cada una).
+// A donde mandar a cada rol despues de iniciar sesion. La sesion vive en una
+// cookie httpOnly que comparten todas las apps (el navegador no aisla las
+// cookies por puerto), asi que basta con redirigir: cada app consulta
+// /auth/me por su cuenta.
+
 const DESTINOS_POR_ROL = {
-  EMPRESA: 
-    import.meta.env.VITE_EMPRESAS_APP_URL || "http://localhost:5174",
+  EMPRESA: import.meta.env.VITE_EMPRESAS_APP_URL || "http://localhost:5174",
   ESTUDIANTE:
     import.meta.env.VITE_ESTUDIANTES_APP_URL || "http://localhost:5175",
   COORDINADOR:
     import.meta.env.VITE_COORDINADORES_APP_URL || "http://localhost:5177",
-  DOCENTE:
-    import.meta.env.VITE_DOCENTES_APP_URL || "http://localhost:5180",
+  DOCENTE: import.meta.env.VITE_DOCENTES_APP_URL || "http://localhost:5180",
 };
 
 export default function Login() {
@@ -34,21 +33,22 @@ export default function Login() {
     setCargando(true);
 
     try {
-      const data = await iniciarSesion(form);
+      await iniciarSesion(form);
 
-      const destino = DESTINOS_POR_ROL[data.usuario.rol];
+      const sesion = await obtenerSesion();
+      if (!sesion) {
+        throw new Error("No se pudo iniciar la sesión, intenta de nuevo.");
+      }
+
+      const destino = DESTINOS_POR_ROL[sesion.rol];
       if (!destino) {
+        await cerrarSesion();
         throw new Error(
-          `Tu cuenta tiene el rol "${data.usuario.rol}", que todavía no tiene un panel propio.`,
+          `Tu cuenta tiene el rol "${sesion.rol}", que todavía no tiene un panel propio.`,
         );
       }
 
-      const parametros = new URLSearchParams({
-        token: data.token,
-        usuario: JSON.stringify(data.usuario),
-      });
-
-      window.location.href = `${destino}/?${parametros.toString()}`;
+      window.location.href = destino;
     } catch (err) {
       setError(err.message);
       setCargando(false);

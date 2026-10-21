@@ -139,9 +139,10 @@ export default function EditarPerfil({ usuario, onVolver, onActualizado }) {
         cambiosComunes.passwordActual = form.passwordActual;
       }
 
-      let usuarioActualizado = null;
+      let huboCambiosComunes = false;
       if (Object.keys(cambiosComunes).length > 0) {
-        usuarioActualizado = await actualizarPerfilAuth(cambiosComunes);
+        await actualizarPerfilAuth(cambiosComunes);
+        huboCambiosComunes = true;
       }
 
       // 2. Datos académicos del estudiante.
@@ -153,8 +154,8 @@ export default function EditarPerfil({ usuario, onVolver, onActualizado }) {
         await actualizarPerfilEstudiante(cambiosEstudiante);
       }
 
-      if (usuarioActualizado) {
-        onActualizado?.(usuarioActualizado);
+      if (huboCambiosComunes) {
+        await onActualizado?.();
       }
 
       setForm((f) => ({

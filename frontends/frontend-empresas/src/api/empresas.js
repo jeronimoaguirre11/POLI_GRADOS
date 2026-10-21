@@ -9,11 +9,6 @@ async function manejarRespuesta(res) {
   return res.json();
 }
 
-function tokenHeader() {
-  const token = localStorage.getItem("token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 function aFormData({ imagen, ...campos }) {
   const formData = new FormData();
   Object.entries(campos).forEach(([clave, valor]) => {
@@ -27,18 +22,19 @@ function aFormData({ imagen, ...campos }) {
 
 export async function obtenerPerfilEmpresa() {
   const res = await fetch(`${API_URL}/empresas/perfil`, {
-    headers: tokenHeader(),
+    credentials: "include",
   });
   return manejarRespuesta(res);
 }
 
 export async function actualizarPerfilEmpresa(datos) {
   const res = await fetch(`${API_URL}/empresas/perfil`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json', ...tokenHeader() },
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify(datos),
-  })
-  return manejarRespuesta(res)
+  });
+  return manejarRespuesta(res);
 }
 
 // Se envia como multipart/form-data porque "imagen" (opcional) es un archivo.
@@ -46,7 +42,7 @@ export async function actualizarPerfilEmpresa(datos) {
 export async function crearOferta(datos) {
   const res = await fetch(`${API_URL}/empresas/ofertas`, {
     method: "POST",
-    headers: tokenHeader(),
+    credentials: "include",
     body: aFormData(datos),
   });
   return manejarRespuesta(res);
@@ -54,7 +50,7 @@ export async function crearOferta(datos) {
 
 export async function listarOfertas() {
   const res = await fetch(`${API_URL}/empresas/ofertas`, {
-    headers: tokenHeader(),
+    credentials: "include",
   });
   return manejarRespuesta(res);
 }
@@ -62,7 +58,7 @@ export async function listarOfertas() {
 export async function actualizarOferta(id, datos) {
   const res = await fetch(`${API_URL}/empresas/ofertas/${id}`, {
     method: "PATCH",
-    headers: tokenHeader(),
+    credentials: "include",
     body: aFormData(datos),
   });
   return manejarRespuesta(res);
@@ -71,7 +67,7 @@ export async function actualizarOferta(id, datos) {
 export async function eliminarOferta(id) {
   const res = await fetch(`${API_URL}/empresas/ofertas/${id}`, {
     method: "DELETE",
-    headers: tokenHeader(),
+    credentials: "include",
   });
   return manejarRespuesta(res);
 }
@@ -80,7 +76,7 @@ export async function listarPostulantesOferta(ofertaId) {
   const res = await fetch(
     `${API_URL}/empresas/ofertas/${ofertaId}/postulaciones`,
     {
-      headers: tokenHeader(),
+      credentials: "include",
     },
   );
   return manejarRespuesta(res);
@@ -93,8 +89,8 @@ export async function actualizarPostulacion(postulacionId, datos) {
       method: "PATCH",
       headers: {
         "Content-Type": "application/json",
-        ...tokenHeader(),
       },
+      credentials: "include",
       body: JSON.stringify(datos),
     },
   );
@@ -104,7 +100,7 @@ export async function actualizarPostulacion(postulacionId, datos) {
 export async function descargarHojaVida(postulacionId) {
   const res = await fetch(
     `${API_URL}/empresas/postulaciones/${postulacionId}/hoja-vida`,
-    { headers: tokenHeader() },
+    { credentials: "include" },
   );
 
   if (!res.ok) {

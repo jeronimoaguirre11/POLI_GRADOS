@@ -3,7 +3,7 @@ import DashboardCoordinador from "./pages/DashboardCoordinador.jsx";
 
 export default function App() {
   return (
-    <ProtectedRoute>
+    <ProtectedRoute rol="coordinador">
       {(usuario) => <DashboardCoordinador usuario={usuario} />}
     </ProtectedRoute>
   );

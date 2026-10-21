@@ -1,6 +1,7 @@
 import { useState } from "react";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import EditarPerfil from "./pages/Dashboard/EditarPerfil.jsx";
+import { obtenerSesion, cerrarSesion } from "./api/sesion.js";
 import "./pages/Dashboard/Dashboard-Estudiante.css";
 
 const AUTH_APP_URL =
@@ -12,67 +13,36 @@ const DIPLOMADO_APP_URL =
 const INVESTIGACION_APP_URL =
   import.meta.env.VITE_INVESTIGACION_APP_URL || "http://localhost:5179";
 
-function obtenerUsuarioInicial() {
-  try {
-    const crudo = localStorage.getItem("usuario");
-    return crudo ? JSON.parse(crudo) : null;
-  } catch {
-    return null;
-  }
-}
-
-function AppShell() {
-  const [usuario, setUsuario] = useState(obtenerUsuarioInicial);
+function AppShell({ sesionInicial }) {
+  const [usuario, setUsuario] = useState(sesionInicial);
   const [vistaEstudiante, setVistaEstudiante] = useState("inicio");
   const [mostrarPerfil, setMostrarPerfil] = useState(false);
 
-  // Se llama cuando EditarPerfil actualiza con exito los datos comunes de la
-  // cuenta (nombre/correo), para que el header refleje el cambio sin tener
-  // que volver a iniciar sesion.
-  function handlePerfilActualizado(usuarioActualizado) {
-    const usuarioCompleto = { ...usuario, ...usuarioActualizado };
-    setUsuario(usuarioCompleto);
-    localStorage.setItem("usuario", JSON.stringify(usuarioCompleto));
+  // Se llama cuando EditarPerfil actualiza con exito los datos de la cuenta.
+  // El backend ya no devuelve el usuario al actualizar, asi que se vuelve a
+  // pedir a /auth/me para que el header refleje el cambio.
+  async function handlePerfilActualizado() {
+    const sesion = await obtenerSesion();
+    if (sesion) setUsuario(sesion);
   }
 
-  function handleLogout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
+  async function handleLogout() {
+    await cerrarSesion();
     window.location.href = AUTH_APP_URL;
   }
 
-  // "Practicas Profesionales" vive en su propia app (otro origen), asi que
-  // saltamos pasando el token y el usuario por la URL, igual que hace
-  // frontend-auth al redirigir tras el login.
+  // Cada modalidad vive en su propia app. La cookie de sesion ya viaja sola
+  // entre ellas, asi que solo hay que redirigir.
   function irAPracticas() {
-    const token = localStorage.getItem("token");
-    const usuarioGuardado = localStorage.getItem("usuario");
-    const params = new URLSearchParams({
-      token: token ?? "",
-      usuario: usuarioGuardado ?? "",
-    });
-    window.location.href = `${POSTULACIONES_APP_URL}/?${params.toString()}`;
+    window.location.href = POSTULACIONES_APP_URL;
   }
 
-  // "Diplomado" ahora vive en su propia app, igual que Practicas.
   function irADiplomado() {
-    const token = localStorage.getItem("token");
-    const usuarioGuardado = localStorage.getItem("usuario");
-    const params = new URLSearchParams({
-      token: token ?? "",
-      usuario: usuarioGuardado ?? "",
-    });
-    window.location.href = `${DIPLOMADO_APP_URL}/?${params.toString()}`;
+    window.location.href = DIPLOMADO_APP_URL;
   }
 
   function irAInvestigacion() {
-    const token = localStorage.getItem("token");
-    const usuarioGuardado = localStorage.getItem("usuario");
-    const params = new URLSearchParams({
-      token: token ?? "",
-      usuario: usuarioGuardado ?? "",
-    });
-    window.location.href = `${INVESTIGACION_APP_URL}/?${params.toString()}`;
+    window.location.href = INVESTIGACION_APP_URL;
   }
 
   return (
@@ -229,8 +199,8 @@ function AppShell() {
 
 export default function App() {
   return (
-    <ProtectedRoute>
-      <AppShell />
+    <ProtectedRoute rol="ESTUDIANTE">
+      {(sesion) => <AppShell sesionInicial={sesion} />}
     </ProtectedRoute>
   );
 }

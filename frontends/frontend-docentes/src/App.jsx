@@ -1,38 +1,42 @@
-import { useEffect, useMemo, useState } from 'react'
-import { BrowserRouter } from 'react-router-dom'
-import ProtectedRoute from './components/ProtectedRoute'
-import { obtenerMiPerfil, obtenerMisEstudiantes } from './api/docentes'
-import './pages/Dashboard/Dashboard-Docente.css'
+import { useEffect, useState } from "react";
+import { BrowserRouter } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
+import { obtenerMiPerfil, obtenerMisEstudiantes } from "./api/docentes";
+import { cerrarSesion } from "./api/sesion";
+import "./pages/Dashboard/Dashboard-Docente.css";
+
+const AUTH_APP_URL =
+  import.meta.env.VITE_AUTH_APP_URL || "http://localhost:5173";
 
 function formatearTexto(valor) {
-  if (!valor) return 'No registrado'
+  if (!valor) return "No registrado";
 
   return String(valor)
     .toLowerCase()
-    .split('_')
+    .split("_")
     .map((palabra) => palabra.charAt(0).toUpperCase() + palabra.slice(1))
-    .join(' ')
+    .join(" ");
 }
 
 function etiquetaModalidad(tipo) {
   const etiquetas = {
-    PRACTICAS: 'Prácticas',
-    DIPLOMADO: 'Diplomado',
-    INVESTIGACION: 'Investigación',
-  }
+    PRACTICAS: "Prácticas",
+    DIPLOMADO: "Diplomado",
+    INVESTIGACION: "Investigación",
+  };
 
-  return etiquetas[tipo] || formatearTexto(tipo)
+  return etiquetas[tipo] || formatearTexto(tipo);
 }
 
 function ModalidadesEstudiante({ estudiante }) {
   const modalidades = Array.isArray(estudiante.modalidades)
     ? estudiante.modalidades
-    : []
+    : [];
   const serviciosNoDisponibles = Array.isArray(
     estudiante.serviciosModalidadNoDisponibles,
   )
     ? estudiante.serviciosModalidadNoDisponibles
-    : []
+    : [];
 
   return (
     <div className="modalidades-lista">
@@ -49,7 +53,7 @@ function ModalidadesEstudiante({ estudiante }) {
               {formatearTexto(modalidad.estado)}
             </span>
           </div>
-          <strong>{modalidad.titulo || 'Proceso sin nombre'}</strong>
+          <strong>{modalidad.titulo || "Proceso sin nombre"}</strong>
           {modalidad.detalle && <small>{modalidad.detalle}</small>}
         </div>
       ))}
@@ -60,61 +64,50 @@ function ModalidadesEstudiante({ estudiante }) {
 
       {serviciosNoDisponibles.length > 0 && (
         <span className="modalidad-advertencia">
-          No fue posible verificar:{' '}
-          {serviciosNoDisponibles.map(etiquetaModalidad).join(', ')}.
+          No fue posible verificar:{" "}
+          {serviciosNoDisponibles.map(etiquetaModalidad).join(", ")}.
         </span>
       )}
     </div>
-  )
+  );
 }
 
 function DashboardDocente() {
-  const [perfil, setPerfil] = useState(null)
-  const [estudiantes, setEstudiantes] = useState([])
-  const [cargando, setCargando] = useState(true)
-  const [error, setError] = useState('')
-
-  const usuario = useMemo(() => {
-    try {
-      return JSON.parse(localStorage.getItem('usuario') || '{}')
-    } catch {
-      return {}
-    }
-  }, [])
+  const [perfil, setPerfil] = useState(null);
+  const [estudiantes, setEstudiantes] = useState([]);
+  const [cargando, setCargando] = useState(true);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     async function cargarDatos() {
       try {
-        setCargando(true)
-        setError('')
+        setCargando(true);
+        setError("");
 
         const [perfilDocente, estudiantesAsignados] = await Promise.all([
           obtenerMiPerfil(),
           obtenerMisEstudiantes(),
-        ])
+        ]);
 
-        setPerfil(perfilDocente)
+        setPerfil(perfilDocente);
         setEstudiantes(
           Array.isArray(estudiantesAsignados) ? estudiantesAsignados : [],
-        )
+        );
       } catch (err) {
-        setError(err.message || 'No fue posible cargar la informacion del docente')
+        setError(
+          err.message || "No fue posible cargar la informacion del docente",
+        );
       } finally {
-        setCargando(false)
+        setCargando(false);
       }
     }
 
-    cargarDatos()
-  }, [])
+    cargarDatos();
+  }, []);
 
-  function cerrarSesion() {
-    localStorage.removeItem('token')
-    localStorage.removeItem('usuario')
-
-    const authUrl =
-      import.meta.env.VITE_AUTH_URL || 'http://localhost:5173'
-
-    window.location.href = authUrl
+  async function handleCerrarSesion() {
+    await cerrarSesion();
+    window.location.href = AUTH_APP_URL;
   }
 
   return (
@@ -131,11 +124,15 @@ function DashboardDocente() {
 
         <div className="usuario-header">
           <div className="usuario-datos">
-            <strong>{usuario.nombre || 'Docente'}</strong>
+            <strong>{usuario.nombre || "Docente"}</strong>
             <span>DOCENTE</span>
           </div>
 
-          <button type="button" className="boton-salir" onClick={cerrarSesion}>
+          <button
+            type="button"
+            className="boton-salir"
+            onClick={handleCerrarSesion}
+          >
             Cerrar sesion
           </button>
         </div>
@@ -145,7 +142,7 @@ function DashboardDocente() {
         <section className="bienvenida">
           <span className="etiqueta">PORTAL DEL DOCENTE</span>
 
-          <h2>Hola, {usuario.nombre || 'Docente'}</h2>
+          <h2>Hola, {usuario.nombre || "Docente"}</h2>
 
           <p>
             Consulta tu informacion academica y los estudiantes que tienes
@@ -176,7 +173,7 @@ function DashboardDocente() {
               <div className="perfil-grid">
                 <div className="dato">
                   <span>Identificacion</span>
-                  <strong>{perfil.identificacion || 'No registrada'}</strong>
+                  <strong>{perfil.identificacion || "No registrada"}</strong>
                 </div>
 
                 <div className="dato">
@@ -198,9 +195,7 @@ function DashboardDocente() {
                   <h3>Estudiantes asignados</h3>
                 </div>
 
-                <div className="contador-estudiantes">
-                  {estudiantes.length}
-                </div>
+                <div className="contador-estudiantes">{estudiantes.length}</div>
               </div>
 
               {estudiantes.length === 0 ? (
@@ -222,11 +217,9 @@ function DashboardDocente() {
                     <tbody>
                       {estudiantes.map((estudiante) => (
                         <tr key={estudiante.id}>
-                          <td>{estudiante.codigo || 'No registrado'}</td>
+                          <td>{estudiante.codigo || "No registrado"}</td>
                           <td>{formatearTexto(estudiante.programa)}</td>
-                          <td>
-                            {estudiante.semestre ?? 'No registrado'}
-                          </td>
+                          <td>{estudiante.semestre ?? "No registrado"}</td>
                           <td>
                             <ModalidadesEstudiante estudiante={estudiante} />
                           </td>
@@ -241,15 +234,15 @@ function DashboardDocente() {
         )}
       </main>
     </div>
-  )
+  );
 }
 
 export default function App() {
   return (
     <BrowserRouter>
-      <ProtectedRoute>
-        <DashboardDocente />
+      <ProtectedRoute rol="DOCENTE">
+        {(sesion) => <DashboardDocente usuario={sesion} />}
       </ProtectedRoute>
     </BrowserRouter>
-  )
+  );
 }

@@ -2,36 +2,26 @@ import { useState } from "react";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import DashboardEmpresa from "./pages/Dashboard/Dashboard-Empresa.jsx";
 import EditarPerfil from "./pages/Dashboard/EditarPerfil.jsx";
+import { obtenerSesion, cerrarSesion } from "./api/sesion.js";
 import "./pages/Dashboard/Dashboard-shell.css";
 
 const AUTH_APP_URL =
   import.meta.env.VITE_AUTH_APP_URL || "http://localhost:5173";
 
-function obtenerUsuarioInicial() {
-  try {
-    const crudo = localStorage.getItem("usuario");
-    return crudo ? JSON.parse(crudo) : null;
-  } catch {
-    return null;
-  }
-}
-
-function AppShell() {
-  const [usuario, setUsuario] = useState(obtenerUsuarioInicial);
+function AppShell({ sesionInicial }) {
+  const [usuario, setUsuario] = useState(sesionInicial);
   const [mostrarPerfil, setMostrarPerfil] = useState(false);
 
   // Se llama cuando EditarPerfil actualiza con exito los datos comunes de la
   // cuenta (nombre/correo), para que el header refleje el cambio sin tener
   // que volver a iniciar sesion.
-  function handlePerfilActualizado(usuarioActualizado) {
-    const usuarioCompleto = { ...usuario, ...usuarioActualizado };
-    setUsuario(usuarioCompleto);
-    localStorage.setItem("usuario", JSON.stringify(usuarioCompleto));
+  async function handlePerfilActualizado() {
+    const sesion = await obtenerSesion();
+    if (sesion) setUsuario(sesion);
   }
 
-  function handleLogout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
+  async function handleLogout() {
+    await cerrarSesion();
     window.location.href = AUTH_APP_URL;
   }
 
@@ -83,8 +73,8 @@ function AppShell() {
 
 export default function App() {
   return (
-    <ProtectedRoute>
-      <AppShell />
+    <ProtectedRoute rol="EMPRESA">
+      {(sesion) => <AppShell sesionInicial={sesion} />}
     </ProtectedRoute>
   );
 }

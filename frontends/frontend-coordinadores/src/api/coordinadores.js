@@ -1,12 +1,11 @@
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000";
 
 async function solicitar(ruta, opciones = {}) {
-  const token = localStorage.getItem("token");
   const respuesta = await fetch(`${API_URL}${ruta}`, {
     ...opciones,
+    credentials: "include",
     headers: {
       ...(opciones.body ? { "Content-Type": "application/json" } : {}),
-      Authorization: `Bearer ${token}`,
       ...opciones.headers,
     },
   });
@@ -55,11 +54,10 @@ export function retirarAsignacionDocente(estudianteId) {
 }
 
 export async function descargarReporteConvocatoriasActivas() {
-  const token = localStorage.getItem("token");
   const respuesta = await fetch(
     `${API_URL}/coordinadores/reportes/convocatorias-activas.pdf`,
     {
-      headers: { Authorization: `Bearer ${token}` },
+      credentials: "include",
     },
   );
 

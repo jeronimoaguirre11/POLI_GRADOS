@@ -65,6 +65,7 @@ async function bootstrap() {
       process.env.FRONTEND_INVESTIGACION_URL,
       process.env.FRONTEND_DOCENTES_URL,
     ].filter((origen): origen is string => Boolean(origen)),
+    credentials: true,
     // Necesario para que el frontend pueda leer el nombre del archivo al
     // descargar la hoja de vida (ver empresas.controller.ts).
     exposedHeaders: ['Content-Disposition'],

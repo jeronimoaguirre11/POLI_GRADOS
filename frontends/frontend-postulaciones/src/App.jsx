@@ -1,5 +1,7 @@
+import { useState } from "react";
 import ProtectedRoute from "./components/ProtectedRoute.jsx";
 import ConvocatoriasDisponibles from "./pages/Convocatorias-Disponibles.jsx";
+import { cerrarSesion } from "./api/sesion.js";
 import "./pages/Dashboard-shell.css";
 
 const AUTH_APP_URL =
@@ -7,21 +9,11 @@ const AUTH_APP_URL =
 const ESTUDIANTES_APP_URL =
   import.meta.env.VITE_ESTUDIANTES_APP_URL || "http://localhost:5175";
 
-function obtenerUsuario() {
-  try {
-    const crudo = localStorage.getItem("usuario");
-    return crudo ? JSON.parse(crudo) : null;
-  } catch {
-    return null;
-  }
-}
+function AppShell({ sesionInicial }) {
+  const usuario = useState(sesionInicial);
 
-function AppShell() {
-  const usuario = obtenerUsuario();
-
-  function handleLogout() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
+  async function handleLogout() {
+    await cerrarSesion();
     window.location.href = AUTH_APP_URL;
   }
 
@@ -62,8 +54,8 @@ function AppShell() {
 
 export default function App() {
   return (
-    <ProtectedRoute>
-      <AppShell />
+    <ProtectedRoute rol="ESTUDIANTE">
+      {(sesion) => <AppShell sesionInicial={sesion} />}
     </ProtectedRoute>
   );
 }

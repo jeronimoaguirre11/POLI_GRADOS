@@ -8,7 +8,7 @@ import { InternalController } from './internal.controller.js';
   imports: [
     JwtModule.register({
       secret: process.env.JWT_SECRET,
-      signOptions: { expiresIn: '8h' },
+      signOptions: { expiresIn: '2h' },
     }),
   ],
   controllers: [AuthController, InternalController],

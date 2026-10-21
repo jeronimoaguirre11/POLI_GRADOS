@@ -8,6 +8,7 @@ import {
   retirarAsignacionDocente,
 } from "../api/coordinadores.js";
 import { irAlLogin } from "../components/ProtectedRoute.jsx";
+import { cerrarSesion as cerrarSesionApi } from "../api/sesion.js";
 import "./DashboardCoordinador.css";
 
 const AUTH_APP_URL =
@@ -947,9 +948,8 @@ export default function DashboardCoordinador({ usuario }) {
     setSeleccionadoId((actual) => (actual === id ? null : id));
   }
 
-  function cerrarSesion() {
-    localStorage.removeItem("token");
-    localStorage.removeItem("usuario");
+  async function cerrarSesion() {
+    await cerrarSesionApi();
     window.location.href = AUTH_APP_URL;
   }
 

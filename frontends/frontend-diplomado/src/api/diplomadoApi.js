@@ -9,21 +9,16 @@ async function manejarRespuesta(res) {
   return res.json();
 }
 
-function tokenHeader() {
-  const token = localStorage.getItem("token");
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
-
 export async function listarDiplomados() {
   const res = await fetch(`${API_URL}/diplomados`, {
-    headers: tokenHeader(),
+    credentials: "include",
   });
   return manejarRespuesta(res);
 }
 
 export async function misInscripciones() {
   const res = await fetch(`${API_URL}/diplomados/mias`, {
-    headers: tokenHeader(),
+    credentials: "include",
   });
   return manejarRespuesta(res);
 }
@@ -33,7 +28,7 @@ export async function inscribirse(diplomadoId) {
     `${API_URL}/diplomados/${diplomadoId}/inscripciones`,
     {
       method: "POST",
-      headers: tokenHeader(),
+      credentials: "include",
     },
   );
   return manejarRespuesta(res);
@@ -44,7 +39,7 @@ export async function cancelarInscripcion(diplomadoId) {
     `${API_URL}/diplomados/${diplomadoId}/inscripciones`,
     {
       method: "DELETE",
-      headers: tokenHeader(),
+      credentials: "include",
     },
   );
   return manejarRespuesta(res);
