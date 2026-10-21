@@ -36,6 +36,18 @@ export class InternalController {
     return this.postulacionesService.listarParaCoordinador();
   }
 
+  @Get('resumen-docente')
+  async resumenParaDocente(
+    @Query('estudianteIds') estudianteIds: string,
+  ) {
+    const ids = (estudianteIds ?? '')
+      .split(',')
+      .map((id) => id.trim())
+      .filter(Boolean);
+
+    return this.postulacionesService.obtenerResumenParaDocente(ids);
+  }
+
   @Get('por-oferta/:ofertaId')
   async porOferta(@Param('ofertaId') ofertaId: string) {
     return this.postulacionesService.obtenerPorOferta(ofertaId);

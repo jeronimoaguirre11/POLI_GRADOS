@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { CoordinadoresController } from './coordinadores.controller.js';
 import { CoordinadoresService } from './coordinadores.service.js';
+import { ReportesService } from './reportes.service.js';
 
 @Module({
   imports: [
@@ -10,6 +11,6 @@ import { CoordinadoresService } from './coordinadores.service.js';
     }),
   ],
   controllers: [CoordinadoresController],
-  providers: [CoordinadoresService],
+  providers: [CoordinadoresService, ReportesService],
 })
 export class CoordinadoresModule {}

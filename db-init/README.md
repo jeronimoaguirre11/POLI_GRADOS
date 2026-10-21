@@ -14,6 +14,9 @@ docker exec trabajo-grado-db psql -U admin -d trabajo_grado -c "CREATE DATABASE 
 docker exec trabajo-grado-db psql -U admin -d trabajo_grado -c "CREATE DATABASE empresas_db;"
 docker exec trabajo-grado-db psql -U admin -d trabajo_grado -c "CREATE DATABASE estudiantes_db;"
 docker exec trabajo-grado-db psql -U admin -d trabajo_grado -c "CREATE DATABASE postulaciones_db;"
+docker exec trabajo-grado-db psql -U admin -d trabajo_grado -c "CREATE DATABASE diplomados_db;"
+docker exec trabajo-grado-db psql -U admin -d trabajo_grado -c "CREATE DATABASE investigacion_db;"
+docker exec trabajo-grado-db psql -U admin -d trabajo_grado -c "CREATE DATABASE docentes_db;"
 ```
 
 Un compañero que clone el repo desde cero (sin ese volumen todavía) las va a

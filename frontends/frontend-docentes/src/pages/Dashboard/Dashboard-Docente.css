@@ -164,6 +164,7 @@
 
 table {
   width: 100%;
+  min-width: 820px;
   border-collapse: collapse;
 }
 
@@ -184,10 +185,90 @@ th {
 
 td {
   color: #294c3f;
+  vertical-align: top;
 }
 
 tbody tr:last-child td {
   border-bottom: none;
+}
+
+.modalidades-lista {
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.modalidad-item {
+  padding: 10px 12px;
+  border: 1px solid #dce8e2;
+  border-left: 4px solid #176b4d;
+  border-radius: 10px;
+  background: #f8fbf9;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.modalidad-diplomado {
+  border-left-color: #3f6ec7;
+}
+
+.modalidad-investigacion {
+  border-left-color: #9a6720;
+}
+
+.modalidad-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.modalidad-tipo,
+.modalidad-estado {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.modalidad-tipo {
+  color: #176b4d;
+}
+
+.modalidad-estado {
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: #e4f2eb;
+  color: #176b4d;
+}
+
+.modalidad-item strong {
+  color: #23483a;
+  font-size: 14px;
+}
+
+.modalidad-item small {
+  color: #63756e;
+  font-size: 12px;
+}
+
+.modalidad-vacia,
+.modalidad-advertencia {
+  font-size: 12px;
+}
+
+.modalidad-vacia {
+  color: #70827a;
+}
+
+.modalidad-advertencia {
+  padding: 8px 10px;
+  border: 1px solid #f0d7a9;
+  border-radius: 8px;
+  background: #fff8e8;
+  color: #805713;
 }
 
 .sin-estudiantes,

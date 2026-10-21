@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import axios from 'axios';
 import { CoordinadoresService } from '../dist/modules/coordinadores/coordinadores.service.js';
+import { ReportesService } from '../dist/modules/coordinadores/reportes.service.js';
 
 const configurarEntorno = () => {
   process.env.INTERNAL_API_KEY = 'clave-interna-prueba';
@@ -9,6 +10,7 @@ const configurarEntorno = () => {
   process.env.EMPRESAS_SERVICE_URL = 'http://empresas';
   process.env.ESTUDIANTES_SERVICE_URL = 'http://estudiantes';
   process.env.POSTULACIONES_SERVICE_URL = 'http://postulaciones';
+  process.env.DOCENTES_SERVICE_URL = 'http://docentes';
 };
 
 test('rechaza usuarios que no tienen rol COORDINADOR', async () => {
@@ -157,4 +159,183 @@ test('arma el panel ordenado y no filtra observaciones ni datos del CV', async (
   } finally {
     axios.get = getOriginal;
   }
+});
+
+test('lista docentes con sus estudiantes y las asignaciones disponibles', async () => {
+  configurarEntorno();
+  const service = new CoordinadoresService();
+  const getOriginal = axios.get;
+
+  axios.get = async (url, config = {}) => {
+    assert.equal(config.headers['x-internal-key'], 'clave-interna-prueba');
+
+    if (url === 'http://auth/internal/usuarios') {
+      return {
+        data: [
+          {
+            id: 'usuario-docente',
+            nombre: 'Carlos Docente',
+            email: 'carlos@prueba.com',
+            rol: 'DOCENTE',
+          },
+          {
+            id: 'usuario-estudiante-1',
+            nombre: 'Ana Estudiante',
+            email: 'ana@prueba.com',
+            rol: 'ESTUDIANTE',
+          },
+          {
+            id: 'usuario-estudiante-2',
+            nombre: 'Zoe Estudiante',
+            email: 'zoe@prueba.com',
+            rol: 'ESTUDIANTE',
+          },
+        ],
+      };
+    }
+
+    if (url === 'http://estudiantes/internal/estudiantes') {
+      return {
+        data: [
+          {
+            id: 'estudiante-1',
+            usuarioId: 'usuario-estudiante-1',
+            codigo: '001',
+            programa: 'INGENIERO_AGROPECUARIO',
+            semestre: 9,
+          },
+          {
+            id: 'estudiante-2',
+            usuarioId: 'usuario-estudiante-2',
+            codigo: '002',
+            programa: 'TECNOLOGIA_AGROPECUARIA',
+            semestre: 7,
+          },
+        ],
+      };
+    }
+
+    if (url === 'http://docentes/internal/docentes') {
+      return {
+        data: [
+          {
+            id: 'docente-1',
+            usuarioId: 'usuario-docente',
+            identificacion: '12345',
+            programa: 'INGENIERO_AGROPECUARIO',
+            especialidad: 'Suelos',
+          },
+        ],
+      };
+    }
+
+    if (url === 'http://docentes/internal/docentes/asignaciones') {
+      return {
+        data: [
+          {
+            id: 'asignacion-1',
+            docenteId: 'docente-1',
+            estudianteId: 'estudiante-1',
+            fechaAsignacion: '2026-10-08T10:00:00.000Z',
+          },
+        ],
+      };
+    }
+
+    throw new Error(`URL inesperada en prueba: ${url}`);
+  };
+
+  try {
+    const gestion = await service.listarDocentes({
+      sub: 'coordinador-1',
+      email: 'coordinador@prueba.com',
+      rol: 'COORDINADOR',
+    });
+
+    assert.deepEqual(gestion.resumen, {
+      totalDocentes: 1,
+      estudiantesAsignados: 1,
+      estudiantesSinAsignar: 1,
+    });
+    assert.equal(gestion.docentes[0].nombre, 'Carlos Docente');
+    assert.equal(gestion.docentes[0].estudiantes[0].nombre, 'Ana Estudiante');
+    assert.equal(gestion.estudiantes[0].docente.nombre, 'Carlos Docente');
+    assert.equal(gestion.estudiantes[1].docente, null);
+    assert.equal(JSON.stringify(gestion).includes('password'), false);
+  } finally {
+    axios.get = getOriginal;
+  }
+});
+
+test('genera un PDF con todas las convocatorias activas', async () => {
+  configurarEntorno();
+  const service = new ReportesService();
+  const getOriginal = axios.get;
+
+  axios.get = async (url, config = {}) => {
+    assert.equal(config.headers['x-internal-key'], 'clave-interna-prueba');
+
+    if (url === 'http://empresas/internal/ofertas/activas-reporte') {
+      return {
+        data: [
+          {
+            id: 'oferta-1',
+            titulo: 'Practicante de gestión ambiental',
+            perfilBuscado: 'INGENIERO_AGROPECUARIO',
+            modalidadContratacion: 'CONVENIO',
+            ubicacion: 'Medellín',
+            fechaInicioConvocatoria: '2026-10-01T00:00:00.000Z',
+            fechaFinConvocatoria: '2026-10-30T00:00:00.000Z',
+            fechaInicioPractica: '2026-11-15T00:00:00.000Z',
+            duracionMeses: 6,
+            estado: 'ABIERTA',
+            fechaPublicacion: '2026-10-01T00:00:00.000Z',
+            empresa: {
+              nombreEmpresa: 'Agro Prueba',
+              nit: '900123456',
+              sector: 'Agroindustria',
+            },
+          },
+        ],
+      };
+    }
+
+    if (url === 'http://postulaciones/internal/conteo-por-ofertas') {
+      assert.equal(config.params.ofertaIds, 'oferta-1');
+      return { data: { 'oferta-1': 3 } };
+    }
+
+    throw new Error(`URL inesperada en prueba: ${url}`);
+  };
+
+  try {
+    const reporte = await service.generarConvocatoriasActivas({
+      sub: 'coordinador-1',
+      email: 'coordinador@prueba.com',
+      rol: 'COORDINADOR',
+    });
+
+    assert.equal(Buffer.isBuffer(reporte.archivo), true);
+    assert.equal(reporte.archivo.subarray(0, 5).toString(), '%PDF-');
+    assert.ok(reporte.archivo.length > 1500);
+    assert.match(
+      reporte.nombreArchivo,
+      /^convocatorias-activas-\d{4}-\d{2}-\d{2}\.pdf$/,
+    );
+  } finally {
+    axios.get = getOriginal;
+  }
+});
+
+test('impide que un rol no coordinador genere el PDF', async () => {
+  const service = new ReportesService();
+
+  await assert.rejects(
+    service.generarConvocatoriasActivas({
+      sub: 'estudiante-1',
+      email: 'estudiante@prueba.com',
+      rol: 'ESTUDIANTE',
+    }),
+    (error) => error?.getStatus?.() === 403,
+  );
 });

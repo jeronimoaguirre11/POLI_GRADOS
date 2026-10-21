@@ -175,4 +175,33 @@ export class InvestigacionService {
       investigacionId: investigacion?.id ?? null,
     };
   }
+
+  async obtenerResumenParaDocente(usuarioIds: string[]) {
+    const ids = [...new Set(usuarioIds)].filter(Boolean);
+    if (ids.length === 0) return [];
+
+    const investigaciones = await this.prisma.investigacion.findMany({
+      where: {
+        estudianteId: { in: ids },
+        estado: { in: ['PENDIENTE', 'APROBADA'] },
+      },
+      orderBy: { updatedAt: 'desc' },
+      select: {
+        estudianteId: true,
+        nombre: true,
+        sector: true,
+        estado: true,
+        updatedAt: true,
+      },
+    });
+
+    return investigaciones.map((investigacion) => ({
+      usuarioId: investigacion.estudianteId,
+      tipo: 'INVESTIGACION',
+      estado: investigacion.estado,
+      titulo: investigacion.nombre,
+      detalle: investigacion.sector,
+      fecha: investigacion.updatedAt,
+    }));
+  }
 }

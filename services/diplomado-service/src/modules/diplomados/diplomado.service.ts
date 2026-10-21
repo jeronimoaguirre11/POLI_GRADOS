@@ -198,6 +198,29 @@ export class DiplomadoService {
     };
   }
 
+  async obtenerResumenParaDocente(usuarioIds: string[]) {
+    const ids = [...new Set(usuarioIds)].filter(Boolean);
+    if (ids.length === 0) return [];
+
+    const inscripciones = await this.prisma.inscripcion.findMany({
+      where: {
+        estudianteId: { in: ids },
+        estado: 'INSCRITO',
+      },
+      include: { diplomado: true },
+      orderBy: { fechaInscripcion: 'desc' },
+    });
+
+    return inscripciones.map((inscripcion) => ({
+      usuarioId: inscripcion.estudianteId,
+      tipo: 'DIPLOMADO',
+      estado: inscripcion.estado,
+      titulo: inscripcion.diplomado.nombre,
+      detalle: `${inscripcion.diplomado.duracionHoras} horas`,
+      fecha: inscripcion.fechaInscripcion,
+    }));
+  }
+
   private async estaComprometidoEnPracticas(
     usuarioId: string,
   ): Promise<boolean> {

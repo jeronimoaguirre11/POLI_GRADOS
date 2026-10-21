@@ -18,6 +18,60 @@ function formatearTexto(valor) {
     .join(" ");
 }
 
+function etiquetaModalidad(tipo) {
+  const etiquetas = {
+    PRACTICAS: "Prácticas",
+    DIPLOMADO: "Diplomado",
+    INVESTIGACION: "Investigación",
+  };
+
+  return etiquetas[tipo] || formatearTexto(tipo);
+}
+
+function ModalidadesEstudiante({ estudiante }) {
+  const modalidades = Array.isArray(estudiante.modalidades)
+    ? estudiante.modalidades
+    : [];
+  const serviciosNoDisponibles = Array.isArray(
+    estudiante.serviciosModalidadNoDisponibles,
+  )
+    ? estudiante.serviciosModalidadNoDisponibles
+    : [];
+
+  return (
+    <div className="modalidades-lista">
+      {modalidades.map((modalidad, indice) => (
+        <div
+          className={`modalidad-item modalidad-${String(modalidad.tipo).toLowerCase()}`}
+          key={`${modalidad.tipo}-${modalidad.titulo}-${indice}`}
+        >
+          <div className="modalidad-cabecera">
+            <span className="modalidad-tipo">
+              {etiquetaModalidad(modalidad.tipo)}
+            </span>
+            <span className="modalidad-estado">
+              {formatearTexto(modalidad.estado)}
+            </span>
+          </div>
+          <strong>{modalidad.titulo || "Proceso sin nombre"}</strong>
+          {modalidad.detalle && <small>{modalidad.detalle}</small>}
+        </div>
+      ))}
+
+      {modalidades.length === 0 && serviciosNoDisponibles.length === 0 && (
+        <span className="modalidad-vacia">Sin modalidad activa</span>
+      )}
+
+      {serviciosNoDisponibles.length > 0 && (
+        <span className="modalidad-advertencia">
+          No fue posible verificar:{" "}
+          {serviciosNoDisponibles.map(etiquetaModalidad).join(", ")}.
+        </span>
+      )}
+    </div>
+  );
+}
+
 function DashboardDocente() {
   const [perfil, setPerfil] = useState(null);
   const [estudiantes, setEstudiantes] = useState([]);
@@ -156,6 +210,7 @@ function DashboardDocente() {
                         <th>Codigo</th>
                         <th>Programa</th>
                         <th>Semestre</th>
+                        <th>Proceso academico</th>
                       </tr>
                     </thead>
 
@@ -165,6 +220,9 @@ function DashboardDocente() {
                           <td>{estudiante.codigo || "No registrado"}</td>
                           <td>{formatearTexto(estudiante.programa)}</td>
                           <td>{estudiante.semestre ?? "No registrado"}</td>
+                          <td>
+                            <ModalidadesEstudiante estudiante={estudiante} />
+                          </td>
                         </tr>
                       ))}
                     </tbody>
