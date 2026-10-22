@@ -1,239 +1,185 @@
-# TrabajoGrado
+# POLI-GRADOS · TrabajoGrado
 
-Plataforma para conectar empresas que publican convocatorias de práctica con
-estudiantes que desean postularse.
+Plataforma web para gestionar **prácticas profesionales y trabajos de grado**: convocatorias de empresas, postulaciones de estudiantes, modalidades de grado (investigación y diplomado) y seguimiento por parte de docentes y coordinación.
 
-El proyecto está construido como una **arquitectura de microservicios**: un
-API Gateway, siete servicios dueños de datos y un servicio coordinador que
-integra información de los demás dominios, junto con ocho frontends
-independientes. Todo corre localmente sin contenedores salvo la instancia
-compartida de PostgreSQL.
+Proyecto académico, 2026. Backend en microservicios (NestJS + Prisma + PostgreSQL), un frontend por módulo (React + Vite) y todo orquestado con Docker Compose.
+
+**Roles:** estudiante, empresa, docente y coordinador. Estudiantes y empresas se registran desde la plataforma; docentes y coordinadores los crea un administrador (ver [Crear docentes y coordinadores](#crear-docentes-y-coordinadores)).
+
+---
+
+## Inicio rápido
+
+**Requisitos:** [Docker Desktop](https://www.docker.com/products/docker-desktop/) (Compose v2) y Git. No hace falta tener Node instalado.
+
+```bash
+git clone <url-del-repositorio>
+cd <carpeta-del-repositorio>
+
+# 1. Variables de entorno
+cp .env.example .env
+#    Edita .env y cambia JWT_SECRET e INTERNAL_API_KEY por claves propias:
+#    openssl rand -hex 32
+
+# 2. Construir y levantar todo
+docker compose up --build -d
+
+# 3. Esperar a que los servicios estén sanos (1 a 3 minutos la primera vez)
+docker compose ps
+```
+
+Cuando los servicios estén `healthy`, abre **http://localhost:5173**.
+
+> Entra siempre por `localhost`, no por `127.0.0.1`: la sesión vive en una cookie y el navegador las trata como sitios distintos.
+
+La primera vez la base de datos está **vacía**: regístrate como estudiante o empresa desde la pantalla de registro.
+
+---
 
 ## Arquitectura
 
 ```
-POLI_GRADOS/
-  docker-compose.yml            → Postgres compartido (una base por servicio)
-  db-init/                      → script de creación de las 7 bases al clonar de cero
-  gateway/                      → API Gateway (NestJS), puerto 3000
-  services/
-    auth-service/                puerto 3001 · DB auth_db          → Usuario
-    empresas-service/            puerto 3002 · DB empresas_db      → Empresa, Oferta
-    estudiantes-service/         puerto 3003 · DB estudiantes_db   → Estudiante
-    postulaciones-service/       puerto 3004 · DB postulaciones_db → Postulacion
-    coordinadores-service/       puerto 3005 · sin DB propia       → seguimiento institucional
-    diplomado-service/           puerto 3006 · DB diplomados_db    → Diplomado, Inscripcion
-    investigacion-service/       puerto 3007 · DB investigacion_db → Investigacion
-    docentes-service/            puerto 3008 · DB docentes_db      → Docente, AsignacionDocente
-  frontends/
-    frontend-auth/                puerto 5173 — Home, Login, Registro
-    frontend-empresas/             puerto 5174 — Dashboard de empresa (perfil, ofertas, postulantes)
-    frontend-estudiantes/          puerto 5175 — Dashboard de estudiante (perfil, modalidades)
-    frontend-postulaciones/        puerto 5176 — Convocatorias disponibles / mis postulaciones
-    frontend-coordinadores/        puerto 5177 — Panel general de seguimiento
-    frontend-diplomado/            puerto 5178 — Oferta e inscripción a diplomados
-    frontend-investigacion/        puerto 5179 — Propuestas de investigación
-    frontend-docentes/             puerto 5180 — Seguimiento de estudiantes asignados
+Navegador
+   │
+   ├── Frontends (nginx, puertos 5173-5180)
+   │
+   └── API Gateway :3000  ──►  Microservicios (red interna de Docker)
+                                    │
+                                    └── PostgreSQL (una base de datos por servicio)
 ```
 
-El **gateway** es el único punto de entrada para los 8 frontends: reenvía
-`/auth`, `/empresas`, `/ofertas`, `/estudiantes`, `/postulaciones` y
-`/coordinadores`, `/diplomados`, `/investigaciones` y `/docentes` al backend
-correspondiente. Ningún frontend le habla directo a un microservicio.
+El navegador solo habla con el **gateway**, que reenvía cada ruta al microservicio dueño (`/auth`, `/empresas`, `/postulaciones`...). Los microservicios no publican puertos hacia afuera y se comunican entre sí por nombre de servicio.
 
-Cada backend valida el JWT con el mismo `JWT_SECRET` (no hay llamada a
-auth-service para validar tokens), y las llamadas entre servicios (por
-ejemplo, empresas-service pidiéndole a postulaciones-service el conteo de
-postulantes de una oferta) usan rutas internas protegidas con un header
-`X-Internal-Key`, separadas de las rutas públicas que expone el gateway.
+### Microservicios
 
-Como cada backend tiene su propia base de datos, las consultas que antes
-cruzaban tablas con `include` de Prisma ahora se arman con llamadas HTTP entre
-servicios y se combinan en memoria (por ejemplo, ver los postulantes de una
-oferta es un fan-out: postulaciones-service → estudiantes-service →
-auth-service).
+| Servicio                | Puerto | Base de datos      | Responsabilidad                                       |
+| ----------------------- | ------ | ------------------ | ----------------------------------------------------- |
+| `auth-service`          | 3001   | `auth_db`          | Usuarios, registro, login, sesión y perfil            |
+| `empresas-service`      | 3002   | `empresas_db`      | Empresas y convocatorias (incluye imágenes de oferta) |
+| `estudiantes-service`   | 3003   | `estudiantes_db`   | Perfil del estudiante                                 |
+| `postulaciones-service` | 3004   | `postulaciones_db` | Postulaciones y hojas de vida                         |
+| `coordinadores-service` | 3005   | —                  | Panel y reportes PDF de coordinación                  |
+| `diplomado-service`     | 3006   | `diplomados_db`    | Modalidad diplomado                                   |
+| `investigacion-service` | 3007   | `investigacion_db` | Modalidad investigación                               |
+| `docentes-service`      | 3008   | `docentes_db`      | Perfil docente y estudiantes asignados                |
+| `gateway`               | 3000   | —                  | Punto de entrada único, CORS y proxy                  |
 
-## Cómo levantar el proyecto
+### Frontends
 
-Se necesitan **17 procesos de aplicación** corriendo en paralelo: el gateway,
-ocho microservicios y ocho frontends, además de PostgreSQL en Docker.
+| Frontend                 | Puerto | Para quién                            |
+| ------------------------ | ------ | ------------------------------------- |
+| `frontend-auth`          | 5173   | Inicio de sesión y registro           |
+| `frontend-empresas`      | 5174   | Empresas: convocatorias y postulantes |
+| `frontend-estudiantes`   | 5175   | Portal del estudiante (modalidades)   |
+| `frontend-postulaciones` | 5176   | Prácticas profesionales               |
+| `frontend-coordinadores` | 5177   | Coordinación                          |
+| `frontend-diplomado`     | 5178   | Modalidad diplomado                   |
+| `frontend-investigacion` | 5179   | Modalidad investigación               |
+| `frontend-docentes`      | 5180   | Docentes                              |
 
-### 1. Base de datos
+---
 
-```powershell
-docker compose up -d
-```
+## Seguridad
 
-Esto levanta Postgres en el puerto `5433` con el contenedor
-`trabajo-grado-db`. Si es la primera vez que se crea el volumen, `db-init/`
-crea las 7 bases automáticamente. Si el volumen ya existía de una versión
-anterior del proyecto (monolítica), las bases nuevas se crean una sola vez a
-mano — ver `db-init/README.md`.
+- **Sesión en cookie `httpOnly`** (`SameSite=Lax`): el token no es accesible desde JavaScript y no se guarda en `localStorage`. No lleva fecha de expiración, así que se borra al cerrar el navegador. El JWT, además, caduca a las 2 horas.
+- **El login no devuelve token ni datos del usuario**: responde solo un mensaje de éxito. Los frontends consultan `GET /auth/me`, que entrega lo mínimo (nombre, correo y rol), y lo mantienen solo en memoria.
+- **Cierre de sesión real**: `POST /auth/logout` borra la cookie desde el servidor.
+- **CORS solo en el gateway**, con orígenes exactos (necesario para cookies). Los microservicios no tienen CORS porque el navegador nunca los llama directamente.
+- **Microservicios y base de datos sin puertos publicados**: solo el gateway y los frontends son accesibles desde fuera.
+- **Rutas `/internal/*`** (llamadas entre servicios) protegidas con `x-internal-key` y nunca expuestas por el gateway.
+- **Secretos fuera del repositorio**: viven en `.env`, que está en `.gitignore`.
+- La cookie se marca `Secure` con `COOKIE_SECURE=true` en `auth-service`; en local va en `false` porque no hay HTTPS.
 
-### 2. Backends (gateway + 8 microservicios)
+---
 
-Para cada carpeta en `gateway/` y `services/*`:
+## Docker
 
-```powershell
-cd gateway   # o cualquiera de las carpetas services/*
-npm install
-# Crear el .env de ese servicio (ver la sección de variables de entorno)
-npx prisma generate       # solo en los 7 servicios que tienen prisma/
-npx prisma migrate deploy # solo en esos 7 servicios
-npm run start:dev
-```
+- **Un contenedor por servicio**, más PostgreSQL, el gateway y los 8 frontends (17 contenedores en total).
+- **PostgreSQL** es una sola instancia con una base de datos por microservicio. `db-init/init-microservicios.sql` las crea la primera vez que se genera el volumen.
+- **Migraciones**: cada servicio con Prisma ejecuta `prisma migrate deploy` al arrancar.
+- **Orden de arranque**: cada servicio expone `GET /health`; el gateway espera a que todos estén sanos y los frontends esperan al gateway.
+- **Frontends**: se compilan con Vite y los sirve nginx. Las variables `VITE_*` se fijan en el momento de construir la imagen; si cambias una URL, reconstruye con `--build`.
+- **Imágenes compartidas**: `services/Dockerfile.prisma` (los 7 servicios con Prisma) y `frontends/Dockerfile` (los 8 frontends).
+- **Volúmenes**: `pgdata` (base de datos), `empresas_uploads` (imágenes de ofertas) y `postulaciones_uploads` (hojas de vida). Sobreviven a reinicios y a `docker compose down`.
 
-Variables de entorno compartidas entre los microservicios (deben ser
-**idénticas** en todos):
+### Variables de entorno (`.env` en la raíz)
 
-```
-JWT_SECRET="<CLAVE_JWT_LARGA_Y_ALEATORIA>"
-INTERNAL_API_KEY="<CLAVE_INTERNA_LARGA_Y_ALEATORIA>"
-```
+| Variable                 | Descripción                                                                         |
+| ------------------------ | ----------------------------------------------------------------------------------- |
+| `DB_USER`, `DB_PASSWORD` | Credenciales de PostgreSQL                                                          |
+| `JWT_SECRET`             | Clave con la que se firman y validan las sesiones (la misma en todos los servicios) |
+| `INTERNAL_API_KEY`       | Clave para las llamadas entre servicios                                             |
 
-No reutilices literalmente los marcadores anteriores. Genera dos valores
-distintos para tu entorno local y no los subas al repositorio.
-
-Además cada servicio de datos tiene su propio `PORT` y `DATABASE_URL`.
-`coordinadores-service` no usa Prisma: consulta a los otros servicios mediante
-sus rutas internas. El gateway tiene las URL de los ocho servicios apuntando
-a `http://localhost:<puerto>`.
-
-### 3. Frontends
-
-Para cada carpeta en `frontends/*`:
-
-```powershell
-cd frontends/frontend-auth   # o cualquiera de las carpetas frontends/*
-Copy-Item .env.example .env
-npm install
-npm run dev
-```
-
-Cada frontend tiene su puerto fijo (`vite.config.js` usa `strictPort: true`),
-así que si alguno no arranca revisa que no haya otro proceso usando ese
-puerto.
-
-### Traspaso de sesión entre frontends
-
-Como cada frontend vive en un origen distinto, `localStorage` no se comparte
-entre ellos. `frontend-auth` redirige tras el login pasando el token por query
-string (`?token=...&usuario=...`); la app destino lo guarda en su propio
-`localStorage` y limpia la URL. Esto también redirige al panel de coordinador
-cuando el JWT pertenece al rol `COORDINADOR`. El mismo mecanismo se usa al
-saltar de
-`frontend-estudiantes` a `frontend-postulaciones` ("Prácticas Profesionales").
-Cerrar sesión en cualquier frontend limpia su propio `localStorage` y
-redirige a `frontend-auth`.
-
-## Gestión de postulantes
-
-El panel empresarial permite consultar los candidatos de cada convocatoria,
-buscar y filtrar postulantes, revisar sus datos académicos, contactarlos por
-correo y descargar su hoja de vida. La empresa puede clasificar cada
-postulación como pendiente, en revisión, preseleccionada, rechazada o
-seleccionada, y guardar observaciones internas.
-
-Las hojas de vida no se sirven como archivos públicos: solo la empresa dueña
-de la convocatoria puede descargarlas desde una ruta autenticada. Los
-estudiantes pueden ver el estado actualizado de sus postulaciones, pero no las
-observaciones internas de la empresa.
-
-Endpoints empresariales del módulo (vía gateway):
-
-- `GET /empresas/ofertas/:id/postulaciones`
-- `PATCH /empresas/postulaciones/:id`
-- `GET /empresas/postulaciones/:id/hoja-vida`
-
-Internamente, estos tres endpoints viven en empresas-service pero delegan a
-postulaciones-service (que es quien de verdad tiene la tabla `Postulacion`) —
-la hoja de vida viaja entre servicios como base64 dentro del JSON de
-respuesta.
-
-Las respuestas públicas del estudiante seleccionan únicamente los datos que
-necesita para hacer seguimiento. `observacionesEmpresa` permanece disponible
-en la comunicación interna con el módulo empresarial, pero nunca se incluye
-en `GET /postulaciones/mias` ni en el panel del coordinador.
-
-## Módulo de coordinador
-
-El rol `COORDINADOR` dispone de un panel de seguimiento institucional en
-`http://localhost:5177`. El frontend consulta, siempre a través del gateway:
-
-- `GET /coordinadores/panel`
-- `GET /coordinadores/docentes`
-- `POST /coordinadores/docentes`
-- `POST /coordinadores/asignaciones-docentes`
-- `PUT /coordinadores/asignaciones-docentes`
-- `DELETE /coordinadores/asignaciones-docentes/:estudianteId`
-- `GET /coordinadores/reportes/convocatorias-activas.pdf`
-
-El servicio valida el JWT y rechaza cualquier rol diferente de
-`COORDINADOR`. Luego obtiene estudiantes, usuarios, postulaciones y ofertas
-mediante rutas internas protegidas y construye una vista unificada sin acceder
-directamente a las bases de datos ajenas.
-
-El panel permite:
-
-- consultar el total de estudiantes, con y sin postulaciones;
-- revisar cantidades por estado de postulación;
-- buscar por nombre, correo o código;
-- filtrar por programa y estado;
-- desplegar las postulaciones de cada estudiante con oferta, empresa, fecha y
-  estado;
-- registrar cuentas de docentes con sus datos académicos;
-- consultar los docentes y sus estudiantes asignados;
-- asignar, reasignar o retirar el docente responsable de un estudiante;
-- descargar en PDF el reporte de convocatorias activas, con empresa, perfil,
-  modalidad, vigencia, duración y total de postulaciones.
-
-El coordinador no cambia las decisiones de las empresas y no recibe
-observaciones privadas ni archivos de hojas de vida. La gestión de docentes se
-realiza mediante llamadas internas protegidas entre `coordinadores-service`,
-`auth-service`, `estudiantes-service` y `docentes-service`.
-
-## Módulo de docentes
-
-El rol `DOCENTE` dispone de un panel en `http://localhost:5180`. Además de su
-perfil, puede consultar los estudiantes que le fueron asignados y el proceso
-de grado activo de cada uno:
-
-- prácticas profesionales, mostrando la convocatoria y la empresa cuando el
-  estudiante fue seleccionado;
-- diplomado, mostrando el nombre, la duración y el estado de la inscripción;
-- investigación, mostrando el nombre, el sector y si está pendiente o
-  aprobada.
-
-`docentes-service` obtiene esos datos por rutas internas protegidas de
-Postulaciones, Diplomado e Investigación. Solo recibe un resumen académico:
-no expone hojas de vida, observaciones empresariales, metodología, objetivos
-ni el contenido de la propuesta. Si uno de los módulos no está disponible,
-el panel conserva los datos de los otros y avisa cuál no pudo verificarse.
-
-### Crear una cuenta de coordinador
-
-El registro público solo permite cuentas de estudiante y empresa. Una cuenta
-de coordinador se crea directamente en `auth-service` mediante una ruta
-interna protegida, usando el mismo `INTERNAL_API_KEY` configurado en los
-servicios:
+### Comandos útiles
 
 ```bash
-curl -X POST http://localhost:3001/internal/usuarios/coordinador \
-  -H "Content-Type: application/json" \
-  -H "X-Internal-Key: <INTERNAL_API_KEY>" \
-  -d '{"nombre":"Coordinación académica","email":"coordinacion@institucion.edu","password":"<CONTRASENA_SEGURA>"}'
+docker compose ps                        # estado de los servicios
+docker compose logs -f auth-service      # logs de un servicio
+docker compose restart empresas-service  # reiniciar uno
+docker compose up --build -d             # reconstruir y levantar
+docker compose down                      # detener (conserva los datos)
+docker compose down -v                   # detener y BORRAR datos y archivos subidos
 ```
 
-Después puede iniciar sesión normalmente en `http://localhost:5173`; el
-frontend de autenticación lo enviará al panel del puerto `5177`.
+---
 
-## Historial de desarrollo
+## Crear docentes y coordinadores
 
-El proyecto arrancó como un monolito NestJS + React siguiendo un roadmap de
-sprints para el semestre (autenticación, catálogo de servicios, módulos de
-investigación/diplomado/prácticas, empresas, coordinador). Los módulos de
-**Auth**, **Estudiantes**, **Empresas** y **Postulaciones** se implementaron
-primero en el monolito y luego se migraron a la arquitectura de
-microservicios descrita arriba. Después se agregaron Coordinación, Diplomado,
-Investigación y Docentes como módulos independientes. El seguimiento del
-docente integra esos dominios por HTTP sin mezclar sus bases de datos.
+No se registran desde la pantalla pública. Mientras se implementa el panel de super administrador, se crean con una llamada interna ejecutada dentro de la red de Docker (Git Bash, Linux o macOS):
+
+```bash
+docker compose exec auth-service node -e "fetch('http://localhost:3001/internal/usuarios/coordinador',{method:'POST',headers:{'Content-Type':'application/json','x-internal-key':process.env.INTERNAL_API_KEY},body:JSON.stringify({nombre:'Coordinador Demo',email:'coord@elpoli.edu.co',password:'Coord1234'})}).then(r=>r.text()).then(console.log)"
+```
+
+Para un docente se usa la ruta `/internal/usuarios/docente` con los campos de `services/auth-service/src/modules/auth/dto/crear-docente.dto.ts`.
+
+---
+
+## Estructura del repositorio
+
+```
+├─ docker-compose.yml
+├─ .env.example
+├─ db-init/                  # crea las bases de datos la primera vez
+├─ gateway/                  # API Gateway
+├─ services/
+│  ├─ Dockerfile.prisma      # imagen compartida de los servicios con Prisma
+│  ├─ auth-service/
+│  ├─ empresas-service/
+│  ├─ estudiantes-service/
+│  ├─ postulaciones-service/
+│  ├─ coordinadores-service/
+│  ├─ diplomado-service/
+│  ├─ investigacion-service/
+│  └─ docentes-service/
+└─ frontends/
+   ├─ Dockerfile             # imagen compartida de los frontends
+   └─ frontend-*/
+```
+
+---
+
+## Solución de problemas
+
+| Síntoma                                                | Qué hacer                                                                                     |
+| ------------------------------------------------------ | --------------------------------------------------------------------------------------------- |
+| Un servicio queda `unhealthy`                          | `docker compose logs <servicio> --tail 40`                                                    |
+| `container name "/trabajo-grado-db" is already in use` | Queda un contenedor de una versión anterior: `docker rm -f trabajo-grado-db`                  |
+| Puerto ocupado (3000, 5173...)                         | Cierra lo que corra en ese puerto (por ejemplo, un `npm run dev` anterior)                    |
+| El login no "pega" o no se mantiene la sesión          | Entra por `http://localhost:5173`, no por `127.0.0.1`, y revisa que el gateway esté `healthy` |
+| El build se corta o da `exit 137`                      | Falta memoria: `COMPOSE_PARALLEL_LIMIT=3 docker compose build` y luego `docker compose up -d` |
+| Cambiaste una URL `VITE_*` y no surte efecto           | Reconstruye los frontends: `docker compose up --build -d`                                     |
+| Quieres empezar con la base de datos limpia            | `docker compose down -v` y luego `docker compose up --build -d`                               |
+
+---
+
+## Pendiente
+
+- Panel de super administrador para crear docentes y coordinadores desde la interfaz.
+
+## Equipo
+
+jeronimo aguirre castrillon
+mateo carvajal maya
+jhonatan
+luquez

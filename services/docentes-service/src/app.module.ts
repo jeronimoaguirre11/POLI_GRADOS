@@ -3,13 +3,11 @@ import { AppController } from './app.controller.js';
 import { AppService } from './app.service.js';
 import { PrismaModule } from './modules/prisma/prisma.module.js';
 import { DocentesModule } from './modules/docentes/docentes.module.js';
+import { HealthController } from './health.controller.js';
 
 @Module({
-  imports: [
-    PrismaModule,
-    DocentesModule,
-  ],
-  controllers: [AppController],
+  imports: [PrismaModule, DocentesModule],
+  controllers: [AppController, HealthController],
   providers: [AppService],
 })
 export class AppModule {}
