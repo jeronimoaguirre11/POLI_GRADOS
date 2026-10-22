@@ -111,7 +111,7 @@ El navegador solo habla con el **gateway**, que reenvía cada ruta al microservi
 | `DB_USER`, `DB_PASSWORD` | Credenciales de PostgreSQL                                                          |
 | `JWT_SECRET`             | Clave con la que se firman y validan las sesiones (la misma en todos los servicios) |
 | `INTERNAL_API_KEY`       | Clave para las llamadas entre servicios                                             |
-| `SUPERADMIN_NOMBRE`, `SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD` | Datos del primer super administrador (opcionales; por defecto `admin@elpoli.edu.co` / `Admin12345`) |
+| `SUPERADMIN_NOMBRE`, `SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD` | Datos del super administrador (único) (opcionales; por defecto `admin@elpoli.edu.co` / `Admin12345`) |
 
 ### Comandos útiles
 
@@ -130,10 +130,10 @@ docker compose down -v                   # detener y BORRAR datos y archivos sub
 
 Es el rol que administra las cuentas de la plataforma. Su panel está en **http://localhost:5181** (el login lo redirige automáticamente).
 
-- **Primer administrador**: `auth-service` lo crea al arrancar con `SUPERADMIN_NOMBRE`, `SUPERADMIN_EMAIL` y `SUPERADMIN_PASSWORD`, solo si todavía no existe ninguno. Reiniciar no lo duplica ni cambia su contraseña. Cámbiala desde el panel (botón *Cambiar contraseña*) después del primer ingreso.
-- **Crear cuentas** de coordinador, docente, estudiante, empresa u otro super administrador. Para estudiantes, empresas y docentes también se crea su perfil en el microservicio correspondiente.
+- **Hay un solo super administrador**: `auth-service` lo crea al arrancar con `SUPERADMIN_NOMBRE`, `SUPERADMIN_EMAIL` y `SUPERADMIN_PASSWORD`, solo si todavía no existe. No hay ninguna ruta ni pantalla para crear otro, y reiniciar no lo duplica ni cambia su contraseña. Cámbiala desde el panel (botón *Cambiar contraseña*) después del primer ingreso.
+- **Crear cuentas** de coordinador, docente, estudiante y empresa. Para estudiantes, empresas y docentes también se crea su perfil en el microservicio correspondiente.
 - **Activar / desactivar cuentas**: una cuenta desactivada no puede iniciar sesión y queda fuera en cuanto recarga cualquier panel (`/auth/me` responde 401 y borra la cookie). No se borra ningún dato.
-- **Protecciones**: solo el rol `SUPERADMIN` puede usar `/administracion/*`, y en cada petición se verifica que su cuenta siga activa; un administrador no puede desactivarse a sí mismo y nunca puede quedar el sistema sin un super administrador activo.
+- **Protecciones**: solo el rol `SUPERADMIN` puede usar `/administracion/*`, y en cada petición se verifica que su cuenta siga activa; la cuenta del super administrador no se puede desactivar.
 
 `administracion-service` no tiene base de datos: valida y orquesta a `auth-service` por sus rutas `/internal/usuarios/*`.
 
@@ -144,7 +144,6 @@ Es el rol que administra las cuentas de la plataforma. Su panel está en **http:
 | `POST`  | `/administracion/usuarios/docentes`                   | Crea un docente con su perfil             |
 | `POST`  | `/administracion/usuarios/estudiantes`                | Crea un estudiante con su perfil          |
 | `POST`  | `/administracion/usuarios/empresas`                   | Crea una empresa con su perfil            |
-| `POST`  | `/administracion/usuarios/administradores`            | Crea otro super administrador             |
 | `PATCH` | `/administracion/usuarios/:id/estado` `{ "activo" }` | Activa o desactiva una cuenta             |
 
 ---

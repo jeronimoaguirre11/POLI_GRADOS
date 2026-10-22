@@ -231,7 +231,7 @@
 .stats {
   margin-top: 1.6rem;
   display: grid;
-  grid-template-columns: 1.4fr repeat(5, 1fr);
+  grid-template-columns: 1.4fr repeat(4, 1fr);
   gap: 0.9rem;
 }
 
@@ -628,7 +628,7 @@ td.acciones .primario {
   padding: 0;
   border: 0;
   display: grid;
-  grid-template-columns: repeat(5, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 0.6rem;
 }
 
@@ -777,9 +777,6 @@ button:disabled {
     grid-template-columns: repeat(3, 1fr);
   }
 
-  .tipos {
-    grid-template-columns: repeat(3, 1fr);
-  }
 }
 
 @media (max-width: 720px) {

@@ -72,8 +72,8 @@ services:
       ESTUDIANTES_SERVICE_URL: http://estudiantes-service:3003
       COORDINADORES_SERVICE_URL: http://coordinadores-service:3005
       DOCENTES_SERVICE_URL: http://docentes-service:3008
-      # Primer super administrador: se crea al arrancar solo si aun no existe
-      # ninguno. Se pueden cambiar con variables en el .env de la raiz.
+      # Super administrador unico: se crea al arrancar solo si aun no existe.
+      # No hay forma de crear otro. Se pueden cambiar con variables en el .env de la raiz.
       SUPERADMIN_NOMBRE: ${SUPERADMIN_NOMBRE:-Super administrador}
       SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-admin@elpoli.edu.co}
       SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-Admin12345}

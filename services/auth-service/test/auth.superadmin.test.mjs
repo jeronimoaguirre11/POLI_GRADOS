@@ -29,29 +29,6 @@ test('cambiar estado exige un booleano', async () => {
   assert.equal(errores.some((e) => e.property === 'activo'), true);
 });
 
-test('crearSuperadmin fija el rol y no devuelve el password', async () => {
-  let datos;
-  const prisma = {
-    usuario: {
-      findUnique: async () => null,
-      create: async ({ data }) => {
-        datos = data;
-        return { id: 'sa-2', createdAt: new Date(), ...data };
-      },
-    },
-  };
-  const service = new AuthService(prisma, jwtFalso);
-
-  const resultado = await service.crearSuperadmin({
-    nombre: 'Otra administradora',
-    email: 'admin2@prueba.com',
-    password: 'Segura123',
-  });
-
-  assert.equal(datos.rol, 'SUPERADMIN');
-  assert.equal('password' in resultado, false);
-});
-
 test('una cuenta desactivada no puede iniciar sesion', async () => {
   const password = await bcrypt.hash('Segura123', 4);
   const prisma = {
@@ -124,12 +101,11 @@ test('/auth/me no expone el campo activo', async () => {
   assert.deepEqual(perfil, { nombre: 'U', email: 'u@prueba.com', rol: 'DOCENTE' });
 });
 
-test('no se puede desactivar al unico super administrador activo', async () => {
+test('la cuenta del super administrador no se puede desactivar', async () => {
   let actualizado = false;
   const prisma = {
     usuario: {
       findUnique: async () => ({ id: 'sa', rol: 'SUPERADMIN', activo: true }),
-      count: async () => 1,
       update: async () => {
         actualizado = true;
       },
@@ -142,20 +118,6 @@ test('no se puede desactivar al unico super administrador activo', async () => {
     (error) => error.getStatus() === 409,
   );
   assert.equal(actualizado, false);
-});
-
-test('se puede desactivar un super administrador si queda otro activo', async () => {
-  const prisma = {
-    usuario: {
-      findUnique: async () => ({ id: 'sa', rol: 'SUPERADMIN', activo: true }),
-      count: async () => 2,
-      update: async ({ data }) => ({ id: 'sa', rol: 'SUPERADMIN', ...data }),
-    },
-  };
-  const service = new AuthService(prisma, jwtFalso);
-
-  const resultado = await service.cambiarEstadoCuenta('sa', false);
-  assert.equal(resultado.activo, false);
 });
 
 test('cambiar estado de un usuario inexistente responde 404', async () => {
@@ -230,4 +192,9 @@ test('el super administrador inicial respeta la configuracion y la politica', as
     ).motivo,
     'email-en-uso',
   );
+});
+
+test('no existe ninguna forma de crear otro super administrador', () => {
+  const service = new AuthService({}, jwtFalso);
+  assert.equal(typeof service.crearSuperadmin, 'undefined');
 });

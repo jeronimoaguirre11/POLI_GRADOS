@@ -12,8 +12,9 @@ import { CrearDocenteDto } from './dto/crear-docente.dto.js';
 import { CrearEstudianteDto } from './dto/crear-estudiante.dto.js';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto.js';
 
+// Roles que se administran desde el panel. El super administrador es unico y
+// no se lista: no se puede crear otro ni desactivarlo.
 export const ROLES = [
-  'SUPERADMIN',
   'COORDINADOR',
   'DOCENTE',
   'ESTUDIANTE',
@@ -32,7 +33,8 @@ export interface UsuarioAdministrado {
 // Este servicio no tiene base de datos: orquesta a auth-service (y, a traves
 // de el, a empresas/estudiantes/docentes) por sus rutas /internal, que el
 // gateway nunca expone. Toda la autorizacion del super administrador vive
-// aqui.
+// aqui. La plataforma tiene un solo super administrador (lo crea auth-service
+// al arrancar), por eso aqui no hay forma de crear otro.
 @Injectable()
 export class AdministracionService {
   private headersInternos() {
@@ -105,13 +107,14 @@ export class AdministracionService {
   async listarUsuarios(payload: JwtPayload) {
     await this.asegurarSuperadminActivo(payload);
 
-    const usuarios = await this.llamarAuth<UsuarioAdministrado[]>(
+    const todos = await this.llamarAuth<UsuarioAdministrado[]>(
       () =>
         axios.get(`${this.urlAuth()}/administracion`, {
           headers: this.headersInternos(),
         }),
       'No se pudo obtener la lista de usuarios',
     );
+    const usuarios = todos.filter((usuario) => usuario.rol !== 'SUPERADMIN');
 
     const porRol = Object.fromEntries(ROLES.map((rol) => [rol, 0])) as Record<
       string,
@@ -142,17 +145,6 @@ export class AdministracionService {
           headers: this.headersInternos(),
         }),
       'Error al crear el coordinador',
-    );
-  }
-
-  async crearAdministrador(payload: JwtPayload, dto: CrearCuentaDto) {
-    await this.asegurarSuperadminActivo(payload);
-    return this.llamarAuth(
-      () =>
-        axios.post(`${this.urlAuth()}/superadmin`, dto, {
-          headers: this.headersInternos(),
-        }),
-      'Error al crear el administrador',
     );
   }
 

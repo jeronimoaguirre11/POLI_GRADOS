@@ -29,7 +29,7 @@ export function obtenerUsuarios() {
   return solicitar("/administracion/usuarios");
 }
 
-// tipo: coordinadores | docentes | estudiantes | empresas | administradores
+// tipo: coordinadores | docentes | estudiantes | empresas
 export function crearUsuario(tipo, datos) {
   return solicitar(`/administracion/usuarios/${tipo}`, {
     method: "POST",

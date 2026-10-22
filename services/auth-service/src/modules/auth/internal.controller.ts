@@ -14,7 +14,6 @@ import { InternalAuthGuard } from '../../common/guards/internal-auth.guard.js';
 import { AuthService } from './auth.service.js';
 import { CrearCoordinadorDto } from './dto/crear-coordinador.dto.js';
 import { CrearDocenteDto } from './dto/crear-docente.dto.js';
-import { CrearSuperadminDto } from './dto/crear-superadmin.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { CambiarEstadoCuentaDto } from './dto/cambiar-estado-cuenta.dto.js';
 
@@ -42,11 +41,6 @@ export class InternalController {
   }
 
   // ---- Rutas usadas por administracion-service (super administrador) ----
-
-  @Post('superadmin')
-  async crearSuperadmin(@Body() dto: CrearSuperadminDto) {
-    return this.authService.crearSuperadmin(dto);
-  }
 
   // Crea un estudiante o una empresa con su perfil, igual que el registro
   // publico, pero devuelve el usuario creado para mostrarlo en el panel.

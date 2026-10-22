@@ -62,7 +62,7 @@ test('un super administrador desactivado pierde el acceso aunque su JWT siga vig
   );
 });
 
-test('lista usuarios con resumen por rol y estado', async () => {
+test('lista usuarios con resumen por rol y estado, sin el super administrador', async () => {
   simularAuth({
     usuarios: [
       { id: '1', rol: 'SUPERADMIN', activo: true },
@@ -75,12 +75,13 @@ test('lista usuarios con resumen por rol y estado', async () => {
 
   const { usuarios, resumen } = await service.listarUsuarios(ADMIN);
 
-  assert.equal(usuarios.length, 4);
+  assert.equal(usuarios.length, 3);
+  assert.equal(usuarios.some((u) => u.rol === 'SUPERADMIN'), false);
   assert.deepEqual(resumen, {
-    total: 4,
-    activos: 3,
+    total: 3,
+    activos: 2,
     inactivos: 1,
-    porRol: { SUPERADMIN: 1, COORDINADOR: 0, DOCENTE: 1, ESTUDIANTE: 2, EMPRESA: 0 },
+    porRol: { COORDINADOR: 0, DOCENTE: 1, ESTUDIANTE: 2, EMPRESA: 0 },
   });
 });
 
@@ -90,7 +91,6 @@ test('cada tipo de cuenta va a su ruta interna y el rol lo fija el servidor', as
   const base = { nombre: 'N', email: 'n@p.com', password: 'Clave1234' };
 
   await service.crearCoordinador(ADMIN, base);
-  await service.crearAdministrador(ADMIN, base);
   await service.crearDocente(ADMIN, { ...base, identificacion: '123' });
   await service.crearEstudiante(ADMIN, { ...base, codigo: '2026', programa: 'INGENIERO_AGROPECUARIO', rol: 'SUPERADMIN' });
   await service.crearEmpresa(ADMIN, { ...base, nombreEmpresa: 'E', nit: '9', sector: 'Agro' });
@@ -100,14 +100,13 @@ test('cada tipo de cuenta va a su ruta interna y el rol lo fija el servidor', as
     posts.map(([, url]) => url),
     [
       'http://auth/internal/usuarios/coordinador',
-      'http://auth/internal/usuarios/superadmin',
       'http://auth/internal/usuarios/docente',
       'http://auth/internal/usuarios/registro',
       'http://auth/internal/usuarios/registro',
     ],
   );
-  assert.equal(posts[3][2].rol, 'ESTUDIANTE');
-  assert.equal(posts[4][2].rol, 'EMPRESA');
+  assert.equal(posts[2][2].rol, 'ESTUDIANTE');
+  assert.equal(posts[3][2].rol, 'EMPRESA');
 });
 
 test('reenvia el status y mensaje de auth-service (correo duplicado)', async () => {
@@ -152,4 +151,9 @@ test('los DTO aplican la politica de contrasena y la lista de programas', async 
     programa: 'MEDICINA',
   });
   assert.equal((await validate(programaMalo)).some((e) => e.property === 'programa'), true);
+});
+
+test('no existe forma de crear otro super administrador', () => {
+  const service = new AdministracionService();
+  assert.equal(typeof service.crearAdministrador, 'undefined');
 });

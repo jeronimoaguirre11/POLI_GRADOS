@@ -9,7 +9,7 @@ import {
 import { PASSWORD_MENSAJE, PASSWORD_REGEX } from './validaciones.js';
 
 // Datos comunes a todas las cuentas. Se usa tal cual para coordinadores y
-// super administradores, y como base de los demas perfiles.
+// como base de los demas perfiles.
 export class CrearCuentaDto {
   @IsString()
   @IsNotEmpty()

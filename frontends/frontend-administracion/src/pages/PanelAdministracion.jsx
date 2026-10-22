@@ -157,9 +157,9 @@ export default function PanelAdministracion({ usuario }) {
             <span className="hero-label">Super administrador</span>
             <h1>Cuentas de la plataforma</h1>
             <p>
-              Crea coordinadores, docentes, estudiantes, empresas y otros
-              administradores. Desactiva una cuenta para bloquear su acceso
-              sin perder su información.
+              Crea las cuentas de coordinadores, docentes, estudiantes y
+              empresas. Desactiva una cuenta para bloquear su acceso sin
+              perder su información.
             </p>
           </div>
           <button

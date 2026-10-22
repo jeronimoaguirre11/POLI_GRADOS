@@ -49,11 +49,6 @@ export class AdministracionController {
     return this.administracion.crearEmpresa(request.user, dto);
   }
 
-  @Post('administradores')
-  crearAdministrador(@Req() request: any, @Body() dto: CrearCuentaDto) {
-    return this.administracion.crearAdministrador(request.user, dto);
-  }
-
   @Patch(':id/estado')
   cambiarEstado(
     @Req() request: any,

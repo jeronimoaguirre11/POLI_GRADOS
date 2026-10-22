@@ -328,13 +328,6 @@ export default function FormularioCuenta({ onCerrar, onCreada, onSesionInvalida 
           )}
         </div>
 
-        {rol === "SUPERADMIN" && (
-          <p className="nota">
-            Un super administrador tiene acceso total a este panel, incluido
-            crear y desactivar otras cuentas.
-          </p>
-        )}
-
         {error && (
           <p className="form-error" role="alert">
             {error}

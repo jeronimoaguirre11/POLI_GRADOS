@@ -1,5 +1,6 @@
+// Roles que se administran desde el panel (el super administrador es unico
+// y no aparece en el resumen ni en los filtros).
 export const ROLES = [
-  "SUPERADMIN",
   "COORDINADOR",
   "DOCENTE",
   "ESTUDIANTE",
@@ -23,12 +24,12 @@ export const PLURALES_ROL = {
 };
 
 // Tipo de cuenta que se puede crear -> ruta de administracion-service.
+// No incluye SUPERADMIN: la plataforma tiene un solo super administrador.
 export const TIPOS_CUENTA = [
   { rol: "COORDINADOR", ruta: "coordinadores", descripcion: "Gestiona el seguimiento de estudiantes y asigna docentes." },
   { rol: "DOCENTE", ruta: "docentes", descripcion: "Acompaña a los estudiantes asignados." },
   { rol: "ESTUDIANTE", ruta: "estudiantes", descripcion: "Accede a prácticas, diplomado e investigación." },
   { rol: "EMPRESA", ruta: "empresas", descripcion: "Publica convocatorias de práctica." },
-  { rol: "SUPERADMIN", ruta: "administradores", descripcion: "Acceso total a este panel." },
 ];
 
 export const PROGRAMAS = [

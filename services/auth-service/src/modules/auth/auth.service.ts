@@ -14,7 +14,6 @@ import { LoginDto } from './dto/login.dto.js';
 import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto.js';
 import { CrearCoordinadorDto } from './dto/crear-coordinador.dto.js';
 import { CrearDocenteDto } from './dto/crear-docente.dto.js';
-import { CrearSuperadminDto } from './dto/crear-superadmin.dto.js';
 import { PASSWORD_REGEX } from './dto/password.validation.js';
 import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 
@@ -192,15 +191,7 @@ export class AuthService {
     return this.crearCuentaSinPerfil(dto, 'COORDINADOR');
   }
 
-  // Igual que el coordinador: solo por ruta interna y con el rol fijado aqui.
-  async crearSuperadmin(dto: CrearSuperadminDto) {
-    return this.crearCuentaSinPerfil(dto, 'SUPERADMIN');
-  }
-
-  private async crearCuentaSinPerfil(
-    dto: CrearCoordinadorDto,
-    rol: 'COORDINADOR' | 'SUPERADMIN',
-  ) {
+  private async crearCuentaSinPerfil(dto: CrearCoordinadorDto, rol: 'COORDINADOR') {
     const existente = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
     });
@@ -310,16 +301,13 @@ export class AuthService {
       throw new NotFoundException('Usuario no encontrado');
     }
 
-    // Nunca puede quedar el sistema sin un super administrador activo.
-    if (!activo && usuario.rol === 'SUPERADMIN' && usuario.activo) {
-      const superadminsActivos = await this.prisma.usuario.count({
-        where: { rol: 'SUPERADMIN', activo: true },
-      });
-      if (superadminsActivos <= 1) {
-        throw new ConflictException(
-          'No se puede desactivar al único super administrador activo',
-        );
-      }
+    // Solo existe un super administrador (lo crea el sistema al arrancar) y
+    // su cuenta nunca se puede desactivar: la plataforma quedaria sin nadie
+    // que la administre.
+    if (!activo && usuario.rol === 'SUPERADMIN') {
+      throw new ConflictException(
+        'La cuenta del super administrador no se puede desactivar',
+      );
     }
 
     return this.prisma.usuario.update({
@@ -329,9 +317,10 @@ export class AuthService {
     });
   }
 
-  // Crea el primer super administrador al arrancar el servicio, con los datos
-  // de SUPERADMIN_NOMBRE, SUPERADMIN_EMAIL y SUPERADMIN_PASSWORD. Si ya existe
-  // algun super administrador no hace nada, asi que es seguro en cada arranque.
+  // Crea el UNICO super administrador al arrancar el servicio, con los datos
+  // de SUPERADMIN_NOMBRE, SUPERADMIN_EMAIL y SUPERADMIN_PASSWORD. Es la unica
+  // forma de crear una cuenta SUPERADMIN: no existe ninguna ruta para crear
+  // otra. Si ya existe no hace nada, asi que es seguro en cada arranque.
   async asegurarSuperadminInicial(
     entorno: Record<string, string | undefined> = process.env,
   ): Promise<{ creado: boolean; motivo: string }> {

@@ -1,10 +1,10 @@
 import { Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { AuthService } from './auth.service.js';
 
-// Crea el primer super administrador al arrancar auth-service, a partir de
-// SUPERADMIN_EMAIL / SUPERADMIN_PASSWORD / SUPERADMIN_NOMBRE. Es idempotente:
-// si ya existe al menos un SUPERADMIN no hace nada, asi que reiniciar el
-// servicio nunca duplica cuentas ni sobreescribe la contrasena cambiada.
+// Crea el unico super administrador de la plataforma al arrancar
+// auth-service, a partir de SUPERADMIN_EMAIL / SUPERADMIN_PASSWORD /
+// SUPERADMIN_NOMBRE. Es idempotente: si ya existe no hace nada, asi que
+// reiniciar el servicio nunca crea otro ni sobreescribe la contrasena.
 @Injectable()
 export class SuperadminInicialService implements OnApplicationBootstrap {
   private readonly logger = new Logger('SuperadminInicial');
