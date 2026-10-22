@@ -1,21 +1,298 @@
+name: poli-grados
+
+x-vite-args: &vite-args
+  VITE_API_URL: http://localhost:3000
+  VITE_AUTH_APP_URL: http://localhost:5173
+  VITE_EMPRESAS_APP_URL: http://localhost:5174
+  VITE_ESTUDIANTES_APP_URL: http://localhost:5175
+  VITE_POSTULACIONES_APP_URL: http://localhost:5176
+  VITE_COORDINADORES_APP_URL: http://localhost:5177
+  VITE_DIPLOMADO_APP_URL: http://localhost:5178
+  VITE_INVESTIGACION_APP_URL: http://localhost:5179
+  VITE_DOCENTES_APP_URL: http://localhost:5180
+
+x-secrets: &secrets
+  JWT_SECRET: "3a39eefed0279f2a8f0a48b18412239607b6b0c8edc5895d27ba6c06054a5085"
+  INTERNAL_API_KEY: "f3ab4da52563be6d8255293779e7fce5922dfef6c4b0ca2b790280b0d4608a03"
+
+# Cada servicio expone su PORT; el healthcheck lo lee del entorno.
+x-healthcheck: &healthcheck
+  test:
+    [
+      "CMD",
+      "node",
+      "-e",
+      "fetch('http://localhost:'+process.env.PORT+'/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+    ]
+  interval: 10s
+  timeout: 5s
+  retries: 10
+  start_period: 40s
+
+x-db-ready: &db-ready
+  postgres:
+    condition: service_healthy
+
+x-frontend: &frontend
+  depends_on:
+    gateway:
+      condition: service_healthy
+
 services:
-  db:
-    image: postgres:16
+  postgres:
+    image: postgres:16-alpine
     container_name: trabajo-grado-db
-    restart: always
     environment:
       POSTGRES_USER: admin
       POSTGRES_PASSWORD: admin123
       POSTGRES_DB: trabajo_grado
-    ports:
-      - "5433:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      # Solo corre la primera vez que se crea el volumen (clon nuevo del
-      # proyecto). Si el volumen ya existe (como en tu maquina), las bases
-      # de datos nuevas se crean a mano una vez con `docker exec` (ver
-      # db-init/README.md).
-      - ./db-init:/docker-entrypoint-initdb.d
+      - pgdata:/var/lib/postgresql/data
+      - ./db-init:/docker-entrypoint-initdb.d:ro
+    # Descomenta solo si necesitas entrar a la base desde tu equipo:
+    # ports: ["5433:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d trabajo_grado"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  auth-service:
+    init: true
+    build:
+      context: ./services/auth-service
+      dockerfile: ../Dockerfile.prisma
+    environment:
+      <<: *secrets
+      PORT: 3001
+      DATABASE_URL: postgresql://admin:admin123@postgres:5432/auth_db?schema=public
+      COOKIE_SECURE: "false"
+      EMPRESAS_SERVICE_URL: http://empresas-service:3002
+      ESTUDIANTES_SERVICE_URL: http://estudiantes-service:3003
+      COORDINADORES_SERVICE_URL: http://coordinadores-service:3005
+      DOCENTES_SERVICE_URL: http://docentes-service:3008
+    depends_on: *db-ready
+    healthcheck: *healthcheck
+
+  empresas-service:
+    init: true
+    build:
+      context: ./services/empresas-service
+      dockerfile: ../Dockerfile.prisma
+    environment:
+      <<: *secrets
+      PORT: 3002
+      DATABASE_URL: postgresql://admin:admin123@postgres:5432/empresas_db?schema=public
+      AUTH_SERVICE_URL: http://auth-service:3001
+      ESTUDIANTES_SERVICE_URL: http://estudiantes-service:3003
+      POSTULACIONES_SERVICE_URL: http://postulaciones-service:3004
+    volumes:
+      - empresas_uploads:/app/uploads
+    depends_on: *db-ready
+    healthcheck: *healthcheck
+
+  estudiantes-service:
+    init: true
+    build:
+      context: ./services/estudiantes-service
+      dockerfile: ../Dockerfile.prisma
+    environment:
+      <<: *secrets
+      PORT: 3003
+      DATABASE_URL: postgresql://admin:admin123@postgres:5432/estudiantes_db?schema=public
+    depends_on: *db-ready
+    healthcheck: *healthcheck
+
+  postulaciones-service:
+    init: true
+    build:
+      context: ./services/postulaciones-service
+      dockerfile: ../Dockerfile.prisma
+    environment:
+      <<: *secrets
+      PORT: 3004
+      DATABASE_URL: postgresql://admin:admin123@postgres:5432/postulaciones_db?schema=public
+      EMPRESAS_SERVICE_URL: http://empresas-service:3002
+      ESTUDIANTES_SERVICE_URL: http://estudiantes-service:3003
+      DIPLOMADO_SERVICE_URL: http://diplomado-service:3006
+      INVESTIGACION_SERVICE_URL: http://investigacion-service:3007
+    volumes:
+      # Hojas de vida. Confirma que la ruta de escritura sea /app/uploads.
+      - postulaciones_uploads:/app/uploads
+    depends_on: *db-ready
+    healthcheck: *healthcheck
+
+  coordinadores-service:
+    init: true
+    build: ./services/coordinadores-service
+    environment:
+      <<: *secrets
+      PORT: 3005
+      AUTH_SERVICE_URL: http://auth-service:3001
+      EMPRESAS_SERVICE_URL: http://empresas-service:3002
+      ESTUDIANTES_SERVICE_URL: http://estudiantes-service:3003
+      POSTULACIONES_SERVICE_URL: http://postulaciones-service:3004
+      DOCENTES_SERVICE_URL: http://docentes-service:3008
+    healthcheck: *healthcheck
+
+  diplomado-service:
+    init: true
+    build:
+      context: ./services/diplomado-service
+      dockerfile: ../Dockerfile.prisma
+    environment:
+      <<: *secrets
+      PORT: 3006
+      DATABASE_URL: postgresql://admin:admin123@postgres:5432/diplomados_db?schema=public
+      POSTULACIONES_SERVICE_URL: http://postulaciones-service:3004
+      INVESTIGACION_SERVICE_URL: http://investigacion-service:3007
+    depends_on: *db-ready
+    healthcheck: *healthcheck
+
+  investigacion-service:
+    init: true
+    build:
+      context: ./services/investigacion-service
+      dockerfile: ../Dockerfile.prisma
+    environment:
+      <<: *secrets
+      PORT: 3007
+      DATABASE_URL: postgresql://admin:admin123@postgres:5432/investigacion_db?schema=public
+      POSTULACIONES_SERVICE_URL: http://postulaciones-service:3004
+      DIPLOMADO_SERVICE_URL: http://diplomado-service:3006
+    depends_on: *db-ready
+    healthcheck: *healthcheck
+
+  docentes-service:
+    init: true
+    build:
+      context: ./services/docentes-service
+      dockerfile: ../Dockerfile.prisma
+    environment:
+      <<: *secrets
+      PORT: 3008
+      DATABASE_URL: postgresql://admin:admin123@postgres:5432/docentes_db?schema=public
+      ESTUDIANTES_SERVICE_URL: http://estudiantes-service:3003
+      POSTULACIONES_SERVICE_URL: http://postulaciones-service:3004
+      DIPLOMADO_SERVICE_URL: http://diplomado-service:3006
+      INVESTIGACION_SERVICE_URL: http://investigacion-service:3007
+    depends_on: *db-ready
+    healthcheck: *healthcheck
+
+  gateway:
+    init: true
+    build: ./gateway
+    ports: ["3000:3000"]
+    environment:
+      PORT: 3000
+      AUTH_SERVICE_URL: http://auth-service:3001
+      EMPRESAS_SERVICE_URL: http://empresas-service:3002
+      ESTUDIANTES_SERVICE_URL: http://estudiantes-service:3003
+      POSTULACIONES_SERVICE_URL: http://postulaciones-service:3004
+      COORDINADORES_SERVICE_URL: http://coordinadores-service:3005
+      DIPLOMADO_SERVICE_URL: http://diplomado-service:3006
+      INVESTIGACION_SERVICE_URL: http://investigacion-service:3007
+      DOCENTES_SERVICE_URL: http://docentes-service:3008
+      FRONTEND_AUTH_URL: http://localhost:5173
+      FRONTEND_EMPRESAS_URL: http://localhost:5174
+      FRONTEND_ESTUDIANTES_URL: http://localhost:5175
+      FRONTEND_POSTULACIONES_URL: http://localhost:5176
+      FRONTEND_COORDINADORES_URL: http://localhost:5177
+      FRONTEND_DIPLOMADO_URL: http://localhost:5178
+      FRONTEND_INVESTIGACION_URL: http://localhost:5179
+      FRONTEND_DOCENTES_URL: http://localhost:5180
+    depends_on:
+      auth-service: { condition: service_healthy }
+      empresas-service: { condition: service_healthy }
+      estudiantes-service: { condition: service_healthy }
+      postulaciones-service: { condition: service_healthy }
+      coordinadores-service: { condition: service_healthy }
+      diplomado-service: { condition: service_healthy }
+      investigacion-service: { condition: service_healthy }
+      docentes-service: { condition: service_healthy }
+    healthcheck: *healthcheck
+
+  frontend-auth:
+    <<: *frontend
+    build:
+      context: ./frontends
+      dockerfile: Dockerfile
+      args:
+        <<: *vite-args
+        APP: frontend-auth
+    ports: ["5173:80"]
+
+  frontend-empresas:
+    <<: *frontend
+    build:
+      context: ./frontends
+      dockerfile: Dockerfile
+      args:
+        <<: *vite-args
+        APP: frontend-empresas
+    ports: ["5174:80"]
+
+  frontend-estudiantes:
+    <<: *frontend
+    build:
+      context: ./frontends
+      dockerfile: Dockerfile
+      args:
+        <<: *vite-args
+        APP: frontend-estudiantes
+    ports: ["5175:80"]
+
+  frontend-postulaciones:
+    <<: *frontend
+    build:
+      context: ./frontends
+      dockerfile: Dockerfile
+      args:
+        <<: *vite-args
+        APP: frontend-postulaciones
+    ports: ["5176:80"]
+
+  frontend-coordinadores:
+    <<: *frontend
+    build:
+      context: ./frontends
+      dockerfile: Dockerfile
+      args:
+        <<: *vite-args
+        APP: frontend-coordinadores
+    ports: ["5177:80"]
+
+  frontend-diplomado:
+    <<: *frontend
+    build:
+      context: ./frontends
+      dockerfile: Dockerfile
+      args:
+        <<: *vite-args
+        APP: frontend-diplomado
+    ports: ["5178:80"]
+
+  frontend-investigacion:
+    <<: *frontend
+    build:
+      context: ./frontends
+      dockerfile: Dockerfile
+      args:
+        <<: *vite-args
+        APP: frontend-investigacion
+    ports: ["5179:80"]
+
+  frontend-docentes:
+    <<: *frontend
+    build:
+      context: ./frontends
+      dockerfile: Dockerfile
+      args:
+        <<: *vite-args
+        APP: frontend-docentes
+    ports: ["5180:80"]
 
 volumes:
-  postgres_data:
+  pgdata:
+  empresas_uploads:
+  postulaciones_uploads:

@@ -1,0 +1,29 @@
+FROM node:22-bookworm-slim AS build
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+COPY package*.json ./
+RUN npm ci
+COPY . .
+ENV DATABASE_URL="postgresql://build:build@localhost:5432/build"
+RUN npx prisma generate
+RUN npm run build
+# El CLI de Prisma solo detecta prisma.config.ts; si el servicio lo llama
+# prisma7.config.ts, se renombra aquí.
+RUN if [ -f prisma7.config.ts ] && [ ! -f prisma.config.ts ]; then cp prisma7.config.ts prisma.config.ts; fi
+
+FROM node:22-bookworm-slim
+WORKDIR /app
+ENV NODE_ENV=production
+RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=build --chown=node:node /app/node_modules ./node_modules
+COPY --from=build --chown=node:node /app/dist ./dist
+COPY --from=build --chown=node:node /app/prisma ./prisma
+COPY --from=build --chown=node:node /app/prisma.config.ts ./prisma.config.ts
+COPY --from=build --chown=node:node /app/package.json ./package.json
+# Carpeta de archivos subidos. Se crea con dueño "node" para que el volumen
+# nombrado herede ese permiso y el servicio pueda escribir.
+RUN mkdir -p /app/uploads && chown node:node /app/uploads
+USER node
+CMD ["sh", "-c", "npx prisma migrate deploy && exec node dist/main.js"]
