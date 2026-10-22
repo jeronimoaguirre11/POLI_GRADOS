@@ -52,7 +52,8 @@ $backends = @(
     @{ Nombre = "Coordinadores Service"; Ruta = "services/coordinadores-service" },
     @{ Nombre = "Diplomado Service"; Ruta = "services/diplomado-service" },
     @{ Nombre = "Docentes Service"; Ruta = "services/docentes-service" },
-    @{ Nombre = "Investigacion Service"; Ruta = "services/investigacion-service" }
+    @{ Nombre = "Investigacion Service"; Ruta = "services/investigacion-service" },
+    @{ Nombre = "Administracion Service"; Ruta = "services/administracion-service" }
 )
 
 foreach ($app in $backends) {
@@ -87,6 +88,7 @@ $frontends = @(
     @{ Nombre = "Frontend Diplomado"; Ruta = "frontends/frontend-diplomado" }
     @{ Nombre = "Frontend Docentes"; Ruta = "frontends/frontend-docentes" }
     @{ Nombre = "Frontend Investigacion"; Ruta = "frontends/frontend-investigacion" }
+    @{ Nombre = "Frontend Administracion"; Ruta = "frontends/frontend-administracion" }
 
 )
 
@@ -126,6 +128,7 @@ Write-Host "  Coordinadores: 3005"
 Write-Host "  Diplomado:     3006"
 write-Host "  Investigacion: 3007"
 Write-Host "  Docentes:      3008"
+Write-Host "  Administracion: 3009"
 Write-Host ""
 Write-Host "Frontends:" -ForegroundColor Cyan
 Write-Host "  Auth/Home:     http://localhost:5173"
@@ -136,5 +139,6 @@ Write-Host "  Coordinadores: http://localhost:5177"
 Write-Host "  Diplomado:     http://localhost:5178"
 Write-Host "  Investigacion: http://localhost:5179"
 Write-Host "  Docentes:      http://localhost:5180"
+Write-Host "  Administracion: http://localhost:5181"
 Write-Host ""
 Write-Host "Proyecto iniciado correctamente." -ForegroundColor Green

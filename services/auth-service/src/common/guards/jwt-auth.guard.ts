@@ -9,7 +9,7 @@ import { JwtService } from '@nestjs/jwt';
 export interface JwtPayload {
   sub: string;
   email: string;
-  rol: 'ESTUDIANTE' | 'EMPRESA' | 'COORDINADOR' | 'DOCENTE';
+  rol: 'ESTUDIANTE' | 'EMPRESA' | 'COORDINADOR' | 'DOCENTE' | 'SUPERADMIN';
 }
 
 // Igual al guard del backend monolitico original: cada microservicio lo

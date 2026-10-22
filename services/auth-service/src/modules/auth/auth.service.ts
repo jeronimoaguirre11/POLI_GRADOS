@@ -14,7 +14,24 @@ import { LoginDto } from './dto/login.dto.js';
 import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto.js';
 import { CrearCoordinadorDto } from './dto/crear-coordinador.dto.js';
 import { CrearDocenteDto } from './dto/crear-docente.dto.js';
+import { CrearSuperadminDto } from './dto/crear-superadmin.dto.js';
+import { PASSWORD_REGEX } from './dto/password.validation.js';
 import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
+
+type RolUsuario = 'ESTUDIANTE' | 'EMPRESA' | 'COORDINADOR' | 'DOCENTE' | 'SUPERADMIN';
+
+// Datos que se pueden mostrar de un usuario: nunca incluye el password.
+const SELECCION_PUBLICA = {
+  id: true,
+  nombre: true,
+  email: true,
+  rol: true,
+  activo: true,
+  createdAt: true,
+} as const;
+
+export const MENSAJE_CUENTA_DESACTIVADA =
+  'Tu cuenta está desactivada. Comunícate con el administrador de la plataforma.';
 
 @Injectable()
 export class AuthService {
@@ -27,7 +44,19 @@ export class AuthService {
     return { 'x-internal-key': process.env.INTERNAL_API_KEY ?? '' };
   }
 
+  // Registro publico: solo devuelve un mensaje (no expone datos del usuario).
   async register(dto: RegisterDto) {
+    await this.crearCuentaConPerfil(dto);
+    return { message: 'Usuario registrado exitosamente' };
+  }
+
+  // Lo usa el super administrador (via administracion-service) para crear
+  // estudiantes y empresas con su perfil completo. Devuelve el usuario creado.
+  async registrarDesdeAdministracion(dto: RegisterDto) {
+    return this.crearCuentaConPerfil(dto);
+  }
+
+  private async crearCuentaConPerfil(dto: RegisterDto) {
     const existente = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
     });
@@ -106,7 +135,7 @@ export class AuthService {
     }
 
     const { password: _, ...usuarioSinPassword } = usuario;
-    return { message: 'Usuario registrado exitosamente' };
+    return usuarioSinPassword;
   }
 
   async login(dto: LoginDto) {
@@ -124,6 +153,12 @@ export class AuthService {
       throw new UnauthorizedException('Credenciales invalidas');
     }
 
+    // Se revisa despues de validar la contraseña para no revelar a un
+    // tercero si un correo existe o si su cuenta esta desactivada.
+    if (!usuario.activo) {
+      throw new UnauthorizedException(MENSAJE_CUENTA_DESACTIVADA);
+    }
+
     const payload = { sub: usuario.id, email: usuario.email, rol: usuario.rol };
     const token = await this.jwtService.signAsync(payload);
 
@@ -133,20 +168,39 @@ export class AuthService {
   async obtenerPerfil(payload: JwtPayload) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { id: payload.sub },
-      select: { nombre: true, email: true, rol: true },
+      select: { nombre: true, email: true, rol: true, activo: true },
     });
 
     if (!usuario) {
       throw new NotFoundException('Usuario no encontrado');
     }
 
-    return usuario;
+    // Todas las apps llaman a /auth/me al cargar: asi, una cuenta que el
+    // administrador desactiva queda fuera en cuanto recarga cualquier pagina.
+    if (!usuario.activo) {
+      throw new UnauthorizedException(MENSAJE_CUENTA_DESACTIVADA);
+    }
+
+    const { activo: _, ...perfil } = usuario;
+    return perfil;
   }
 
   // Los coordinadores no se pueden crear desde /auth/register. Este metodo
   // solo se expone por la ruta interna protegida con x-internal-key y fija el
   // rol en servidor, por lo que el cliente no puede elevar sus privilegios.
   async crearCoordinador(dto: CrearCoordinadorDto) {
+    return this.crearCuentaSinPerfil(dto, 'COORDINADOR');
+  }
+
+  // Igual que el coordinador: solo por ruta interna y con el rol fijado aqui.
+  async crearSuperadmin(dto: CrearSuperadminDto) {
+    return this.crearCuentaSinPerfil(dto, 'SUPERADMIN');
+  }
+
+  private async crearCuentaSinPerfil(
+    dto: CrearCoordinadorDto,
+    rol: 'COORDINADOR' | 'SUPERADMIN',
+  ) {
     const existente = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
     });
@@ -161,7 +215,7 @@ export class AuthService {
           nombre: dto.nombre,
           email: dto.email,
           password: await bcrypt.hash(dto.password, 10),
-          rol: 'COORDINADOR',
+          rol,
         },
       });
 
@@ -228,6 +282,100 @@ export class AuthService {
     return usuarioSinPassword;
   }
 
+  // ---------- Administracion de cuentas (solo rutas internas) ----------
+
+  async listarParaAdministracion() {
+    return this.prisma.usuario.findMany({
+      select: SELECCION_PUBLICA,
+      orderBy: [{ createdAt: 'desc' }, { email: 'asc' }],
+    });
+  }
+
+  async obtenerEstadoCuenta(id: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id },
+      select: { id: true, rol: true, activo: true },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+    return usuario;
+  }
+
+  async cambiarEstadoCuenta(id: string, activo: boolean) {
+    const usuario = await this.prisma.usuario.findUnique({ where: { id } });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    // Nunca puede quedar el sistema sin un super administrador activo.
+    if (!activo && usuario.rol === 'SUPERADMIN' && usuario.activo) {
+      const superadminsActivos = await this.prisma.usuario.count({
+        where: { rol: 'SUPERADMIN', activo: true },
+      });
+      if (superadminsActivos <= 1) {
+        throw new ConflictException(
+          'No se puede desactivar al único super administrador activo',
+        );
+      }
+    }
+
+    return this.prisma.usuario.update({
+      where: { id },
+      data: { activo },
+      select: SELECCION_PUBLICA,
+    });
+  }
+
+  // Crea el primer super administrador al arrancar el servicio, con los datos
+  // de SUPERADMIN_NOMBRE, SUPERADMIN_EMAIL y SUPERADMIN_PASSWORD. Si ya existe
+  // algun super administrador no hace nada, asi que es seguro en cada arranque.
+  async asegurarSuperadminInicial(
+    entorno: Record<string, string | undefined> = process.env,
+  ): Promise<{ creado: boolean; motivo: string }> {
+    const email = entorno.SUPERADMIN_EMAIL?.trim();
+    const password = entorno.SUPERADMIN_PASSWORD;
+    const nombre = entorno.SUPERADMIN_NOMBRE?.trim() || 'Super administrador';
+
+    if (!email || !password) {
+      return { creado: false, motivo: 'sin-configuracion' };
+    }
+
+    const yaHaySuperadmin = await this.prisma.usuario.count({
+      where: { rol: 'SUPERADMIN' },
+    });
+    if (yaHaySuperadmin > 0) {
+      return { creado: false, motivo: 'ya-existe' };
+    }
+
+    if (
+      password.length < 8 ||
+      password.length > 15 ||
+      !PASSWORD_REGEX.test(password)
+    ) {
+      return { creado: false, motivo: 'password-invalido' };
+    }
+
+    const existente = await this.prisma.usuario.findUnique({
+      where: { email },
+    });
+    if (existente) {
+      return { creado: false, motivo: 'email-en-uso' };
+    }
+
+    await this.prisma.usuario.create({
+      data: {
+        nombre,
+        email,
+        password: await bcrypt.hash(password, 10),
+        rol: 'SUPERADMIN' satisfies RolUsuario,
+      },
+    });
+    return { creado: true, motivo: 'creado' };
+  }
+
   async actualizarPerfil(payload: JwtPayload, dto: ActualizarPerfilDto) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { id: payload.sub },
@@ -235,6 +383,10 @@ export class AuthService {
 
     if (!usuario) {
       throw new NotFoundException('Usuario no encontrado');
+    }
+
+    if (!usuario.activo) {
+      throw new UnauthorizedException(MENSAJE_CUENTA_DESACTIVADA);
     }
 
     const cambiaCredenciales =

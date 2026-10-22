@@ -4,7 +4,7 @@ Plataforma web para gestionar **prácticas profesionales y trabajos de grado**: 
 
 Proyecto académico, 2026. Backend en microservicios (NestJS + Prisma + PostgreSQL), un frontend por módulo (React + Vite) y todo orquestado con Docker Compose.
 
-**Roles:** estudiante, empresa, docente y coordinador. Estudiantes y empresas se registran desde la plataforma; docentes y coordinadores los crea un administrador (ver [Crear docentes y coordinadores](#crear-docentes-y-coordinadores)).
+**Roles:** super administrador, coordinador, docente, estudiante y empresa. Estudiantes y empresas pueden registrarse desde la plataforma; el **super administrador** crea cualquier tipo de cuenta y puede desactivarlas (ver [Super administrador](#super-administrador)).
 
 ---
 
@@ -32,7 +32,7 @@ Cuando los servicios estén `healthy`, abre **http://localhost:5173**.
 
 > Entra siempre por `localhost`, no por `127.0.0.1`: la sesión vive en una cookie y el navegador las trata como sitios distintos.
 
-La primera vez la base de datos está **vacía**: regístrate como estudiante o empresa desde la pantalla de registro.
+La primera vez la base de datos solo tiene el **super administrador inicial**: entra con `admin@elpoli.edu.co` / `Admin12345` (o los valores de `SUPERADMIN_*` en tu `.env`) y crea desde su panel los coordinadores, docentes y demás cuentas. Estudiantes y empresas también pueden registrarse solos.
 
 ---
 
@@ -41,7 +41,7 @@ La primera vez la base de datos está **vacía**: regístrate como estudiante o 
 ```
 Navegador
    │
-   ├── Frontends (nginx, puertos 5173-5180)
+   ├── Frontends (nginx, puertos 5173-5181)
    │
    └── API Gateway :3000  ──►  Microservicios (red interna de Docker)
                                     │
@@ -62,6 +62,7 @@ El navegador solo habla con el **gateway**, que reenvía cada ruta al microservi
 | `diplomado-service`     | 3006   | `diplomados_db`    | Modalidad diplomado                                   |
 | `investigacion-service` | 3007   | `investigacion_db` | Modalidad investigación                               |
 | `docentes-service`      | 3008   | `docentes_db`      | Perfil docente y estudiantes asignados                |
+| `administracion-service`| 3009   | —                  | Super administrador: crear y activar/desactivar cuentas |
 | `gateway`               | 3000   | —                  | Punto de entrada único, CORS y proxy                  |
 
 ### Frontends
@@ -76,6 +77,7 @@ El navegador solo habla con el **gateway**, que reenvía cada ruta al microservi
 | `frontend-diplomado`     | 5178   | Modalidad diplomado                   |
 | `frontend-investigacion` | 5179   | Modalidad investigación               |
 | `frontend-docentes`      | 5180   | Docentes                              |
+| `frontend-administracion`| 5181   | Super administrador                   |
 
 ---
 
@@ -94,12 +96,12 @@ El navegador solo habla con el **gateway**, que reenvía cada ruta al microservi
 
 ## Docker
 
-- **Un contenedor por servicio**, más PostgreSQL, el gateway y los 8 frontends (17 contenedores en total).
+- **Un contenedor por servicio**, más PostgreSQL, el gateway y los 9 frontends (20 contenedores en total).
 - **PostgreSQL** es una sola instancia con una base de datos por microservicio. `db-init/init-microservicios.sql` las crea la primera vez que se genera el volumen.
 - **Migraciones**: cada servicio con Prisma ejecuta `prisma migrate deploy` al arrancar.
 - **Orden de arranque**: cada servicio expone `GET /health`; el gateway espera a que todos estén sanos y los frontends esperan al gateway.
 - **Frontends**: se compilan con Vite y los sirve nginx. Las variables `VITE_*` se fijan en el momento de construir la imagen; si cambias una URL, reconstruye con `--build`.
-- **Imágenes compartidas**: `services/Dockerfile.prisma` (los 7 servicios con Prisma) y `frontends/Dockerfile` (los 8 frontends).
+- **Imágenes compartidas**: `services/Dockerfile.prisma` (los 7 servicios con Prisma) y `frontends/Dockerfile` (los 9 frontends).
 - **Volúmenes**: `pgdata` (base de datos), `empresas_uploads` (imágenes de ofertas) y `postulaciones_uploads` (hojas de vida). Sobreviven a reinicios y a `docker compose down`.
 
 ### Variables de entorno (`.env` en la raíz)
@@ -109,6 +111,7 @@ El navegador solo habla con el **gateway**, que reenvía cada ruta al microservi
 | `DB_USER`, `DB_PASSWORD` | Credenciales de PostgreSQL                                                          |
 | `JWT_SECRET`             | Clave con la que se firman y validan las sesiones (la misma en todos los servicios) |
 | `INTERNAL_API_KEY`       | Clave para las llamadas entre servicios                                             |
+| `SUPERADMIN_NOMBRE`, `SUPERADMIN_EMAIL`, `SUPERADMIN_PASSWORD` | Datos del primer super administrador (opcionales; por defecto `admin@elpoli.edu.co` / `Admin12345`) |
 
 ### Comandos útiles
 
@@ -123,15 +126,26 @@ docker compose down -v                   # detener y BORRAR datos y archivos sub
 
 ---
 
-## Crear docentes y coordinadores
+## Super administrador
 
-No se registran desde la pantalla pública. Mientras se implementa el panel de super administrador, se crean con una llamada interna ejecutada dentro de la red de Docker (Git Bash, Linux o macOS):
+Es el rol que administra las cuentas de la plataforma. Su panel está en **http://localhost:5181** (el login lo redirige automáticamente).
 
-```bash
-docker compose exec auth-service node -e "fetch('http://localhost:3001/internal/usuarios/coordinador',{method:'POST',headers:{'Content-Type':'application/json','x-internal-key':process.env.INTERNAL_API_KEY},body:JSON.stringify({nombre:'Coordinador Demo',email:'coord@elpoli.edu.co',password:'Coord1234'})}).then(r=>r.text()).then(console.log)"
-```
+- **Primer administrador**: `auth-service` lo crea al arrancar con `SUPERADMIN_NOMBRE`, `SUPERADMIN_EMAIL` y `SUPERADMIN_PASSWORD`, solo si todavía no existe ninguno. Reiniciar no lo duplica ni cambia su contraseña. Cámbiala desde el panel (botón *Cambiar contraseña*) después del primer ingreso.
+- **Crear cuentas** de coordinador, docente, estudiante, empresa u otro super administrador. Para estudiantes, empresas y docentes también se crea su perfil en el microservicio correspondiente.
+- **Activar / desactivar cuentas**: una cuenta desactivada no puede iniciar sesión y queda fuera en cuanto recarga cualquier panel (`/auth/me` responde 401 y borra la cookie). No se borra ningún dato.
+- **Protecciones**: solo el rol `SUPERADMIN` puede usar `/administracion/*`, y en cada petición se verifica que su cuenta siga activa; un administrador no puede desactivarse a sí mismo y nunca puede quedar el sistema sin un super administrador activo.
 
-Para un docente se usa la ruta `/internal/usuarios/docente` con los campos de `services/auth-service/src/modules/auth/dto/crear-docente.dto.ts`.
+`administracion-service` no tiene base de datos: valida y orquesta a `auth-service` por sus rutas `/internal/usuarios/*`.
+
+| Método  | Ruta (por el gateway)                                 | Qué hace                                  |
+| ------- | ----------------------------------------------------- | ----------------------------------------- |
+| `GET`   | `/administracion/usuarios`                            | Lista de cuentas y resumen por rol/estado |
+| `POST`  | `/administracion/usuarios/coordinadores`              | Crea un coordinador                       |
+| `POST`  | `/administracion/usuarios/docentes`                   | Crea un docente con su perfil             |
+| `POST`  | `/administracion/usuarios/estudiantes`                | Crea un estudiante con su perfil          |
+| `POST`  | `/administracion/usuarios/empresas`                   | Crea una empresa con su perfil            |
+| `POST`  | `/administracion/usuarios/administradores`            | Crea otro super administrador             |
+| `PATCH` | `/administracion/usuarios/:id/estado` `{ "activo" }` | Activa o desactiva una cuenta             |
 
 ---
 
@@ -151,7 +165,8 @@ Para un docente se usa la ruta `/internal/usuarios/docente` con los campos de `s
 │  ├─ coordinadores-service/
 │  ├─ diplomado-service/
 │  ├─ investigacion-service/
-│  └─ docentes-service/
+│  ├─ docentes-service/
+│  └─ administracion-service/
 └─ frontends/
    ├─ Dockerfile             # imagen compartida de los frontends
    └─ frontend-*/
@@ -172,10 +187,6 @@ Para un docente se usa la ruta `/internal/usuarios/docente` con los campos de `s
 | Quieres empezar con la base de datos limpia            | `docker compose down -v` y luego `docker compose up --build -d`                               |
 
 ---
-
-## Pendiente
-
-- Panel de super administrador para crear docentes y coordinadores desde la interfaz.
 
 ## Equipo
 

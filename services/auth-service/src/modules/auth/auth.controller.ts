@@ -7,6 +7,7 @@ import {
   Post,
   Req,
   Res,
+  UnauthorizedException,
   UseGuards,
 } from '@nestjs/common';
 import type { Response } from 'express';
@@ -58,8 +59,20 @@ export class AuthController {
 
   @Get('me')
   @UseGuards(JwtAuthGuard)
-  async me(@Req() request: any) {
-    return this.authService.obtenerPerfil(request.user);
+  async me(
+    @Req() request: any,
+    @Res({ passthrough: true }) res: Response,
+  ) {
+    try {
+      return await this.authService.obtenerPerfil(request.user);
+    } catch (error) {
+      // Si la cuenta fue desactivada (o eliminada) se borra la cookie para
+      // que el frontend vuelva al login y no siga con una sesion huerfana.
+      if (error instanceof UnauthorizedException) {
+        res.clearCookie('token', opcionesCookie());
+      }
+      throw error;
+    }
   }
 
   @Patch('perfil')

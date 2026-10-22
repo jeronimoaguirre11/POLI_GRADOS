@@ -10,6 +10,7 @@ x-vite-args: &vite-args
   VITE_DIPLOMADO_APP_URL: http://localhost:5178
   VITE_INVESTIGACION_APP_URL: http://localhost:5179
   VITE_DOCENTES_APP_URL: http://localhost:5180
+  VITE_ADMINISTRACION_APP_URL: http://localhost:5181
 
 x-secrets: &secrets
   JWT_SECRET: "3a39eefed0279f2a8f0a48b18412239607b6b0c8edc5895d27ba6c06054a5085"
@@ -71,6 +72,11 @@ services:
       ESTUDIANTES_SERVICE_URL: http://estudiantes-service:3003
       COORDINADORES_SERVICE_URL: http://coordinadores-service:3005
       DOCENTES_SERVICE_URL: http://docentes-service:3008
+      # Primer super administrador: se crea al arrancar solo si aun no existe
+      # ninguno. Se pueden cambiar con variables en el .env de la raiz.
+      SUPERADMIN_NOMBRE: ${SUPERADMIN_NOMBRE:-Super administrador}
+      SUPERADMIN_EMAIL: ${SUPERADMIN_EMAIL:-admin@elpoli.edu.co}
+      SUPERADMIN_PASSWORD: ${SUPERADMIN_PASSWORD:-Admin12345}
     depends_on: *db-ready
     healthcheck: *healthcheck
 
@@ -135,6 +141,17 @@ services:
       DOCENTES_SERVICE_URL: http://docentes-service:3008
     healthcheck: *healthcheck
 
+  # Sin base de datos: orquesta a auth-service para el panel del super
+  # administrador.
+  administracion-service:
+    init: true
+    build: ./services/administracion-service
+    environment:
+      <<: *secrets
+      PORT: 3009
+      AUTH_SERVICE_URL: http://auth-service:3001
+    healthcheck: *healthcheck
+
   diplomado-service:
     init: true
     build:
@@ -193,6 +210,7 @@ services:
       DIPLOMADO_SERVICE_URL: http://diplomado-service:3006
       INVESTIGACION_SERVICE_URL: http://investigacion-service:3007
       DOCENTES_SERVICE_URL: http://docentes-service:3008
+      ADMINISTRACION_SERVICE_URL: http://administracion-service:3009
       FRONTEND_AUTH_URL: http://localhost:5173
       FRONTEND_EMPRESAS_URL: http://localhost:5174
       FRONTEND_ESTUDIANTES_URL: http://localhost:5175
@@ -201,6 +219,7 @@ services:
       FRONTEND_DIPLOMADO_URL: http://localhost:5178
       FRONTEND_INVESTIGACION_URL: http://localhost:5179
       FRONTEND_DOCENTES_URL: http://localhost:5180
+      FRONTEND_ADMINISTRACION_URL: http://localhost:5181
     depends_on:
       auth-service: { condition: service_healthy }
       empresas-service: { condition: service_healthy }
@@ -210,6 +229,7 @@ services:
       diplomado-service: { condition: service_healthy }
       investigacion-service: { condition: service_healthy }
       docentes-service: { condition: service_healthy }
+      administracion-service: { condition: service_healthy }
     healthcheck: *healthcheck
 
   frontend-auth:
@@ -291,6 +311,16 @@ services:
         <<: *vite-args
         APP: frontend-docentes
     ports: ["5180:80"]
+
+  frontend-administracion:
+    <<: *frontend
+    build:
+      context: ./frontends
+      dockerfile: Dockerfile
+      args:
+        <<: *vite-args
+        APP: frontend-administracion
+    ports: ["5181:80"]
 
 volumes:
   pgdata:
