@@ -8,6 +8,7 @@ import {
 } from '../dist/modules/auth/auth.service.js';
 import { RegisterDto } from '../dist/modules/auth/dto/register.dto.js';
 import { CambiarEstadoCuentaDto } from '../dist/modules/auth/dto/cambiar-estado-cuenta.dto.js';
+import { RestablecerPasswordDto } from '../dist/modules/auth/dto/restablecer-password.dto.js';
 
 const jwtFalso = { signAsync: async (payload) => `token-${payload.rol}` };
 
@@ -197,4 +198,44 @@ test('el super administrador inicial respeta la configuracion y la politica', as
 test('no existe ninguna forma de crear otro super administrador', () => {
   const service = new AuthService({}, jwtFalso);
   assert.equal(typeof service.crearSuperadmin, 'undefined');
+});
+
+test('restablecer contrasena guarda el hash nuevo', async () => {
+  let datos;
+  const prisma = {
+    usuario: {
+      findUnique: async () => ({ id: 'u1', rol: 'DOCENTE' }),
+      update: async ({ data }) => {
+        datos = data;
+      },
+    },
+  };
+  const service = new AuthService(prisma, jwtFalso);
+
+  const resultado = await service.restablecerPassword('u1', 'Nueva1234');
+  assert.equal(await bcrypt.compare('Nueva1234', datos.password), true);
+  assert.equal('password' in resultado, false);
+});
+
+test('restablecer contrasena no aplica al super administrador ni a inexistentes', async () => {
+  const superadmin = new AuthService(
+    { usuario: { findUnique: async () => ({ id: 'sa', rol: 'SUPERADMIN' }) } },
+    jwtFalso,
+  );
+  await assert.rejects(
+    superadmin.restablecerPassword('sa', 'Nueva1234'),
+    (error) => error.getStatus() === 403,
+  );
+
+  const nadie = new AuthService({ usuario: { findUnique: async () => null } }, jwtFalso);
+  await assert.rejects(
+    nadie.restablecerPassword('x', 'Nueva1234'),
+    (error) => error.getStatus() === 404,
+  );
+});
+
+test('restablecer contrasena exige la politica de contrasenas', async () => {
+  const dto = Object.assign(new RestablecerPasswordDto(), { password: 'debil' });
+  const errores = await validate(dto);
+  assert.equal(errores.some((e) => e.property === 'password'), true);
 });

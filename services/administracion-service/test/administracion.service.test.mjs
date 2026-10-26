@@ -157,3 +157,29 @@ test('no existe forma de crear otro super administrador', () => {
   const service = new AdministracionService();
   assert.equal(typeof service.crearAdministrador, 'undefined');
 });
+
+test('el administrador asigna una contrasena nueva a otra cuenta', async () => {
+  const llamadas = simularAuth();
+  const service = new AdministracionService();
+
+  await service.restablecerPassword(ADMIN, 'usuario-7', 'Nueva1234');
+
+  const patch = llamadas.find(([m]) => m === 'PATCH');
+  assert.equal(patch[1], 'http://auth/internal/usuarios/usuario-7/password');
+  assert.deepEqual(patch[2], { password: 'Nueva1234' });
+});
+
+test('no puede cambiar su propia contrasena por esta ruta ni sin ser SUPERADMIN', async () => {
+  const llamadas = simularAuth();
+  const service = new AdministracionService();
+
+  await assert.rejects(
+    service.restablecerPassword(ADMIN, ADMIN.sub, 'Nueva1234'),
+    (error) => error.getStatus() === 400,
+  );
+  await assert.rejects(
+    service.restablecerPassword({ ...ADMIN, rol: 'COORDINADOR' }, 'otro', 'Nueva1234'),
+    (error) => error.getStatus() === 403,
+  );
+  assert.equal(llamadas.some(([m]) => m === 'PATCH'), false);
+});

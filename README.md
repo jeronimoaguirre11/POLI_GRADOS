@@ -132,6 +132,7 @@ Es el rol que administra las cuentas de la plataforma. Su panel está en **http:
 
 - **Hay un solo super administrador**: `auth-service` lo crea al arrancar con `SUPERADMIN_NOMBRE`, `SUPERADMIN_EMAIL` y `SUPERADMIN_PASSWORD`, solo si todavía no existe. No hay ninguna ruta ni pantalla para crear otro, y reiniciar no lo duplica ni cambia su contraseña. Cámbiala desde el panel (botón *Cambiar contraseña*) después del primer ingreso.
 - **Crear cuentas** de coordinador, docente, estudiante y empresa. Para estudiantes, empresas y docentes también se crea su perfil en el microservicio correspondiente.
+- **Cambiar la contraseña de una cuenta** (por ejemplo, si la persona la olvidó): botón *Cambiar clave* en la tabla, con opción de generar una segura. No pide la contraseña anterior; la del super administrador solo se cambia desde *Cambiar contraseña*.
 - **Activar / desactivar cuentas**: una cuenta desactivada no puede iniciar sesión y queda fuera en cuanto recarga cualquier panel (`/auth/me` responde 401 y borra la cookie). No se borra ningún dato.
 - **Protecciones**: solo el rol `SUPERADMIN` puede usar `/administracion/*`, y en cada petición se verifica que su cuenta siga activa; la cuenta del super administrador no se puede desactivar.
 
@@ -145,6 +146,7 @@ Es el rol que administra las cuentas de la plataforma. Su panel está en **http:
 | `POST`  | `/administracion/usuarios/estudiantes`                | Crea un estudiante con su perfil          |
 | `POST`  | `/administracion/usuarios/empresas`                   | Crea una empresa con su perfil            |
 | `PATCH` | `/administracion/usuarios/:id/estado` `{ "activo" }` | Activa o desactiva una cuenta             |
+| `PATCH` | `/administracion/usuarios/:id/password` `{ "password" }` | Asigna una contraseña nueva a una cuenta |
 
 ---
 

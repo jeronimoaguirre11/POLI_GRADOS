@@ -16,6 +16,7 @@ import { CrearCoordinadorDto } from './dto/crear-coordinador.dto.js';
 import { CrearDocenteDto } from './dto/crear-docente.dto.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { CambiarEstadoCuentaDto } from './dto/cambiar-estado-cuenta.dto.js';
+import { RestablecerPasswordDto } from './dto/restablecer-password.dto.js';
 
 // Rutas que SOLO llaman otros microservicios (nunca el gateway ni un
 // frontend). El gateway no reenvia nada bajo /internal, y ademas este guard
@@ -60,6 +61,16 @@ export class InternalController {
   @Get(':id/estado')
   async obtenerEstado(@Param('id', ParseUUIDPipe) id: string) {
     return this.authService.obtenerEstadoCuenta(id);
+  }
+
+  // El super administrador asigna una contrasena nueva a otra cuenta (por
+  // ejemplo, cuando el usuario la olvido). No pide la contrasena anterior.
+  @Patch(':id/password')
+  async restablecerPassword(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RestablecerPasswordDto,
+  ) {
+    return this.authService.restablecerPassword(id, dto.password);
   }
 
   @Patch(':id/estado')

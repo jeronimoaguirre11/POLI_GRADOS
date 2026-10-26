@@ -44,6 +44,14 @@ export function cambiarEstadoUsuario(id, activo) {
   );
 }
 
+// El super administrador asigna una contrasena nueva a otra cuenta.
+export function restablecerContrasenaUsuario(id, password) {
+  return solicitar(
+    `/administracion/usuarios/${encodeURIComponent(id)}/password`,
+    { method: "PATCH", body: JSON.stringify({ password }) },
+  );
+}
+
 export function cambiarMiContrasena(passwordActual, password) {
   return solicitar("/auth/perfil", {
     method: "PATCH",

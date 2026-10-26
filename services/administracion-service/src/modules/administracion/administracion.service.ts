@@ -186,6 +186,28 @@ export class AdministracionService {
     );
   }
 
+  async restablecerPassword(payload: JwtPayload, id: string, password: string) {
+    await this.asegurarSuperadminActivo(payload);
+
+    // Su propia contrasena la cambia desde "Cambiar contraseña" (pide la
+    // actual); auth-service tambien lo rechaza.
+    if (id === payload.sub) {
+      throw new BadRequestException(
+        'Tu propia contraseña se cambia desde "Cambiar contraseña"',
+      );
+    }
+
+    return this.llamarAuth(
+      () =>
+        axios.patch(
+          `${this.urlAuth()}/${id}/password`,
+          { password },
+          { headers: this.headersInternos() },
+        ),
+      'Error al cambiar la contraseña',
+    );
+  }
+
   async cambiarEstado(payload: JwtPayload, id: string, activo: boolean) {
     await this.asegurarSuperadminActivo(payload);
 

@@ -16,6 +16,7 @@ import { CrearDocenteDto } from './dto/crear-docente.dto.js';
 import { CrearEstudianteDto } from './dto/crear-estudiante.dto.js';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto.js';
 import { CambiarEstadoDto } from './dto/cambiar-estado.dto.js';
+import { RestablecerPasswordDto } from './dto/restablecer-password.dto.js';
 
 // Expuesto por el gateway en /administracion. Cada metodo del servicio
 // verifica que la cuenta sea SUPERADMIN y siga activa.
@@ -47,6 +48,15 @@ export class AdministracionController {
   @Post('empresas')
   crearEmpresa(@Req() request: any, @Body() dto: CrearEmpresaDto) {
     return this.administracion.crearEmpresa(request.user, dto);
+  }
+
+  @Patch(':id/password')
+  restablecerPassword(
+    @Req() request: any,
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() dto: RestablecerPasswordDto,
+  ) {
+    return this.administracion.restablecerPassword(request.user, id, dto.password);
   }
 
   @Patch(':id/estado')

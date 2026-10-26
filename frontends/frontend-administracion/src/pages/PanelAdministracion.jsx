@@ -7,6 +7,7 @@ import { cerrarSesion as cerrarSesionApi } from "../api/sesion.js";
 import { irAlLogin } from "../components/ProtectedRoute.jsx";
 import FormularioCuenta from "../components/FormularioCuenta.jsx";
 import CambiarContrasena from "../components/CambiarContrasena.jsx";
+import RestablecerContrasena from "../components/RestablecerContrasena.jsx";
 import { ETIQUETAS_ROL, PLURALES_ROL, ROLES } from "../roles.js";
 import "./PanelAdministracion.css";
 
@@ -35,6 +36,8 @@ export default function PanelAdministracion({ usuario }) {
   const [filtroEstado, setFiltroEstado] = useState("TODOS");
   const [formularioAbierto, setFormularioAbierto] = useState(false);
   const [contrasenaAbierta, setContrasenaAbierta] = useState(false);
+  // Cuenta a la que el administrador le esta cambiando la contrasena.
+  const [cuentaClave, setCuentaClave] = useState(null);
   const [aviso, setAviso] = useState("");
   // Confirmacion en linea: id de la fila que esta pidiendo confirmar.
   const [confirmandoId, setConfirmandoId] = useState(null);
@@ -362,16 +365,25 @@ export default function PanelAdministracion({ usuario }) {
                                   </button>
                                 </div>
                               ) : (
-                                <button
-                                  type="button"
-                                  className={fila.activo ? "accion-off" : "accion-on"}
-                                  onClick={() => {
-                                    setConfirmandoId(fila.id);
-                                    setErrorFila({ id: null, mensaje: "" });
-                                  }}
-                                >
-                                  {fila.activo ? "Desactivar" : "Activar"}
-                                </button>
+                                <div className="botones-fila">
+                                  <button
+                                    type="button"
+                                    className="accion-clave"
+                                    onClick={() => setCuentaClave(fila)}
+                                  >
+                                    Cambiar clave
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className={fila.activo ? "accion-off" : "accion-on"}
+                                    onClick={() => {
+                                      setConfirmandoId(fila.id);
+                                      setErrorFila({ id: null, mensaje: "" });
+                                    }}
+                                  >
+                                    {fila.activo ? "Desactivar" : "Activar"}
+                                  </button>
+                                </div>
                               )}
                               {errorFila.id === fila.id && (
                                 <p className="error-fila" role="alert">
@@ -396,6 +408,18 @@ export default function PanelAdministracion({ usuario }) {
           onCerrar={() => setFormularioAbierto(false)}
           onCreada={alCrear}
           onSesionInvalida={manejarErrorSesion}
+        />
+      )}
+
+      {cuentaClave && (
+        <RestablecerContrasena
+          cuenta={cuentaClave}
+          onCerrar={() => setCuentaClave(null)}
+          onSesionInvalida={manejarErrorSesion}
+          onCambiada={(cuenta) => {
+            setCuentaClave(null);
+            setAviso(`Se actualizó la contraseña de ${cuenta.nombre}.`);
+          }}
         />
       )}
 

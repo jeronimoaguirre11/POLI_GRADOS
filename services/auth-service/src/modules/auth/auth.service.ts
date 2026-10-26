@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -292,6 +293,33 @@ export class AuthService {
       throw new NotFoundException('Usuario no encontrado');
     }
     return usuario;
+  }
+
+  // Lo usa el super administrador para asignar una contrasena nueva. La del
+  // propio super administrador no se cambia por aqui: se cambia desde su
+  // perfil, confirmando la contrasena actual.
+  async restablecerPassword(id: string, password: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id },
+      select: { id: true, rol: true },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    if (usuario.rol === 'SUPERADMIN') {
+      throw new ForbiddenException(
+        'La contraseña del super administrador se cambia desde "Cambiar contraseña"',
+      );
+    }
+
+    await this.prisma.usuario.update({
+      where: { id },
+      data: { password: await bcrypt.hash(password, 10) },
+    });
+
+    return { message: 'Contraseña actualizada correctamente' };
   }
 
   async cambiarEstadoCuenta(id: string, activo: boolean) {

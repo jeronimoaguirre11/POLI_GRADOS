@@ -479,7 +479,8 @@ tr.inactiva .badge {
 }
 
 .acciones {
-  width: 220px;
+  width: 260px;
+  white-space: nowrap;
   text-align: right;
 }
 
@@ -516,6 +517,51 @@ td.acciones .primario {
   background: var(--verde);
   border-color: var(--verde);
   color: #fff;
+}
+
+.botones-fila {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+td.acciones .accion-clave:hover {
+  border-color: #b9c9bb;
+  background: #f7f9f7;
+  color: var(--verde);
+}
+
+.campo-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.campo-cabecera .link-button {
+  min-height: auto;
+  padding: 0;
+  font-size: 0.78rem;
+}
+
+.con-boton {
+  position: relative;
+}
+
+.con-boton input {
+  padding-right: 5.5rem;
+}
+
+.con-boton .ver {
+  position: absolute;
+  top: 50%;
+  right: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border: 0;
+  border-radius: 7px;
+  background: #f3f5f4;
+  color: #475148;
+  font-size: 0.74rem;
+  font-weight: 700;
+  transform: translateY(-50%);
 }
 
 .confirmar {
