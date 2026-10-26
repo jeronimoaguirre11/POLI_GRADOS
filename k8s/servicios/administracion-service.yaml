@@ -28,6 +28,12 @@ spec:
           env:
             - name: AUTH_SERVICE_URL
               value: "http://auth-service:3001"
+            - name: DOCENTES_SERVICE_URL
+              value: "http://docentes-service:3008"
+            - name: EMPRESAS_SERVICE_URL
+              value: "http://empresas-service:3002"
+            - name: ESTUDIANTES_SERVICE_URL
+              value: "http://estudiantes-service:3003"
             - name: INTERNAL_API_KEY
               valueFrom:
                 secretKeyRef:
