@@ -1,0 +1,97 @@
+# gateway: Punto de entrada unico del API (CORS y proxy).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+  labels:
+    app: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      # Sin las variables automaticas *_SERVICE_HOST/_PORT de Kubernetes: los
+      # servicios usan sus propias URLs (*_SERVICE_URL), igual que en compose.
+      enableServiceLinks: false
+      containers:
+        - name: gateway
+          # Imagen construida con "docker compose build" (no se descarga).
+          image: poli-grados-gateway:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3000
+          env:
+            - name: ADMINISTRACION_SERVICE_URL
+              value: "http://administracion-service:3009"
+            - name: AUTH_SERVICE_URL
+              value: "http://auth-service:3001"
+            - name: COORDINADORES_SERVICE_URL
+              value: "http://coordinadores-service:3005"
+            - name: DIPLOMADO_SERVICE_URL
+              value: "http://diplomado-service:3006"
+            - name: DOCENTES_SERVICE_URL
+              value: "http://docentes-service:3008"
+            - name: EMPRESAS_SERVICE_URL
+              value: "http://empresas-service:3002"
+            - name: ESTUDIANTES_SERVICE_URL
+              value: "http://estudiantes-service:3003"
+            - name: FRONTEND_ADMINISTRACION_URL
+              value: "http://localhost:5181"
+            - name: FRONTEND_AUTH_URL
+              value: "http://localhost:5173"
+            - name: FRONTEND_COORDINADORES_URL
+              value: "http://localhost:5177"
+            - name: FRONTEND_DIPLOMADO_URL
+              value: "http://localhost:5178"
+            - name: FRONTEND_DOCENTES_URL
+              value: "http://localhost:5180"
+            - name: FRONTEND_EMPRESAS_URL
+              value: "http://localhost:5174"
+            - name: FRONTEND_ESTUDIANTES_URL
+              value: "http://localhost:5175"
+            - name: FRONTEND_INVESTIGACION_URL
+              value: "http://localhost:5179"
+            - name: FRONTEND_POSTULACIONES_URL
+              value: "http://localhost:5176"
+            - name: INVESTIGACION_SERVICE_URL
+              value: "http://investigacion-service:3007"
+            - name: PORT
+              value: "3000"
+            - name: POSTULACIONES_SERVICE_URL
+              value: "http://postulaciones-service:3004"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3000
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+---
+# LoadBalancer: Docker Desktop lo publica en http://localhost:3000, la misma
+# URL que usan los frontends con docker compose.
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+spec:
+  type: LoadBalancer
+  selector:
+    app: gateway
+  ports:
+    - port: 3000
+      targetPort: 3000

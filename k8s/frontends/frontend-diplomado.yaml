@@ -1,0 +1,47 @@
+# frontend-diplomado: React compilado y servido por nginx (puerto 80 del contenedor).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-diplomado
+  labels:
+    app: frontend-diplomado
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-diplomado
+  template:
+    metadata:
+      labels:
+        app: frontend-diplomado
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: frontend-diplomado
+          image: poli-grados-frontend-diplomado:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+---
+# LoadBalancer: Docker Desktop lo publica en http://localhost:5178, la misma
+# URL de docker compose (las VITE_* quedan igual y no hay que reconstruir).
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-diplomado
+spec:
+  type: LoadBalancer
+  selector:
+    app: frontend-diplomado
+  ports:
+    - port: 5178
+      targetPort: 80

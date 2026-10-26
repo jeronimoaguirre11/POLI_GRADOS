@@ -1,0 +1,72 @@
+# administracion-service: Panel del super administrador (sin base de datos).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: administracion-service
+  labels:
+    app: administracion-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: administracion-service
+  template:
+    metadata:
+      labels:
+        app: administracion-service
+    spec:
+      # Sin las variables automaticas *_SERVICE_HOST/_PORT de Kubernetes: los
+      # servicios usan sus propias URLs (*_SERVICE_URL), igual que en compose.
+      enableServiceLinks: false
+      containers:
+        - name: administracion-service
+          # Imagen construida con "docker compose build" (no se descarga).
+          image: poli-grados-administracion-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3009
+          env:
+            - name: AUTH_SERVICE_URL
+              value: "http://auth-service:3001"
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: INTERNAL_API_KEY
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: JWT_SECRET
+            - name: PORT
+              value: "3009"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3009
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3009
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+---
+# Solo accesible dentro del cluster, por el nombre del servicio (igual que en
+# la red interna de docker compose).
+apiVersion: v1
+kind: Service
+metadata:
+  name: administracion-service
+spec:
+  selector:
+    app: administracion-service
+  ports:
+    - port: 3009
+      targetPort: 3009

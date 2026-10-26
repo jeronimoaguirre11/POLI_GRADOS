@@ -1,0 +1,47 @@
+# frontend-docentes: React compilado y servido por nginx (puerto 80 del contenedor).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-docentes
+  labels:
+    app: frontend-docentes
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-docentes
+  template:
+    metadata:
+      labels:
+        app: frontend-docentes
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: frontend-docentes
+          image: poli-grados-frontend-docentes:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+---
+# LoadBalancer: Docker Desktop lo publica en http://localhost:5180, la misma
+# URL de docker compose (las VITE_* quedan igual y no hay que reconstruir).
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-docentes
+spec:
+  type: LoadBalancer
+  selector:
+    app: frontend-docentes
+  ports:
+    - port: 5180
+      targetPort: 80

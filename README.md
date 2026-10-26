@@ -127,6 +127,19 @@ docker compose down -v                   # detener y BORRAR datos y archivos sub
 
 ---
 
+## Kubernetes
+
+El mismo proyecto también se puede desplegar en Kubernetes (por ejemplo, el de Docker Desktop). Docker se sigue usando para construir las imágenes; Kubernetes las ejecuta, las reinicia si fallan y las conecta entre sí. Los manifiestos están en [`k8s/`](k8s/README.md).
+
+```powershell
+.\k8s-iniciar.ps1     # construye las imágenes y despliega (Windows)
+.\k8s-detener.ps1     # detiene sin borrar datos
+```
+
+Las URLs son las mismas (`http://localhost:5173`). Usa docker compose **o** Kubernetes, no los dos a la vez. Guía completa: [k8s/README.md](k8s/README.md).
+
+---
+
 ## Super administrador
 
 Es el rol que administra las cuentas de la plataforma. Su panel está en **http://localhost:5181** (el login lo redirige automáticamente).
@@ -170,6 +183,7 @@ La plataforma guarda un **historial de acciones**: quién hizo qué, cuándo, de
 
 ```
 ├─ docker-compose.yml
+├─ k8s/                     # manifiestos de Kubernetes (ver k8s/README.md)
 ├─ .env.example
 ├─ db-init/                  # crea las bases de datos la primera vez
 ├─ gateway/                  # API Gateway

@@ -1,0 +1,47 @@
+# frontend-postulaciones: React compilado y servido por nginx (puerto 80 del contenedor).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-postulaciones
+  labels:
+    app: frontend-postulaciones
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-postulaciones
+  template:
+    metadata:
+      labels:
+        app: frontend-postulaciones
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: frontend-postulaciones
+          image: poli-grados-frontend-postulaciones:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+---
+# LoadBalancer: Docker Desktop lo publica en http://localhost:5176, la misma
+# URL de docker compose (las VITE_* quedan igual y no hay que reconstruir).
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-postulaciones
+spec:
+  type: LoadBalancer
+  selector:
+    app: frontend-postulaciones
+  ports:
+    - port: 5176
+      targetPort: 80

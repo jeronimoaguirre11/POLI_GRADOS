@@ -1,0 +1,114 @@
+# auth-service: Usuarios, registro, login, sesion y perfil.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: auth-service
+  labels:
+    app: auth-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: auth-service
+  template:
+    metadata:
+      labels:
+        app: auth-service
+    spec:
+      # Sin las variables automaticas *_SERVICE_HOST/_PORT de Kubernetes: los
+      # servicios usan sus propias URLs (*_SERVICE_URL), igual que en compose.
+      enableServiceLinks: false
+      initContainers:
+        # Espera a que PostgreSQL acepte conexiones antes de correr las
+        # migraciones (equivale al depends_on: service_healthy de compose).
+        - name: esperar-postgres
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "until pg_isready -h postgres -p 5432; do echo esperando postgres; sleep 2; done"]
+      containers:
+        - name: auth-service
+          # Imagen construida con "docker compose build" (no se descarga).
+          image: poli-grados-auth-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3001
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: DB_PASSWORD
+            - name: COOKIE_SECURE
+              value: "false"
+            - name: COORDINADORES_SERVICE_URL
+              value: "http://coordinadores-service:3005"
+            - name: DATABASE_URL
+              value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres:5432/auth_db?schema=public"
+            - name: DOCENTES_SERVICE_URL
+              value: "http://docentes-service:3008"
+            - name: EMPRESAS_SERVICE_URL
+              value: "http://empresas-service:3002"
+            - name: ESTUDIANTES_SERVICE_URL
+              value: "http://estudiantes-service:3003"
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: INTERNAL_API_KEY
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: JWT_SECRET
+            - name: PORT
+              value: "3001"
+            - name: SUPERADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: SUPERADMIN_EMAIL
+            - name: SUPERADMIN_NOMBRE
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: SUPERADMIN_NOMBRE
+            - name: SUPERADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: SUPERADMIN_PASSWORD
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3001
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+---
+# Solo accesible dentro del cluster, por el nombre del servicio (igual que en
+# la red interna de docker compose).
+apiVersion: v1
+kind: Service
+metadata:
+  name: auth-service
+spec:
+  selector:
+    app: auth-service
+  ports:
+    - port: 3001
+      targetPort: 3001
