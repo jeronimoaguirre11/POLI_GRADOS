@@ -26,8 +26,21 @@ spec:
           ports:
             - containerPort: 3000
           env:
+            # Para la auditoria: leer quien hace cada accion y enviarla.
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: JWT_SECRET
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: INTERNAL_API_KEY
             - name: ADMINISTRACION_SERVICE_URL
               value: "http://administracion-service:3009"
+            - name: AUDITORIA_SERVICE_URL
+              value: "http://auditoria-service:3010"
             - name: AUTH_SERVICE_URL
               value: "http://auth-service:3001"
             - name: COORDINADORES_SERVICE_URL

@@ -43,6 +43,8 @@ spec:
                 secretKeyRef:
                   name: poli-grados-secretos
                   key: DB_PASSWORD
+            - name: AUDITORIA_SERVICE_URL
+              value: "http://auditoria-service:3010"
             - name: COOKIE_SECURE
               value: "false"
             - name: COORDINADORES_SERVICE_URL

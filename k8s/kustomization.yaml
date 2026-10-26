@@ -22,6 +22,7 @@ resources:
   - servicios/investigacion-service.yaml
   - servicios/docentes-service.yaml
   - servicios/administracion-service.yaml
+  - servicios/auditoria-service.yaml
   - gateway.yaml
   - frontends/frontend-auth.yaml
   - frontends/frontend-empresas.yaml
