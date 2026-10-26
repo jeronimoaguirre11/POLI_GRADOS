@@ -16,6 +16,8 @@ const DESTINOS_POR_ROL = {
   COORDINADOR:
     import.meta.env.VITE_COORDINADORES_APP_URL || "http://localhost:5177",
   DOCENTE: import.meta.env.VITE_DOCENTES_APP_URL || "http://localhost:5180",
+  SUPERADMIN:
+    import.meta.env.VITE_ADMINISTRACION_APP_URL || "http://localhost:5181",
 };
 
 export default function Login() {

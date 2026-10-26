@@ -17,6 +17,7 @@ enum Rol {
   EMPRESA
   COORDINADOR
   DOCENTE
+  SUPERADMIN
 }
 
 model Usuario {
@@ -25,5 +26,8 @@ model Usuario {
   password  String
   nombre    String
   rol       Rol
+  // Una cuenta desactivada no puede iniciar sesion. La activa o desactiva el
+  // super administrador desde administracion-service.
+  activo    Boolean  @default(true)
   createdAt DateTime @default(now())
 }

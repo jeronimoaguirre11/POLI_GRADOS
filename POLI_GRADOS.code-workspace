@@ -7,11 +7,13 @@
     { "name": "🎓 Estudiantes service", "path": "services/estudiantes-service" },
     { "name": "📄 Postulaciones service", "path": "services/postulaciones-service" },
     { "name": "🧭 Coordinadores service", "path": "services/coordinadores-service" },
+    { "name": "🛡️ Administracion service", "path": "services/administracion-service" },
     { "name": "💻 Frontend Auth", "path": "frontends/frontend-auth" },
     { "name": "💻 Frontend Empresas", "path": "frontends/frontend-empresas" },
     { "name": "💻 Frontend Estudiantes", "path": "frontends/frontend-estudiantes" },
     { "name": "💻 Frontend Postulaciones", "path": "frontends/frontend-postulaciones" },
-    { "name": "💻 Frontend Coordinadores", "path": "frontends/frontend-coordinadores" }
+    { "name": "💻 Frontend Coordinadores", "path": "frontends/frontend-coordinadores" },
+    { "name": "💻 Frontend Administracion", "path": "frontends/frontend-administracion" }
   ],
   "settings": {
     "files.eol": "\n",

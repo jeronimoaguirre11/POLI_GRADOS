@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { AuthController } from './auth.controller.js';
 import { AuthService } from './auth.service.js';
 import { InternalController } from './internal.controller.js';
+import { SuperadminInicialService } from './superadmin-inicial.service.js';
 
 @Module({
   imports: [
@@ -12,6 +13,6 @@ import { InternalController } from './internal.controller.js';
     }),
   ],
   controllers: [AuthController, InternalController],
-  providers: [AuthService],
+  providers: [AuthService, SuperadminInicialService],
 })
 export class AuthModule {}
