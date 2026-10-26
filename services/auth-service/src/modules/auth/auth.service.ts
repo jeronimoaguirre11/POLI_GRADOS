@@ -15,6 +15,7 @@ import { LoginDto } from './dto/login.dto.js';
 import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto.js';
 import { CrearCoordinadorDto } from './dto/crear-coordinador.dto.js';
 import { CrearDocenteDto } from './dto/crear-docente.dto.js';
+import { ActualizarCuentaDto } from './dto/actualizar-cuenta.dto.js';
 import { PASSWORD_REGEX } from './dto/password.validation.js';
 import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 
@@ -293,6 +294,49 @@ export class AuthService {
       throw new NotFoundException('Usuario no encontrado');
     }
     return usuario;
+  }
+
+  // Lo usa el super administrador para corregir nombre o correo de una cuenta.
+  // El super administrador edita los suyos desde su propio perfil.
+  async actualizarCuenta(id: string, dto: ActualizarCuentaDto) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id },
+      select: { id: true, rol: true, email: true },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    if (usuario.rol === 'SUPERADMIN') {
+      throw new ForbiddenException(
+        'Los datos del super administrador no se editan desde aquí',
+      );
+    }
+
+    const email = dto.email?.trim();
+    if (email && email !== usuario.email) {
+      const otro = await this.prisma.usuario.findUnique({ where: { email } });
+      if (otro) {
+        throw new ConflictException('Ya existe un usuario con ese correo');
+      }
+    }
+
+    try {
+      return await this.prisma.usuario.update({
+        where: { id },
+        data: {
+          ...(dto.nombre !== undefined && { nombre: dto.nombre.trim() }),
+          ...(email && { email }),
+        },
+        select: SELECCION_PUBLICA,
+      });
+    } catch (error: any) {
+      if (error?.code === 'P2002') {
+        throw new ConflictException('Ya existe un usuario con ese correo');
+      }
+      throw error;
+    }
   }
 
   // Lo usa el super administrador para asignar una contrasena nueva. La del

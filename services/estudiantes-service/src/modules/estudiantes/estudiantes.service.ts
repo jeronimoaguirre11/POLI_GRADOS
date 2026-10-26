@@ -7,6 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service.js';
 import { ActualizarPerfilEstudianteDto } from './dto/actualizar-perfil-estudiante.dto.js';
 import { CrearEstudianteDto } from './dto/crear-estudiante.dto.js';
+import { ActualizarEstudianteAdminDto } from './dto/actualizar-estudiante-admin.dto.js';
 import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 
 @Injectable()
@@ -78,6 +79,33 @@ export class EstudiantesService {
         programa: dto.programa,
         semestre: dto.semestre ?? null,
       },
+    });
+  }
+
+  // --- Llamado solo por administracion-service (super administrador) ---
+  async actualizarPorUsuario(
+    usuarioId: string,
+    dto: ActualizarEstudianteAdminDto,
+  ) {
+    const estudiante = await this.obtenerEstudianteDelUsuario(usuarioId);
+
+    if (dto.codigo !== undefined && dto.codigo !== estudiante.codigo) {
+      const otro = await this.prisma.estudiante.findUnique({
+        where: { codigo: dto.codigo },
+      });
+      if (otro) {
+        throw new ConflictException('Ya existe un estudiante con ese codigo');
+      }
+    }
+
+    return this.prisma.estudiante.update({
+      where: { id: estudiante.id },
+      data: {
+        ...(dto.codigo !== undefined && { codigo: dto.codigo }),
+        ...(dto.programa !== undefined && { programa: dto.programa }),
+        ...(dto.semestre !== undefined && { semestre: dto.semestre }),
+      },
+      select: { usuarioId: true, codigo: true, programa: true, semestre: true },
     });
   }
 

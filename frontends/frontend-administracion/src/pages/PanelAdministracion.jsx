@@ -8,6 +8,7 @@ import { irAlLogin } from "../components/ProtectedRoute.jsx";
 import FormularioCuenta from "../components/FormularioCuenta.jsx";
 import CambiarContrasena from "../components/CambiarContrasena.jsx";
 import RestablecerContrasena from "../components/RestablecerContrasena.jsx";
+import EditarCuenta from "../components/EditarCuenta.jsx";
 import { ETIQUETAS_ROL, PLURALES_ROL, ROLES } from "../roles.js";
 import "./PanelAdministracion.css";
 
@@ -38,6 +39,8 @@ export default function PanelAdministracion({ usuario }) {
   const [contrasenaAbierta, setContrasenaAbierta] = useState(false);
   // Cuenta a la que el administrador le esta cambiando la contrasena.
   const [cuentaClave, setCuentaClave] = useState(null);
+  // Cuenta que se esta editando (nombre, correo y perfil).
+  const [cuentaEditar, setCuentaEditar] = useState(null);
   const [aviso, setAviso] = useState("");
   // Confirmacion en linea: id de la fila que esta pidiendo confirmar.
   const [confirmandoId, setConfirmandoId] = useState(null);
@@ -369,6 +372,13 @@ export default function PanelAdministracion({ usuario }) {
                                   <button
                                     type="button"
                                     className="accion-clave"
+                                    onClick={() => setCuentaEditar(fila)}
+                                  >
+                                    Editar
+                                  </button>
+                                  <button
+                                    type="button"
+                                    className="accion-clave"
                                     onClick={() => setCuentaClave(fila)}
                                   >
                                     Cambiar clave
@@ -408,6 +418,19 @@ export default function PanelAdministracion({ usuario }) {
           onCerrar={() => setFormularioAbierto(false)}
           onCreada={alCrear}
           onSesionInvalida={manejarErrorSesion}
+        />
+      )}
+
+      {cuentaEditar && (
+        <EditarCuenta
+          cuenta={cuentaEditar}
+          onCerrar={() => setCuentaEditar(null)}
+          onSesionInvalida={manejarErrorSesion}
+          onGuardada={(cuenta) => {
+            setCuentaEditar(null);
+            setAviso(`Se guardaron los cambios de ${cuenta.nombre}.`);
+            cargar();
+          }}
         />
       )}
 

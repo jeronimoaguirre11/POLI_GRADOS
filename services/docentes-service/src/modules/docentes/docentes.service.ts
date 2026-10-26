@@ -9,6 +9,7 @@ import axios from 'axios';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { CreateDocenteDto } from './dto/create-docente.dto.js';
 import { UpdateDocenteDto } from './dto/update-docente.dto.js';
+import { ActualizarDocenteAdminDto } from './dto/actualizar-docente-admin.dto.js';
 import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 
 export interface EstudianteInterno {
@@ -136,6 +137,42 @@ export class DocentesService {
     }
 
     return docente;
+  }
+
+  // --- Llamado solo por administracion-service (super administrador) ---
+  async actualizarPorUsuario(usuarioId: string, dto: ActualizarDocenteAdminDto) {
+    const docente = await this.obtenerPorUsuarioId(usuarioId);
+
+    if (
+      dto.identificacion !== undefined &&
+      dto.identificacion !== docente.identificacion
+    ) {
+      const otro = await this.prisma.docente.findUnique({
+        where: { identificacion: dto.identificacion },
+      });
+      if (otro) {
+        throw new ConflictException(
+          'Ya existe un docente con esa identificación',
+        );
+      }
+    }
+
+    const textoOpcional = (valor: string) => valor.trim() || null;
+
+    return this.prisma.docente.update({
+      where: { id: docente.id },
+      data: {
+        ...(dto.identificacion !== undefined && {
+          identificacion: dto.identificacion,
+        }),
+        ...(dto.programa !== undefined && {
+          programa: textoOpcional(dto.programa),
+        }),
+        ...(dto.especialidad !== undefined && {
+          especialidad: textoOpcional(dto.especialidad),
+        }),
+      },
+    });
   }
 
   async actualizar(id: string, dto: UpdateDocenteDto) {

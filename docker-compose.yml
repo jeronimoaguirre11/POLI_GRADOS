@@ -150,6 +150,10 @@ services:
       <<: *secrets
       PORT: 3009
       AUTH_SERVICE_URL: http://auth-service:3001
+      # Perfiles que el super administrador puede ver y editar.
+      EMPRESAS_SERVICE_URL: http://empresas-service:3002
+      ESTUDIANTES_SERVICE_URL: http://estudiantes-service:3003
+      DOCENTES_SERVICE_URL: http://docentes-service:3008
     healthcheck: *healthcheck
 
   diplomado-service:

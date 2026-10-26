@@ -239,3 +239,46 @@ test('restablecer contrasena exige la politica de contrasenas', async () => {
   const errores = await validate(dto);
   assert.equal(errores.some((e) => e.property === 'password'), true);
 });
+
+test('el administrador corrige nombre y correo de una cuenta', async () => {
+  let datos;
+  const prisma = {
+    usuario: {
+      findUnique: async ({ where }) =>
+        where.id ? { id: 'u1', rol: 'ESTUDIANTE', email: 'viejo@p.com' } : null,
+      update: async ({ data }) => {
+        datos = data;
+        return { id: 'u1', ...data };
+      },
+    },
+  };
+  const service = new AuthService(prisma, jwtFalso);
+
+  await service.actualizarCuenta('u1', { nombre: ' Ana Ruiz ', email: 'nuevo@p.com' });
+  assert.deepEqual(datos, { nombre: 'Ana Ruiz', email: 'nuevo@p.com' });
+});
+
+test('editar cuenta rechaza correo repetido y al super administrador', async () => {
+  const conCorreoUsado = new AuthService(
+    {
+      usuario: {
+        findUnique: async ({ where }) =>
+          where.id ? { id: 'u1', rol: 'DOCENTE', email: 'a@p.com' } : { id: 'u2' },
+      },
+    },
+    jwtFalso,
+  );
+  await assert.rejects(
+    conCorreoUsado.actualizarCuenta('u1', { email: 'b@p.com' }),
+    (error) => error.getStatus() === 409,
+  );
+
+  const superadmin = new AuthService(
+    { usuario: { findUnique: async () => ({ id: 'sa', rol: 'SUPERADMIN', email: 'x' }) } },
+    jwtFalso,
+  );
+  await assert.rejects(
+    superadmin.actualizarCuenta('sa', { nombre: 'Otro' }),
+    (error) => error.getStatus() === 403,
+  );
+});

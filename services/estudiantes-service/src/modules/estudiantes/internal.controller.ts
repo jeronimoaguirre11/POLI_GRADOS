@@ -4,12 +4,14 @@ import {
   Get,
   NotFoundException,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
 } from '@nestjs/common';
 import { EstudiantesService } from './estudiantes.service.js';
 import { CrearEstudianteDto } from './dto/crear-estudiante.dto.js';
+import { ActualizarEstudianteAdminDto } from './dto/actualizar-estudiante-admin.dto.js';
 import { InternalAuthGuard } from '../../common/guards/internal-auth.guard.js';
 
 // Rutas que SOLO llaman otros microservicios (el gateway nunca reenvia nada
@@ -51,5 +53,14 @@ export class InternalController {
       );
     }
     return estudiante;
+  }
+
+  // --- Llamado solo por administracion-service (super administrador) ---
+  @Patch('por-usuario/:usuarioId')
+  async actualizarPorUsuario(
+    @Param('usuarioId') usuarioId: string,
+    @Body() dto: ActualizarEstudianteAdminDto,
+  ) {
+    return this.estudiantesService.actualizarPorUsuario(usuarioId, dto);
   }
 }

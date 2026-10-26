@@ -44,6 +44,25 @@ export function cambiarEstadoUsuario(id, activo) {
   );
 }
 
+// { rol, perfil } con los datos del perfil segun el rol (null si no tiene).
+export function obtenerPerfilUsuario(id) {
+  return solicitar(`/administracion/usuarios/${encodeURIComponent(id)}/perfil`);
+}
+
+export function actualizarCuentaUsuario(id, datos) {
+  return solicitar(`/administracion/usuarios/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(datos),
+  });
+}
+
+export function actualizarPerfilUsuario(id, datos) {
+  return solicitar(
+    `/administracion/usuarios/${encodeURIComponent(id)}/perfil`,
+    { method: "PATCH", body: JSON.stringify(datos) },
+  );
+}
+
 // El super administrador asigna una contrasena nueva a otra cuenta.
 export function restablecerContrasenaUsuario(id, password) {
   return solicitar(

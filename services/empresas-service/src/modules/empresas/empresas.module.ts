@@ -3,6 +3,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { EmpresasController } from './empresas.controller.js';
 import { EmpresasService } from './empresas.service.js';
 import { InternalController } from './internal.controller.js';
+import { EmpresasAdministracionService } from './empresas-administracion.service.js';
 
 @Module({
   imports: [
@@ -11,6 +12,6 @@ import { InternalController } from './internal.controller.js';
     }),
   ],
   controllers: [EmpresasController, InternalController],
-  providers: [EmpresasService],
+  providers: [EmpresasService, EmpresasAdministracionService],
 })
 export class EmpresasModule {}
