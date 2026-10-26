@@ -9,6 +9,7 @@ import FormularioCuenta from "../components/FormularioCuenta.jsx";
 import CambiarContrasena from "../components/CambiarContrasena.jsx";
 import RestablecerContrasena from "../components/RestablecerContrasena.jsx";
 import EditarCuenta from "../components/EditarCuenta.jsx";
+import Auditoria from "./Auditoria.jsx";
 import { ETIQUETAS_ROL, PLURALES_ROL, ROLES } from "../roles.js";
 import "./PanelAdministracion.css";
 
@@ -41,6 +42,8 @@ export default function PanelAdministracion({ usuario }) {
   const [cuentaClave, setCuentaClave] = useState(null);
   // Cuenta que se esta editando (nombre, correo y perfil).
   const [cuentaEditar, setCuentaEditar] = useState(null);
+  // Pestana visible: administracion de cuentas o historial de auditoria.
+  const [vista, setVista] = useState("cuentas");
   const [aviso, setAviso] = useState("");
   // Confirmacion en linea: id de la fila que esta pidiendo confirmar.
   const [confirmandoId, setConfirmandoId] = useState(null);
@@ -158,257 +161,282 @@ export default function PanelAdministracion({ usuario }) {
       </header>
 
       <main className="dashboard-main">
-        <section className="hero">
-          <div>
-            <span className="hero-label">Super administrador</span>
-            <h1>Cuentas de la plataforma</h1>
-            <p>
-              Crea las cuentas de coordinadores, docentes, estudiantes y
-              empresas. Desactiva una cuenta para bloquear su acceso sin
-              perder su información.
-            </p>
-          </div>
+        <nav className="pestanas" aria-label="Secciones del panel">
           <button
             type="button"
-            className="hero-button"
-            onClick={() => setFormularioAbierto(true)}
+            className={vista === "cuentas" ? "activa" : ""}
+            aria-current={vista === "cuentas" ? "page" : undefined}
+            onClick={() => setVista("cuentas")}
           >
-            <span aria-hidden="true">+</span> Crear cuenta
+            Cuentas
           </button>
-        </section>
+          <button
+            type="button"
+            className={vista === "auditoria" ? "activa" : ""}
+            aria-current={vista === "auditoria" ? "page" : undefined}
+            onClick={() => setVista("auditoria")}
+          >
+            Auditoría
+          </button>
+        </nav>
 
-        {aviso && (
-          <div className="toast" role="status">
-            {aviso}
-            <button
-              type="button"
-              aria-label="Cerrar aviso"
-              onClick={() => setAviso("")}
-            >
-              ×
-            </button>
-          </div>
-        )}
-
-        {cargando ? (
-          <div className="state-card" aria-live="polite">
-            <span className="loader" aria-hidden="true" />
-            <p>Cargando cuentas…</p>
-          </div>
-        ) : error ? (
-          <div className="state-card error" role="alert">
-            <strong>No pudimos cargar las cuentas</strong>
-            <p>{error}</p>
-            <button type="button" onClick={cargar}>
-              Reintentar
-            </button>
-          </div>
+        {vista === "auditoria" ? (
+          <Auditoria onSesionInvalida={manejarErrorSesion} />
         ) : (
           <>
-            <section className="stats" aria-label="Resumen de cuentas">
-              <article className="stat principal">
-                <span>Cuentas</span>
-                <strong>{resumen.total}</strong>
-                <small>
-                  {resumen.activos} {resumen.activos === 1 ? "activa" : "activas"} ·{" "}
-                  {resumen.inactivos}{" "}
-                  {resumen.inactivos === 1 ? "inactiva" : "inactivas"}
-                </small>
-              </article>
-              {ROLES.map((rol) => (
-                <button
-                  key={rol}
-                  type="button"
-                  className={`stat rol-${rol.toLowerCase()} ${filtroRol === rol ? "seleccionado" : ""}`}
-                  onClick={() =>
-                    setFiltroRol((actual) => (actual === rol ? "TODOS" : rol))
-                  }
-                  aria-pressed={filtroRol === rol}
-                >
-                  <span>{PLURALES_ROL[rol]}</span>
-                  <strong>{resumen.porRol[rol] ?? 0}</strong>
-                </button>
-              ))}
-            </section>
-
-            <section className="table-card">
-              <div className="toolbar">
-                <div className="search">
-                  <label htmlFor="busqueda" className="sr-only">
-                    Buscar por nombre o correo
-                  </label>
-                  <input
-                    id="busqueda"
-                    type="search"
-                    placeholder="Buscar por nombre o correo"
-                    value={busqueda}
-                    onChange={(e) => setBusqueda(e.target.value)}
-                  />
-                </div>
-                <label>
-                  <span>Rol</span>
-                  <select
-                    value={filtroRol}
-                    onChange={(e) => setFiltroRol(e.target.value)}
-                  >
-                    <option value="TODOS">Todos</option>
-                    {ROLES.map((rol) => (
-                      <option key={rol} value={rol}>
-                        {ETIQUETAS_ROL[rol]}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-                <label>
-                  <span>Estado</span>
-                  <select
-                    value={filtroEstado}
-                    onChange={(e) => setFiltroEstado(e.target.value)}
-                  >
-                    <option value="TODOS">Todos</option>
-                    <option value="ACTIVOS">Activas</option>
-                    <option value="INACTIVOS">Inactivas</option>
-                  </select>
-                </label>
-                {hayFiltros && (
-                  <button
-                    type="button"
-                    className="link-button"
-                    onClick={() => {
-                      setBusqueda("");
-                      setFiltroRol("TODOS");
-                      setFiltroEstado("TODOS");
-                    }}
-                  >
-                    Limpiar filtros
-                  </button>
-                )}
-              </div>
-
-              <p className="result-count">
-                {usuariosFiltrados.length} de {resumen.total} cuentas
+          <section className="hero">
+            <div>
+              <span className="hero-label">Super administrador</span>
+              <h1>Cuentas de la plataforma</h1>
+              <p>
+                Crea las cuentas de coordinadores, docentes, estudiantes y
+                empresas. Desactiva una cuenta para bloquear su acceso sin
+                perder su información.
               </p>
+            </div>
+            <button
+              type="button"
+              className="hero-button"
+              onClick={() => setFormularioAbierto(true)}
+            >
+              <span aria-hidden="true">+</span> Crear cuenta
+            </button>
+          </section>
 
-              {usuariosFiltrados.length === 0 ? (
-                <div className="empty">
-                  No hay cuentas que coincidan con los filtros.
+          {aviso && (
+            <div className="toast" role="status">
+              {aviso}
+              <button
+                type="button"
+                aria-label="Cerrar aviso"
+                onClick={() => setAviso("")}
+              >
+                ×
+              </button>
+            </div>
+          )}
+
+          {cargando ? (
+            <div className="state-card" aria-live="polite">
+              <span className="loader" aria-hidden="true" />
+              <p>Cargando cuentas…</p>
+            </div>
+          ) : error ? (
+            <div className="state-card error" role="alert">
+              <strong>No pudimos cargar las cuentas</strong>
+              <p>{error}</p>
+              <button type="button" onClick={cargar}>
+                Reintentar
+              </button>
+            </div>
+          ) : (
+            <>
+              <section className="stats" aria-label="Resumen de cuentas">
+                <article className="stat principal">
+                  <span>Cuentas</span>
+                  <strong>{resumen.total}</strong>
+                  <small>
+                    {resumen.activos} {resumen.activos === 1 ? "activa" : "activas"} ·{" "}
+                    {resumen.inactivos}{" "}
+                    {resumen.inactivos === 1 ? "inactiva" : "inactivas"}
+                  </small>
+                </article>
+                {ROLES.map((rol) => (
+                  <button
+                    key={rol}
+                    type="button"
+                    className={`stat rol-${rol.toLowerCase()} ${filtroRol === rol ? "seleccionado" : ""}`}
+                    onClick={() =>
+                      setFiltroRol((actual) => (actual === rol ? "TODOS" : rol))
+                    }
+                    aria-pressed={filtroRol === rol}
+                  >
+                    <span>{PLURALES_ROL[rol]}</span>
+                    <strong>{resumen.porRol[rol] ?? 0}</strong>
+                  </button>
+                ))}
+              </section>
+
+              <section className="table-card">
+                <div className="toolbar">
+                  <div className="search">
+                    <label htmlFor="busqueda" className="sr-only">
+                      Buscar por nombre o correo
+                    </label>
+                    <input
+                      id="busqueda"
+                      type="search"
+                      placeholder="Buscar por nombre o correo"
+                      value={busqueda}
+                      onChange={(e) => setBusqueda(e.target.value)}
+                    />
+                  </div>
+                  <label>
+                    <span>Rol</span>
+                    <select
+                      value={filtroRol}
+                      onChange={(e) => setFiltroRol(e.target.value)}
+                    >
+                      <option value="TODOS">Todos</option>
+                      {ROLES.map((rol) => (
+                        <option key={rol} value={rol}>
+                          {ETIQUETAS_ROL[rol]}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Estado</span>
+                    <select
+                      value={filtroEstado}
+                      onChange={(e) => setFiltroEstado(e.target.value)}
+                    >
+                      <option value="TODOS">Todos</option>
+                      <option value="ACTIVOS">Activas</option>
+                      <option value="INACTIVOS">Inactivas</option>
+                    </select>
+                  </label>
+                  {hayFiltros && (
+                    <button
+                      type="button"
+                      className="link-button"
+                      onClick={() => {
+                        setBusqueda("");
+                        setFiltroRol("TODOS");
+                        setFiltroEstado("TODOS");
+                      }}
+                    >
+                      Limpiar filtros
+                    </button>
+                  )}
                 </div>
-              ) : (
-                <div className="table-wrap">
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>Usuario</th>
-                        <th>Rol</th>
-                        <th>Estado</th>
-                        <th>Creada</th>
-                        <th className="acciones">Acción</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {usuariosFiltrados.map((fila) => {
-                        const esYo = fila.email === usuario?.email;
-                        const confirmando = confirmandoId === fila.id;
-                        return (
-                          <tr key={fila.id} className={fila.activo ? "" : "inactiva"}>
-                            <td>
-                              <div className="user-cell">
-                                <span className="avatar" aria-hidden="true">
-                                  {(fila.nombre || "?").trim().charAt(0).toUpperCase()}
-                                </span>
-                                <div>
-                                  <strong>
-                                    {fila.nombre}
-                                    {esYo && <em className="tag-yo">Tú</em>}
-                                  </strong>
-                                  <span>{fila.email}</span>
-                                </div>
-                              </div>
-                            </td>
-                            <td>
-                              <span className={`badge rol-${fila.rol.toLowerCase()}`}>
-                                {ETIQUETAS_ROL[fila.rol] ?? fila.rol}
-                              </span>
-                            </td>
-                            <td>
-                              <span className={`estado ${fila.activo ? "on" : "off"}`}>
-                                {fila.activo ? "Activa" : "Inactiva"}
-                              </span>
-                            </td>
-                            <td className="fecha">
-                              {fila.createdAt
-                                ? formatoFecha.format(new Date(fila.createdAt))
-                                : "—"}
-                            </td>
-                            <td className="acciones">
-                              {esYo ? (
-                                <span className="muted">Tu cuenta</span>
-                              ) : confirmando ? (
-                                <div className="confirmar">
-                                  <span>
-                                    ¿{fila.activo ? "Desactivar" : "Activar"}?
+
+                <p className="result-count">
+                  {usuariosFiltrados.length} de {resumen.total} cuentas
+                </p>
+
+                {usuariosFiltrados.length === 0 ? (
+                  <div className="empty">
+                    No hay cuentas que coincidan con los filtros.
+                  </div>
+                ) : (
+                  <div className="table-wrap">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>Usuario</th>
+                          <th>Rol</th>
+                          <th>Estado</th>
+                          <th>Creada</th>
+                          <th className="acciones">Acción</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {usuariosFiltrados.map((fila) => {
+                          const esYo = fila.email === usuario?.email;
+                          const confirmando = confirmandoId === fila.id;
+                          return (
+                            <tr key={fila.id} className={fila.activo ? "" : "inactiva"}>
+                              <td>
+                                <div className="user-cell">
+                                  <span className="avatar" aria-hidden="true">
+                                    {(fila.nombre || "?").trim().charAt(0).toUpperCase()}
                                   </span>
-                                  <button
-                                    type="button"
-                                    className={fila.activo ? "peligro" : "primario"}
-                                    disabled={cambiandoId === fila.id}
-                                    onClick={() => confirmarCambioEstado(fila)}
-                                  >
-                                    {cambiandoId === fila.id ? "…" : "Sí"}
-                                  </button>
-                                  <button
-                                    type="button"
-                                    disabled={cambiandoId === fila.id}
-                                    onClick={() => {
-                                      setConfirmandoId(null);
-                                      setErrorFila({ id: null, mensaje: "" });
-                                    }}
-                                  >
-                                    No
-                                  </button>
+                                  <div>
+                                    <strong>
+                                      {fila.nombre}
+                                      {esYo && <em className="tag-yo">Tú</em>}
+                                    </strong>
+                                    <span>{fila.email}</span>
+                                  </div>
                                 </div>
-                              ) : (
-                                <div className="botones-fila">
-                                  <button
-                                    type="button"
-                                    className="accion-clave"
-                                    onClick={() => setCuentaEditar(fila)}
-                                  >
-                                    Editar
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className="accion-clave"
-                                    onClick={() => setCuentaClave(fila)}
-                                  >
-                                    Cambiar clave
-                                  </button>
-                                  <button
-                                    type="button"
-                                    className={fila.activo ? "accion-off" : "accion-on"}
-                                    onClick={() => {
-                                      setConfirmandoId(fila.id);
-                                      setErrorFila({ id: null, mensaje: "" });
-                                    }}
-                                  >
-                                    {fila.activo ? "Desactivar" : "Activar"}
-                                  </button>
-                                </div>
-                              )}
-                              {errorFila.id === fila.id && (
-                                <p className="error-fila" role="alert">
-                                  {errorFila.mensaje}
-                                </p>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              )}
-            </section>
+                              </td>
+                              <td>
+                                <span className={`badge rol-${fila.rol.toLowerCase()}`}>
+                                  {ETIQUETAS_ROL[fila.rol] ?? fila.rol}
+                                </span>
+                              </td>
+                              <td>
+                                <span className={`estado ${fila.activo ? "on" : "off"}`}>
+                                  {fila.activo ? "Activa" : "Inactiva"}
+                                </span>
+                              </td>
+                              <td className="fecha">
+                                {fila.createdAt
+                                  ? formatoFecha.format(new Date(fila.createdAt))
+                                  : "—"}
+                              </td>
+                              <td className="acciones">
+                                {esYo ? (
+                                  <span className="muted">Tu cuenta</span>
+                                ) : confirmando ? (
+                                  <div className="confirmar">
+                                    <span>
+                                      ¿{fila.activo ? "Desactivar" : "Activar"}?
+                                    </span>
+                                    <button
+                                      type="button"
+                                      className={fila.activo ? "peligro" : "primario"}
+                                      disabled={cambiandoId === fila.id}
+                                      onClick={() => confirmarCambioEstado(fila)}
+                                    >
+                                      {cambiandoId === fila.id ? "…" : "Sí"}
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={cambiandoId === fila.id}
+                                      onClick={() => {
+                                        setConfirmandoId(null);
+                                        setErrorFila({ id: null, mensaje: "" });
+                                      }}
+                                    >
+                                      No
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="botones-fila">
+                                    <button
+                                      type="button"
+                                      className="accion-clave"
+                                      onClick={() => setCuentaEditar(fila)}
+                                    >
+                                      Editar
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className="accion-clave"
+                                      onClick={() => setCuentaClave(fila)}
+                                    >
+                                      Cambiar clave
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={fila.activo ? "accion-off" : "accion-on"}
+                                      onClick={() => {
+                                        setConfirmandoId(fila.id);
+                                        setErrorFila({ id: null, mensaje: "" });
+                                      }}
+                                    >
+                                      {fila.activo ? "Desactivar" : "Activar"}
+                                    </button>
+                                  </div>
+                                )}
+                                {errorFila.id === fila.id && (
+                                  <p className="error-fila" role="alert">
+                                    {errorFila.mensaje}
+                                  </p>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                )}
+              </section>
+            </>
+          )}
           </>
         )}
       </main>

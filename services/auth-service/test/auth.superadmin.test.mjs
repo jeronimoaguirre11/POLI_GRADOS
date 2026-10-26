@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import bcrypt from 'bcrypt';
+import axios from 'axios';
 import { validate } from 'class-validator';
 import {
   AuthService,
@@ -281,4 +282,38 @@ test('editar cuenta rechaza correo repetido y al super administrador', async () 
     superadmin.actualizarCuenta('sa', { nombre: 'Otro' }),
     (error) => error.getStatus() === 403,
   );
+});
+
+test('el login registra en auditoria los intentos fallidos y exitosos', async () => {
+  process.env.AUDITORIA_SERVICE_URL = 'http://auditoria';
+  const enviados = [];
+  const postOriginal = axios.post;
+  axios.post = async (url, body) => {
+    enviados.push([url, body]);
+    return { data: {} };
+  };
+
+  try {
+    const password = await bcrypt.hash('Segura123', 4);
+    const prisma = {
+      usuario: {
+        findUnique: async () => ({ id: 'u1', email: 'u@p.com', rol: 'DOCENTE', password, activo: true }),
+      },
+    };
+    const service = new AuthService(prisma, jwtFalso);
+
+    await assert.rejects(service.login({ email: 'u@p.com', password: 'Mala1234' }, { ip: '1.1.1.1' }));
+    await service.login({ email: 'u@p.com', password: 'Segura123' }, { ip: '1.1.1.1' });
+
+    assert.equal(enviados.length, 2);
+    assert.equal(enviados[0][0], 'http://auditoria/internal/eventos');
+    assert.equal(enviados[0][1].exito, false);
+    assert.equal(enviados[0][1].detalle, 'Contraseña incorrecta');
+    assert.equal(enviados[1][1].exito, true);
+    assert.equal(enviados[1][1].accion, 'Iniciar sesión');
+    assert.equal(JSON.stringify(enviados).includes('Segura123'), false);
+  } finally {
+    axios.post = postOriginal;
+    delete process.env.AUDITORIA_SERVICE_URL;
+  }
 });

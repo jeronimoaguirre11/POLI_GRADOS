@@ -139,29 +139,82 @@ export class AuthService {
     return usuarioSinPassword;
   }
 
-  async login(dto: LoginDto) {
+  // Envia un inicio de sesion (exitoso o fallido) a auditoria-service. El
+  // gateway no puede saber quien intento entrar, por eso lo registra auth.
+  // Nunca guarda la contrasena y nunca frena ni rompe el login.
+  private registrarInicioSesion(evento: {
+    email: string;
+    usuarioId?: string;
+    rol?: string;
+    exito: boolean;
+    estado: number;
+    detalle?: string;
+    ip?: string;
+  }) {
+    const destino = process.env.AUDITORIA_SERVICE_URL;
+    if (!destino) return;
+
+    axios
+      .post(
+        `${destino}/internal/eventos`,
+        {
+          ...evento,
+          email: evento.email.slice(0, 100),
+          accion: evento.exito ? 'Iniciar sesión' : 'Intento fallido de inicio de sesión',
+          metodo: 'POST',
+          ruta: '/auth/login',
+          servicio: 'auth',
+        },
+        { headers: this.headersInternos(), timeout: 3000 },
+      )
+      .catch(() => undefined);
+  }
+
+  async login(dto: LoginDto, contexto: { ip?: string } = {}) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
     });
 
+    const fallo = (detalle: string, mensaje = 'Credenciales invalidas') => {
+      this.registrarInicioSesion({
+        email: dto.email,
+        usuarioId: usuario?.id,
+        rol: usuario?.rol,
+        exito: false,
+        estado: 401,
+        detalle,
+        ip: contexto.ip,
+      });
+      return new UnauthorizedException(mensaje);
+    };
+
     if (!usuario) {
-      throw new UnauthorizedException('Credenciales invalidas');
+      throw fallo('El correo no está registrado');
     }
 
     const passwordValida = await bcrypt.compare(dto.password, usuario.password);
 
     if (!passwordValida) {
-      throw new UnauthorizedException('Credenciales invalidas');
+      throw fallo('Contraseña incorrecta');
     }
 
     // Se revisa despues de validar la contraseña para no revelar a un
     // tercero si un correo existe o si su cuenta esta desactivada.
     if (!usuario.activo) {
-      throw new UnauthorizedException(MENSAJE_CUENTA_DESACTIVADA);
+      throw fallo('Cuenta desactivada', MENSAJE_CUENTA_DESACTIVADA);
     }
 
     const payload = { sub: usuario.id, email: usuario.email, rol: usuario.rol };
     const token = await this.jwtService.signAsync(payload);
+
+    this.registrarInicioSesion({
+      email: usuario.email,
+      usuarioId: usuario.id,
+      rol: usuario.rol,
+      exito: true,
+      estado: 200,
+      ip: contexto.ip,
+    });
 
     return { token };
   }

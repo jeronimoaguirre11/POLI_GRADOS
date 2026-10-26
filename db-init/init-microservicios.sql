@@ -8,6 +8,7 @@
 --   diplomados_db     -> diplomado-service (Diplomado, Inscripcion)
 --   investigacion_db  -> investigacion-service (Investigacion)
 --   docentes_db       -> docentes-service (Docente, AsignacionDocente)
+--   auditoria_db      -> auditoria-service (Evento)
 CREATE DATABASE auth_db;
 CREATE DATABASE empresas_db;
 CREATE DATABASE estudiantes_db;
@@ -15,3 +16,4 @@ CREATE DATABASE postulaciones_db;
 CREATE DATABASE diplomados_db;
 CREATE DATABASE investigacion_db;
 CREATE DATABASE docentes_db;
+CREATE DATABASE auditoria_db;

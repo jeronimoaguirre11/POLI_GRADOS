@@ -63,6 +63,7 @@ El navegador solo habla con el **gateway**, que reenvía cada ruta al microservi
 | `investigacion-service` | 3007   | `investigacion_db` | Modalidad investigación                               |
 | `docentes-service`      | 3008   | `docentes_db`      | Perfil docente y estudiantes asignados                |
 | `administracion-service`| 3009   | —                  | Super administrador: crear y activar/desactivar cuentas |
+| `auditoria-service`     | 3010   | `auditoria_db`     | Historial de acciones de los usuarios (auditoría)     |
 | `gateway`               | 3000   | —                  | Punto de entrada único, CORS y proxy                  |
 
 ### Frontends
@@ -96,7 +97,7 @@ El navegador solo habla con el **gateway**, que reenvía cada ruta al microservi
 
 ## Docker
 
-- **Un contenedor por servicio**, más PostgreSQL, el gateway y los 9 frontends (20 contenedores en total).
+- **Un contenedor por servicio**, más PostgreSQL, el gateway y los 9 frontends (21 contenedores en total).
 - **PostgreSQL** es una sola instancia con una base de datos por microservicio. `db-init/init-microservicios.sql` las crea la primera vez que se genera el volumen.
 - **Migraciones**: cada servicio con Prisma ejecuta `prisma migrate deploy` al arrancar.
 - **Orden de arranque**: cada servicio expone `GET /health`; el gateway espera a que todos estén sanos y los frontends esperan al gateway.
@@ -154,6 +155,17 @@ Es el rol que administra las cuentas de la plataforma. Su panel está en **http:
 
 ---
 
+## Auditoría
+
+La plataforma guarda un **historial de acciones**: quién hizo qué, cuándo, desde qué IP y si funcionó. El super administrador lo consulta en la pestaña **Auditoría** de su panel, con filtros por usuario, rol, acción, resultado y fechas, y lo puede exportar a CSV (Excel).
+
+- **Qué se registra**: inicios de sesión (exitosos y fallidos, con el motivo), cierres de sesión y **todas las acciones que modifican datos** (crear, editar, eliminar), además de descargas sensibles como hojas de vida y reportes PDF.
+- **Cómo**: el gateway ve pasar todas las peticiones; al terminar cada una envía el evento a `auditoria-service` (sin esperar respuesta, así nunca frena la aplicación). Los inicios de sesión los envía `auth-service`, que es quien sabe qué correo lo intentó.
+- **Privacidad**: nunca se guardan contraseñas ni el contenido de los formularios, solo la acción, la ruta y el resultado.
+- **Rutas**: `GET /auditoria/eventos` (filtros `usuario`, `rol`, `accion`, `resultado`, `desde`, `hasta`, `pagina`, `limite`) y `GET /auditoria/eventos.csv`. Solo para el super administrador activo.
+
+---
+
 ## Estructura del repositorio
 
 ```
@@ -171,7 +183,8 @@ Es el rol que administra las cuentas de la plataforma. Su panel está en **http:
 │  ├─ diplomado-service/
 │  ├─ investigacion-service/
 │  ├─ docentes-service/
-│  └─ administracion-service/
+│  ├─ administracion-service/
+│  └─ auditoria-service/
 └─ frontends/
    ├─ Dockerfile             # imagen compartida de los frontends
    └─ frontend-*/

@@ -1,0 +1,36 @@
+// Microservicio Auditoria: guarda el historial de acciones de los usuarios
+// (quien hizo que, cuando, desde donde y si funciono). Nunca guarda
+// contrasenas ni el contenido de los formularios.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Evento {
+  id        String   @id @default(uuid())
+  fecha     DateTime @default(now())
+  // Quien hizo la accion (vacio si no habia sesion, p. ej. un login fallido)
+  usuarioId String?
+  email     String?
+  rol       String?
+  // Que hizo: texto legible ("Crear coordinador") y la peticion original
+  accion    String
+  metodo    String
+  ruta      String
+  servicio  String
+  // Resultado: codigo HTTP y si fue exitoso (2xx/3xx)
+  estado    Int
+  exito     Boolean
+  ip        String?
+  // Datos extra sin informacion sensible (p. ej. motivo de un login fallido)
+  detalle   String?
+
+  @@index([fecha])
+  @@index([usuarioId])
+  @@index([accion])
+}
