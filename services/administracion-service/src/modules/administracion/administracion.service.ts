@@ -11,6 +11,9 @@ import { CrearCuentaDto } from './dto/crear-cuenta.dto.js';
 import { CrearDocenteDto } from './dto/crear-docente.dto.js';
 import { CrearEstudianteDto } from './dto/crear-estudiante.dto.js';
 import { CrearEmpresaDto } from './dto/crear-empresa.dto.js';
+import { ActualizarCuentaDto } from './dto/actualizar-cuenta.dto.js';
+import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto.js';
+import { PROGRAMAS } from './dto/validaciones.js';
 
 // Roles que se administran desde el panel. El super administrador es unico y
 // no se lista: no se puede crear otro ni desactivarlo.
@@ -20,6 +23,29 @@ export const ROLES = [
   'ESTUDIANTE',
   'EMPRESA',
 ] as const;
+
+// Donde vive el perfil de cada rol y que campos se pueden editar. El
+// coordinador no tiene perfil: solo nombre y correo (en auth-service).
+const PERFILES: Record<
+  string,
+  { variable: string; ruta: string; campos: (keyof ActualizarPerfilDto)[] }
+> = {
+  ESTUDIANTE: {
+    variable: 'ESTUDIANTES_SERVICE_URL',
+    ruta: 'internal/estudiantes',
+    campos: ['codigo', 'programa', 'semestre'],
+  },
+  DOCENTE: {
+    variable: 'DOCENTES_SERVICE_URL',
+    ruta: 'internal/docentes',
+    campos: ['identificacion', 'programa', 'especialidad'],
+  },
+  EMPRESA: {
+    variable: 'EMPRESAS_SERVICE_URL',
+    ruta: 'internal/empresas',
+    campos: ['nombreEmpresa', 'nit', 'sector'],
+  },
+};
 
 export interface UsuarioAdministrado {
   id: string;
@@ -49,6 +75,34 @@ export class AdministracionService {
       );
     }
     return `${valor}/internal/usuarios`;
+  }
+
+  private urlPerfil(rol: string, usuarioId: string) {
+    const destino = PERFILES[rol];
+    const base = destino && process.env[destino.variable];
+    if (!destino || !base) {
+      throw new InternalServerErrorException(
+        `Falta configurar ${destino?.variable ?? 'la URL del perfil'} en administracion-service`,
+      );
+    }
+    return `${base}/${destino.ruta}/por-usuario/${encodeURIComponent(usuarioId)}`;
+  }
+
+  // Rol real de la cuenta (no se confia en lo que diga el frontend).
+  private async rolDe(id: string) {
+    const estado = await this.llamarAuth<{ rol: string }>(
+      () =>
+        axios.get(`${this.urlAuth()}/${id}/estado`, {
+          headers: this.headersInternos(),
+        }),
+      'No se pudo consultar la cuenta',
+    );
+    if (estado.rol === 'SUPERADMIN') {
+      throw new ForbiddenException(
+        'Los datos del super administrador no se editan desde aquí',
+      );
+    }
+    return estado.rol;
   }
 
   // Reenvia el status y el mensaje de auth-service (409 correo duplicado,
@@ -183,6 +237,104 @@ export class AdministracionService {
           { headers: this.headersInternos() },
         ),
       'Error al crear la empresa',
+    );
+  }
+
+  // Perfil de la cuenta segun su rol (estudiante, docente o empresa). El
+  // coordinador no tiene perfil y devuelve null.
+  async obtenerPerfil(payload: JwtPayload, id: string) {
+    await this.asegurarSuperadminActivo(payload);
+    const rol = await this.rolDe(id);
+
+    if (!PERFILES[rol]) return { rol, perfil: null };
+
+    const perfil = await this.llamarAuth<Record<string, unknown>>(
+      () => axios.get(this.urlPerfil(rol, id), { headers: this.headersInternos() }),
+      'No se pudo obtener el perfil',
+    );
+
+    const campos = Object.fromEntries(
+      PERFILES[rol].campos.map((campo) => [campo, perfil?.[campo] ?? null]),
+    );
+    return { rol, perfil: campos };
+  }
+
+  async actualizarCuenta(payload: JwtPayload, id: string, dto: ActualizarCuentaDto) {
+    await this.asegurarSuperadminActivo(payload);
+    if (id === payload.sub) {
+      throw new BadRequestException('Tus datos se editan desde tu propio perfil');
+    }
+    await this.rolDe(id);
+
+    return this.llamarAuth(
+      () =>
+        axios.patch(`${this.urlAuth()}/${id}`, dto, {
+          headers: this.headersInternos(),
+        }),
+      'Error al actualizar la cuenta',
+    );
+  }
+
+  async actualizarPerfil(payload: JwtPayload, id: string, dto: ActualizarPerfilDto) {
+    await this.asegurarSuperadminActivo(payload);
+    const rol = await this.rolDe(id);
+    const destino = PERFILES[rol];
+
+    if (!destino) {
+      throw new BadRequestException(
+        'Esta cuenta no tiene datos de perfil; solo se editan nombre y correo',
+      );
+    }
+
+    const enviados = Object.keys(dto).filter(
+      (campo) => dto[campo as keyof ActualizarPerfilDto] !== undefined,
+    ) as (keyof ActualizarPerfilDto)[];
+    const ajenos = enviados.filter((campo) => !destino.campos.includes(campo));
+    if (ajenos.length > 0) {
+      throw new BadRequestException(
+        `Campos que no aplican a esta cuenta: ${ajenos.join(', ')}`,
+      );
+    }
+    if (enviados.length === 0) {
+      throw new BadRequestException('No hay datos para actualizar');
+    }
+
+    // Para estudiantes el programa es una lista cerrada; para docentes es
+    // texto libre.
+    if (
+      rol === 'ESTUDIANTE' &&
+      dto.programa !== undefined &&
+      !(PROGRAMAS as readonly string[]).includes(dto.programa)
+    ) {
+      throw new BadRequestException('Selecciona un programa válido');
+    }
+
+    const cuerpo = Object.fromEntries(enviados.map((campo) => [campo, dto[campo]]));
+    return this.llamarAuth(
+      () => axios.patch(this.urlPerfil(rol, id), cuerpo, { headers: this.headersInternos() }),
+      'Error al actualizar el perfil',
+    );
+  }
+
+  async restablecerPassword(payload: JwtPayload, id: string, password: string) {
+    await this.asegurarSuperadminActivo(payload);
+
+    // Su propia contrasena la cambia desde "Cambiar contraseña" (pide la
+    // actual); auth-service tambien lo rechaza.
+    if (id === payload.sub) {
+      throw new BadRequestException(
+        'Tu propia contraseña se cambia desde "Cambiar contraseña"',
+      );
+    }
+
+    return this.llamarAuth(
+      () =>
+        axios.patch(
+          `${this.urlAuth()}/${id}/password`,
+          { password },
+          { headers: this.headersInternos() },
+        ),
+      'Error al cambiar la contraseña',
     );
   }
 

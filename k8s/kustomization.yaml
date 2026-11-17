@@ -1,0 +1,47 @@
+# Despliegue de POLI_GRADOS en Kubernetes (pensado para el Kubernetes de
+# Docker Desktop). Uso, desde la raiz del repositorio:
+#
+#   docker compose build          # construye las imagenes poli-grados-*
+#   kubectl apply -k k8s/         # crea o actualiza todo
+#
+# Guia completa: k8s/README.md
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: poli-grados
+
+resources:
+  - namespace.yaml
+  - postgres/postgres.yaml
+  - servicios/auth-service.yaml
+  - servicios/empresas-service.yaml
+  - servicios/estudiantes-service.yaml
+  - servicios/postulaciones-service.yaml
+  - servicios/coordinadores-service.yaml
+  - servicios/diplomado-service.yaml
+  - servicios/investigacion-service.yaml
+  - servicios/docentes-service.yaml
+  - servicios/administracion-service.yaml
+  - servicios/auditoria-service.yaml
+  - gateway.yaml
+  - frontends/frontend-auth.yaml
+  - frontends/frontend-empresas.yaml
+  - frontends/frontend-estudiantes.yaml
+  - frontends/frontend-postulaciones.yaml
+  - frontends/frontend-coordinadores.yaml
+  - frontends/frontend-diplomado.yaml
+  - frontends/frontend-investigacion.yaml
+  - frontends/frontend-docentes.yaml
+  - frontends/frontend-administracion.yaml
+
+configMapGenerator:
+  - name: postgres-init
+    files:
+      - postgres/init-microservicios.sql
+
+# Lee k8s/secretos.env (no se sube al repositorio; ver secretos.env.example).
+# El sufijo con hash hace que los pods se reinicien solos si cambias un valor.
+secretGenerator:
+  - name: poli-grados-secretos
+    envs:
+      - secretos.env

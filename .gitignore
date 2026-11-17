@@ -7,3 +7,6 @@ cookies.txt
 # Basura comun de SO/editor.
 .DS_Store
 Thumbs.db
+
+# Secretos de Kubernetes (ver k8s/secretos.env.example).
+k8s/secretos.env

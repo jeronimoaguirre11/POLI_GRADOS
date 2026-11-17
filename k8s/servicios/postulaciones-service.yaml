@@ -1,0 +1,128 @@
+# postulaciones-service: Postulaciones y hojas de vida.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: postulaciones-service
+  labels:
+    app: postulaciones-service
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: postulaciones-service
+  template:
+    metadata:
+      labels:
+        app: postulaciones-service
+    spec:
+      # Sin las variables automaticas *_SERVICE_HOST/_PORT de Kubernetes: los
+      # servicios usan sus propias URLs (*_SERVICE_URL), igual que en compose.
+      enableServiceLinks: false
+      initContainers:
+        # Espera a que PostgreSQL acepte conexiones antes de correr las
+        # migraciones (equivale al depends_on: service_healthy de compose).
+        - name: esperar-postgres
+          image: postgres:16-alpine
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "until pg_isready -h postgres -p 5432; do echo esperando postgres; sleep 2; done"]
+        # El servicio corre como el usuario "node" (uid 1000): se le da la
+        # carpeta de archivos subidos antes de arrancar.
+        - name: permisos-uploads
+          image: poli-grados-postulaciones-service:latest
+          imagePullPolicy: Never
+          securityContext:
+            runAsUser: 0
+          command: ["sh", "-c", "chown -R 1000:1000 /app/uploads"]
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+      containers:
+        - name: postulaciones-service
+          # Imagen construida con "docker compose build" (no se descarga).
+          image: poli-grados-postulaciones-service:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 3004
+          env:
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: DB_USER
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: DB_PASSWORD
+            - name: DATABASE_URL
+              value: "postgresql://$(DB_USER):$(DB_PASSWORD)@postgres:5432/postulaciones_db?schema=public"
+            - name: DIPLOMADO_SERVICE_URL
+              value: "http://diplomado-service:3006"
+            - name: EMPRESAS_SERVICE_URL
+              value: "http://empresas-service:3002"
+            - name: ESTUDIANTES_SERVICE_URL
+              value: "http://estudiantes-service:3003"
+            - name: INTERNAL_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: INTERNAL_API_KEY
+            - name: INVESTIGACION_SERVICE_URL
+              value: "http://investigacion-service:3007"
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: poli-grados-secretos
+                  key: JWT_SECRET
+            - name: PORT
+              value: "3004"
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 3004
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 3004
+            initialDelaySeconds: 60
+            periodSeconds: 20
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+          volumeMounts:
+            - name: uploads
+              mountPath: /app/uploads
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: postulaciones-service-uploads
+---
+# Solo accesible dentro del cluster, por el nombre del servicio (igual que en
+# la red interna de docker compose).
+apiVersion: v1
+kind: Service
+metadata:
+  name: postulaciones-service
+spec:
+  selector:
+    app: postulaciones-service
+  ports:
+    - port: 3004
+      targetPort: 3004
+---
+# Archivos subidos: sobreviven a reinicios y a reconstruir la imagen.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postulaciones-service-uploads
+spec:
+  accessModes: ["ReadWriteOnce"]
+  resources:
+    requests:
+      storage: 1Gi

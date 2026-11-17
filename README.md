@@ -63,6 +63,7 @@ El navegador solo habla con el **gateway**, que reenvía cada ruta al microservi
 | `investigacion-service` | 3007   | `investigacion_db` | Modalidad investigación                               |
 | `docentes-service`      | 3008   | `docentes_db`      | Perfil docente y estudiantes asignados                |
 | `administracion-service`| 3009   | —                  | Super administrador: crear y activar/desactivar cuentas |
+| `auditoria-service`     | 3010   | `auditoria_db`     | Historial de acciones de los usuarios (auditoría)     |
 | `gateway`               | 3000   | —                  | Punto de entrada único, CORS y proxy                  |
 
 ### Frontends
@@ -96,7 +97,7 @@ El navegador solo habla con el **gateway**, que reenvía cada ruta al microservi
 
 ## Docker
 
-- **Un contenedor por servicio**, más PostgreSQL, el gateway y los 9 frontends (20 contenedores en total).
+- **Un contenedor por servicio**, más PostgreSQL, el gateway y los 9 frontends (21 contenedores en total).
 - **PostgreSQL** es una sola instancia con una base de datos por microservicio. `db-init/init-microservicios.sql` las crea la primera vez que se genera el volumen.
 - **Migraciones**: cada servicio con Prisma ejecuta `prisma migrate deploy` al arrancar.
 - **Orden de arranque**: cada servicio expone `GET /health`; el gateway espera a que todos estén sanos y los frontends esperan al gateway.
@@ -126,12 +127,27 @@ docker compose down -v                   # detener y BORRAR datos y archivos sub
 
 ---
 
+## Kubernetes
+
+El mismo proyecto también se puede desplegar en Kubernetes (por ejemplo, el de Docker Desktop). Docker se sigue usando para construir las imágenes; Kubernetes las ejecuta, las reinicia si fallan y las conecta entre sí. Los manifiestos están en [`k8s/`](k8s/README.md).
+
+```powershell
+.\k8s-iniciar.ps1     # construye las imágenes y despliega (Windows)
+.\k8s-detener.ps1     # detiene sin borrar datos
+```
+
+Las URLs son las mismas (`http://localhost:5173`). Usa docker compose **o** Kubernetes, no los dos a la vez. Guía completa: [k8s/README.md](k8s/README.md).
+
+---
+
 ## Super administrador
 
 Es el rol que administra las cuentas de la plataforma. Su panel está en **http://localhost:5181** (el login lo redirige automáticamente).
 
 - **Hay un solo super administrador**: `auth-service` lo crea al arrancar con `SUPERADMIN_NOMBRE`, `SUPERADMIN_EMAIL` y `SUPERADMIN_PASSWORD`, solo si todavía no existe. No hay ninguna ruta ni pantalla para crear otro, y reiniciar no lo duplica ni cambia su contraseña. Cámbiala desde el panel (botón *Cambiar contraseña*) después del primer ingreso.
 - **Crear cuentas** de coordinador, docente, estudiante y empresa. Para estudiantes, empresas y docentes también se crea su perfil en el microservicio correspondiente.
+- **Editar cuentas**: botón *Editar* para corregir nombre, correo y los datos del perfil (código, programa y semestre del estudiante; identificación, programa y especialidad del docente; nombre, NIT y sector de la empresa). Cada dato se guarda en el microservicio que lo administra.
+- **Cambiar la contraseña de una cuenta** (por ejemplo, si la persona la olvidó): botón *Cambiar clave* en la tabla, con opción de generar una segura. No pide la contraseña anterior; la del super administrador solo se cambia desde *Cambiar contraseña*.
 - **Activar / desactivar cuentas**: una cuenta desactivada no puede iniciar sesión y queda fuera en cuanto recarga cualquier panel (`/auth/me` responde 401 y borra la cookie). No se borra ningún dato.
 - **Protecciones**: solo el rol `SUPERADMIN` puede usar `/administracion/*`, y en cada petición se verifica que su cuenta siga activa; la cuenta del super administrador no se puede desactivar.
 
@@ -145,6 +161,21 @@ Es el rol que administra las cuentas de la plataforma. Su panel está en **http:
 | `POST`  | `/administracion/usuarios/estudiantes`                | Crea un estudiante con su perfil          |
 | `POST`  | `/administracion/usuarios/empresas`                   | Crea una empresa con su perfil            |
 | `PATCH` | `/administracion/usuarios/:id/estado` `{ "activo" }` | Activa o desactiva una cuenta             |
+| `GET`   | `/administracion/usuarios/:id/perfil`                 | Datos del perfil según el rol             |
+| `PATCH` | `/administracion/usuarios/:id` `{ nombre, email }`   | Corrige nombre o correo                   |
+| `PATCH` | `/administracion/usuarios/:id/perfil`                 | Edita el perfil (estudiante, docente o empresa) |
+| `PATCH` | `/administracion/usuarios/:id/password` `{ "password" }` | Asigna una contraseña nueva a una cuenta |
+
+---
+
+## Auditoría
+
+La plataforma guarda un **historial de acciones**: quién hizo qué, cuándo, desde qué IP y si funcionó. El super administrador lo consulta en la pestaña **Auditoría** de su panel, con filtros por usuario, rol, acción, resultado y fechas, y lo puede exportar a CSV (Excel).
+
+- **Qué se registra**: inicios de sesión (exitosos y fallidos, con el motivo), cierres de sesión y **todas las acciones que modifican datos** (crear, editar, eliminar), además de descargas sensibles como hojas de vida y reportes PDF.
+- **Cómo**: el gateway ve pasar todas las peticiones; al terminar cada una envía el evento a `auditoria-service` (sin esperar respuesta, así nunca frena la aplicación). Los inicios de sesión los envía `auth-service`, que es quien sabe qué correo lo intentó.
+- **Privacidad**: nunca se guardan contraseñas ni el contenido de los formularios, solo la acción, la ruta y el resultado.
+- **Rutas**: `GET /auditoria/eventos` (filtros `usuario`, `rol`, `accion`, `resultado`, `desde`, `hasta`, `pagina`, `limite`) y `GET /auditoria/eventos.csv`. Solo para el super administrador activo.
 
 ---
 
@@ -152,6 +183,7 @@ Es el rol que administra las cuentas de la plataforma. Su panel está en **http:
 
 ```
 ├─ docker-compose.yml
+├─ k8s/                     # manifiestos de Kubernetes (ver k8s/README.md)
 ├─ .env.example
 ├─ db-init/                  # crea las bases de datos la primera vez
 ├─ gateway/                  # API Gateway
@@ -165,7 +197,8 @@ Es el rol que administra las cuentas de la plataforma. Su panel está en **http:
 │  ├─ diplomado-service/
 │  ├─ investigacion-service/
 │  ├─ docentes-service/
-│  └─ administracion-service/
+│  ├─ administracion-service/
+│  └─ auditoria-service/
 └─ frontends/
    ├─ Dockerfile             # imagen compartida de los frontends
    └─ frontend-*/

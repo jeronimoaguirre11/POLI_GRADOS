@@ -5,6 +5,7 @@ import {
   Get,
   Param,
   ParseUUIDPipe,
+  Patch,
   Post,
   Put,
   UseGuards,
@@ -13,6 +14,7 @@ import { InternalAuthGuard } from '../../common/guards/internal-auth.guard.js';
 import { DocentesService } from './docentes.service.js';
 import { CreateDocenteDto } from './dto/create-docente.dto.js';
 import { AsignarEstudianteDto } from './dto/asignar-estudiante.dto.js';
+import { ActualizarDocenteAdminDto } from './dto/actualizar-docente-admin.dto.js';
 
 @Controller('internal/docentes')
 @UseGuards(InternalAuthGuard)
@@ -60,5 +62,19 @@ export class InternalDocentesController {
   @Get(':docenteId/asignaciones')
   listarEstudiantesAsignados(@Param('docenteId') docenteId: string) {
     return this.docentesService.listarEstudiantesAsignados(docenteId);
+  }
+
+  // --- Llamado solo por administracion-service (super administrador) ---
+  @Get('por-usuario/:usuarioId')
+  obtenerPorUsuario(@Param('usuarioId') usuarioId: string) {
+    return this.docentesService.obtenerPorUsuarioId(usuarioId);
+  }
+
+  @Patch('por-usuario/:usuarioId')
+  actualizarPorUsuario(
+    @Param('usuarioId') usuarioId: string,
+    @Body() dto: ActualizarDocenteAdminDto,
+  ) {
+    return this.docentesService.actualizarPorUsuario(usuarioId, dto);
   }
 }

@@ -4,6 +4,7 @@ import 'dotenv/config';
 import { NestFactory } from '@nestjs/core';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { AppModule } from './app.module.js';
+import { crearMiddlewareAuditoria } from './auditoria.js';
 
 // Un prefijo por microservicio. El gateway NUNCA reenvia nada bajo
 // /internal: esas rutas solo se llaman servicio-a-servicio, directo por su
@@ -30,6 +31,11 @@ function construirRutas(): Array<{ prefijo: string; destino: string }> {
     {
       prefijo: '/administracion',
       destino: process.env.ADMINISTRACION_SERVICE_URL,
+    },
+    // Historial de acciones (solo lo consulta el super administrador).
+    {
+      prefijo: '/auditoria',
+      destino: process.env.AUDITORIA_SERVICE_URL,
     },
     // El listado publico de convocatorias abiertas vive en empresas-service,
     // pero su ruta (heredada del monolito, ver ofertas.controller.ts) es
@@ -78,12 +84,17 @@ async function bootstrap() {
     exposedHeaders: ['Content-Disposition'],
   });
 
+  // Antes del proxy: anota quien hizo cada accion y con que resultado.
+  app.use(crearMiddlewareAuditoria());
+
   for (const { prefijo, destino } of construirRutas()) {
     app.use(
       prefijo,
       createProxyMiddleware({
         target: destino,
         changeOrigin: true,
+        // Reenvia la IP del navegador (x-forwarded-for) para la auditoria.
+        xfwd: true,
         // Al montar el middleware con app.use(prefijo, ...), Express le
         // quita el prefijo del path antes de que llegue aca. Se lo volvemos
         // a poner porque el microservicio de destino sigue esperando sus

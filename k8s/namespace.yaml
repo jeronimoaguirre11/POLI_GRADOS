@@ -1,0 +1,6 @@
+# Todo el proyecto vive en su propio namespace: se puede ver con
+# "kubectl get all -n poli-grados" y borrar de una vez si hace falta.
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: poli-grados

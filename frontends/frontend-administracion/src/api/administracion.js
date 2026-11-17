@@ -44,9 +44,68 @@ export function cambiarEstadoUsuario(id, activo) {
   );
 }
 
+// { rol, perfil } con los datos del perfil segun el rol (null si no tiene).
+export function obtenerPerfilUsuario(id) {
+  return solicitar(`/administracion/usuarios/${encodeURIComponent(id)}/perfil`);
+}
+
+export function actualizarCuentaUsuario(id, datos) {
+  return solicitar(`/administracion/usuarios/${encodeURIComponent(id)}`, {
+    method: "PATCH",
+    body: JSON.stringify(datos),
+  });
+}
+
+export function actualizarPerfilUsuario(id, datos) {
+  return solicitar(
+    `/administracion/usuarios/${encodeURIComponent(id)}/perfil`,
+    { method: "PATCH", body: JSON.stringify(datos) },
+  );
+}
+
+// El super administrador asigna una contrasena nueva a otra cuenta.
+export function restablecerContrasenaUsuario(id, password) {
+  return solicitar(
+    `/administracion/usuarios/${encodeURIComponent(id)}/password`,
+    { method: "PATCH", body: JSON.stringify({ password }) },
+  );
+}
+
 export function cambiarMiContrasena(passwordActual, password) {
   return solicitar("/auth/perfil", {
     method: "PATCH",
     body: JSON.stringify({ passwordActual, password }),
   });
+}
+
+// --- Auditoria (auditoria-service) ---
+
+function consulta(filtros) {
+  const parametros = new URLSearchParams();
+  for (const [clave, valor] of Object.entries(filtros)) {
+    if (valor !== "" && valor !== undefined && valor !== null) {
+      parametros.set(clave, valor);
+    }
+  }
+  const texto = parametros.toString();
+  return texto ? `?${texto}` : "";
+}
+
+// { eventos, total, pagina, limite }
+export function obtenerEventos(filtros) {
+  return solicitar(`/auditoria/eventos${consulta(filtros)}`);
+}
+
+export async function descargarAuditoriaCsv(filtros) {
+  const respuesta = await fetch(
+    `${API_URL}/auditoria/eventos.csv${consulta(filtros)}`,
+    { credentials: "include" },
+  );
+  if (!respuesta.ok) {
+    const cuerpo = await respuesta.json().catch(() => null);
+    const error = new Error(cuerpo?.message || `Error ${respuesta.status}`);
+    error.status = respuesta.status;
+    throw error;
+  }
+  return respuesta.blob();
 }

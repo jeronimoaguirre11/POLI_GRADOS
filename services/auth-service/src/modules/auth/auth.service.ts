@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   ConflictException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
   UnauthorizedException,
@@ -14,6 +15,7 @@ import { LoginDto } from './dto/login.dto.js';
 import { ActualizarPerfilDto } from './dto/actualizar-perfil.dto.js';
 import { CrearCoordinadorDto } from './dto/crear-coordinador.dto.js';
 import { CrearDocenteDto } from './dto/crear-docente.dto.js';
+import { ActualizarCuentaDto } from './dto/actualizar-cuenta.dto.js';
 import { PASSWORD_REGEX } from './dto/password.validation.js';
 import type { JwtPayload } from '../../common/guards/jwt-auth.guard.js';
 
@@ -137,29 +139,82 @@ export class AuthService {
     return usuarioSinPassword;
   }
 
-  async login(dto: LoginDto) {
+  // Envia un inicio de sesion (exitoso o fallido) a auditoria-service. El
+  // gateway no puede saber quien intento entrar, por eso lo registra auth.
+  // Nunca guarda la contrasena y nunca frena ni rompe el login.
+  private registrarInicioSesion(evento: {
+    email: string;
+    usuarioId?: string;
+    rol?: string;
+    exito: boolean;
+    estado: number;
+    detalle?: string;
+    ip?: string;
+  }) {
+    const destino = process.env.AUDITORIA_SERVICE_URL;
+    if (!destino) return;
+
+    axios
+      .post(
+        `${destino}/internal/eventos`,
+        {
+          ...evento,
+          email: evento.email.slice(0, 100),
+          accion: evento.exito ? 'Iniciar sesión' : 'Intento fallido de inicio de sesión',
+          metodo: 'POST',
+          ruta: '/auth/login',
+          servicio: 'auth',
+        },
+        { headers: this.headersInternos(), timeout: 3000 },
+      )
+      .catch(() => undefined);
+  }
+
+  async login(dto: LoginDto, contexto: { ip?: string } = {}) {
     const usuario = await this.prisma.usuario.findUnique({
       where: { email: dto.email },
     });
 
+    const fallo = (detalle: string, mensaje = 'Credenciales invalidas') => {
+      this.registrarInicioSesion({
+        email: dto.email,
+        usuarioId: usuario?.id,
+        rol: usuario?.rol,
+        exito: false,
+        estado: 401,
+        detalle,
+        ip: contexto.ip,
+      });
+      return new UnauthorizedException(mensaje);
+    };
+
     if (!usuario) {
-      throw new UnauthorizedException('Credenciales invalidas');
+      throw fallo('El correo no está registrado');
     }
 
     const passwordValida = await bcrypt.compare(dto.password, usuario.password);
 
     if (!passwordValida) {
-      throw new UnauthorizedException('Credenciales invalidas');
+      throw fallo('Contraseña incorrecta');
     }
 
     // Se revisa despues de validar la contraseña para no revelar a un
     // tercero si un correo existe o si su cuenta esta desactivada.
     if (!usuario.activo) {
-      throw new UnauthorizedException(MENSAJE_CUENTA_DESACTIVADA);
+      throw fallo('Cuenta desactivada', MENSAJE_CUENTA_DESACTIVADA);
     }
 
     const payload = { sub: usuario.id, email: usuario.email, rol: usuario.rol };
     const token = await this.jwtService.signAsync(payload);
+
+    this.registrarInicioSesion({
+      email: usuario.email,
+      usuarioId: usuario.id,
+      rol: usuario.rol,
+      exito: true,
+      estado: 200,
+      ip: contexto.ip,
+    });
 
     return { token };
   }
@@ -292,6 +347,76 @@ export class AuthService {
       throw new NotFoundException('Usuario no encontrado');
     }
     return usuario;
+  }
+
+  // Lo usa el super administrador para corregir nombre o correo de una cuenta.
+  // El super administrador edita los suyos desde su propio perfil.
+  async actualizarCuenta(id: string, dto: ActualizarCuentaDto) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id },
+      select: { id: true, rol: true, email: true },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    if (usuario.rol === 'SUPERADMIN') {
+      throw new ForbiddenException(
+        'Los datos del super administrador no se editan desde aquí',
+      );
+    }
+
+    const email = dto.email?.trim();
+    if (email && email !== usuario.email) {
+      const otro = await this.prisma.usuario.findUnique({ where: { email } });
+      if (otro) {
+        throw new ConflictException('Ya existe un usuario con ese correo');
+      }
+    }
+
+    try {
+      return await this.prisma.usuario.update({
+        where: { id },
+        data: {
+          ...(dto.nombre !== undefined && { nombre: dto.nombre.trim() }),
+          ...(email && { email }),
+        },
+        select: SELECCION_PUBLICA,
+      });
+    } catch (error: any) {
+      if (error?.code === 'P2002') {
+        throw new ConflictException('Ya existe un usuario con ese correo');
+      }
+      throw error;
+    }
+  }
+
+  // Lo usa el super administrador para asignar una contrasena nueva. La del
+  // propio super administrador no se cambia por aqui: se cambia desde su
+  // perfil, confirmando la contrasena actual.
+  async restablecerPassword(id: string, password: string) {
+    const usuario = await this.prisma.usuario.findUnique({
+      where: { id },
+      select: { id: true, rol: true },
+    });
+
+    if (!usuario) {
+      throw new NotFoundException('Usuario no encontrado');
+    }
+
+    if (usuario.rol === 'SUPERADMIN') {
+      throw new ForbiddenException(
+        'La contraseña del super administrador se cambia desde "Cambiar contraseña"',
+      );
+    }
+
+    await this.prisma.usuario.update({
+      where: { id },
+      data: { password: await bcrypt.hash(password, 10) },
+    });
+
+    return { message: 'Contraseña actualizada correctamente' };
   }
 
   async cambiarEstadoCuenta(id: string, activo: boolean) {

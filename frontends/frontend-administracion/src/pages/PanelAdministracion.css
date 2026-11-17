@@ -479,7 +479,8 @@ tr.inactiva .badge {
 }
 
 .acciones {
-  width: 220px;
+  width: 330px;
+  white-space: nowrap;
   text-align: right;
 }
 
@@ -516,6 +517,51 @@ td.acciones .primario {
   background: var(--verde);
   border-color: var(--verde);
   color: #fff;
+}
+
+.botones-fila {
+  display: inline-flex;
+  gap: 0.4rem;
+}
+
+td.acciones .accion-clave:hover {
+  border-color: #b9c9bb;
+  background: #f7f9f7;
+  color: var(--verde);
+}
+
+.campo-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.campo-cabecera .link-button {
+  min-height: auto;
+  padding: 0;
+  font-size: 0.78rem;
+}
+
+.con-boton {
+  position: relative;
+}
+
+.con-boton input {
+  padding-right: 5.5rem;
+}
+
+.con-boton .ver {
+  position: absolute;
+  top: 50%;
+  right: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border: 0;
+  border-radius: 7px;
+  background: #f3f5f4;
+  color: #475148;
+  font-size: 0.74rem;
+  font-weight: 700;
+  transform: translateY(-50%);
 }
 
 .confirmar {
@@ -817,4 +863,124 @@ button:disabled {
   .acciones {
     width: auto;
   }
+}
+
+/* ---------- Pestanas y auditoria ---------- */
+
+.pestanas {
+  margin-bottom: 1.4rem;
+  padding: 0.3rem;
+  border: 1px solid var(--borde);
+  border-radius: 12px;
+  background: #fff;
+  display: inline-flex;
+  gap: 0.25rem;
+}
+
+.pestanas button {
+  padding: 0.55rem 1.1rem;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--texto-suave);
+  font-weight: 700;
+}
+
+.pestanas button.activa {
+  background: var(--verde);
+  color: #fff;
+}
+
+.auditoria-encabezado {
+  margin-bottom: 1.2rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.auditoria-encabezado h1 {
+  margin-bottom: 0.3rem;
+  font-size: 1.6rem;
+  letter-spacing: -0.03em;
+}
+
+.auditoria-encabezado p {
+  margin-bottom: 0;
+  color: var(--texto-suave);
+  font-size: 0.9rem;
+}
+
+.boton-secundario {
+  padding: 0.65rem 1rem;
+  border: 1px solid #d8ded9;
+  border-radius: 10px;
+  background: #fff;
+  color: var(--verde);
+  font-weight: 700;
+}
+
+.boton-secundario:hover:not(:disabled) {
+  border-color: var(--verde);
+}
+
+.toolbar input[type="date"] {
+  min-width: 150px;
+}
+
+.evento-accion strong {
+  display: block;
+  font-size: 0.86rem;
+}
+
+.evento-accion code {
+  color: var(--texto-suave);
+  font-size: 0.72rem;
+  overflow-wrap: anywhere;
+}
+
+.evento-detalle {
+  margin-top: 0.15rem;
+  color: #8a5413;
+  font-size: 0.74rem;
+}
+
+.paginacion {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  color: var(--texto-suave);
+  font-size: 0.82rem;
+}
+
+.paginacion button {
+  padding: 0.45rem 0.85rem;
+  border: 1px solid #d8ded9;
+  border-radius: 8px;
+  background: #fff;
+  color: #475148;
+  font-weight: 700;
+}
+
+.estado.off-error {
+  background: #fff1f0;
+  color: #b42318;
+}
+
+.evento-accion {
+  min-width: 260px;
+}
+
+.evento-usuario strong {
+  display: block;
+  font-size: 0.86rem;
+  overflow-wrap: anywhere;
+}
+
+.evento-usuario .badge {
+  margin-top: 0.3rem;
+  font-size: 0.68rem;
 }

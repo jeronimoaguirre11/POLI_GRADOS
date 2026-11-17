@@ -1,0 +1,47 @@
+# frontend-investigacion: React compilado y servido por nginx (puerto 80 del contenedor).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-investigacion
+  labels:
+    app: frontend-investigacion
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-investigacion
+  template:
+    metadata:
+      labels:
+        app: frontend-investigacion
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: frontend-investigacion
+          image: poli-grados-frontend-investigacion:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+---
+# LoadBalancer: Docker Desktop lo publica en http://localhost:5179, la misma
+# URL de docker compose (las VITE_* quedan igual y no hay que reconstruir).
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-investigacion
+spec:
+  type: LoadBalancer
+  selector:
+    app: frontend-investigacion
+  ports:
+    - port: 5179
+      targetPort: 80

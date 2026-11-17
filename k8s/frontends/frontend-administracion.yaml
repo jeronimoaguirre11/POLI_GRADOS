@@ -1,0 +1,47 @@
+# frontend-administracion: React compilado y servido por nginx (puerto 80 del contenedor).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend-administracion
+  labels:
+    app: frontend-administracion
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend-administracion
+  template:
+    metadata:
+      labels:
+        app: frontend-administracion
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: frontend-administracion
+          image: poli-grados-frontend-administracion:latest
+          imagePullPolicy: Never
+          ports:
+            - containerPort: 80
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 32Mi
+---
+# LoadBalancer: Docker Desktop lo publica en http://localhost:5181, la misma
+# URL de docker compose (las VITE_* quedan igual y no hay que reconstruir).
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend-administracion
+spec:
+  type: LoadBalancer
+  selector:
+    app: frontend-administracion
+  ports:
+    - port: 5181
+      targetPort: 80

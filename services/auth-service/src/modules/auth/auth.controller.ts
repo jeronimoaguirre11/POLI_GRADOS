@@ -43,9 +43,18 @@ export class AuthController {
   @HttpCode(200)
   async login(
     @Body() dto: LoginDto,
+    @Req() request: any,
     @Res({ passthrough: true }) res: Response,
   ) {
-    const { token } = await this.authService.login(dto);
+    // IP del navegador: el gateway la agrega al FINAL de x-forwarded-for
+    // (xfwd). Se toma la ultima porque las anteriores las puede inventar el
+    // cliente.
+    const reenviadas = String(request.headers?.['x-forwarded-for'] ?? '')
+      .split(',')
+      .map((valor: string) => valor.trim())
+      .filter(Boolean);
+    const ip = (reenviadas.at(-1) ?? request.ip)?.replace(/^::ffff:/, '');
+    const { token } = await this.authService.login(dto, { ip });
     res.cookie('token', token, opcionesCookie());
     return { message: 'Inicio de sesión exitoso' };
   }

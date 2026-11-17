@@ -9,6 +9,9 @@ import { CrearCuentaDto } from '../dist/modules/administracion/dto/crear-cuenta.
 
 process.env.INTERNAL_API_KEY = 'clave-interna-prueba';
 process.env.AUTH_SERVICE_URL = 'http://auth';
+process.env.ESTUDIANTES_SERVICE_URL = 'http://estudiantes';
+process.env.DOCENTES_SERVICE_URL = 'http://docentes';
+process.env.EMPRESAS_SERVICE_URL = 'http://empresas';
 
 const ADMIN = { sub: 'admin-1', email: 'admin@prueba.com', rol: 'SUPERADMIN' };
 const original = { get: axios.get, post: axios.post, patch: axios.patch };
@@ -17,13 +20,21 @@ afterEach(() => Object.assign(axios, original));
 
 // Simula auth-service. "estado" es lo que responde la verificacion de la
 // cuenta del administrador en cada peticion.
-function simularAuth({ estado = { rol: 'SUPERADMIN', activo: true }, usuarios = [] } = {}) {
+function simularAuth({
+  estado = { rol: 'SUPERADMIN', activo: true },
+  usuarios = [],
+  roles = {},
+  perfiles = {},
+} = {}) {
   const llamadas = [];
   axios.get = async (url, config) => {
     assert.equal(config.headers['x-internal-key'], 'clave-interna-prueba');
     llamadas.push(['GET', url]);
     if (url === `http://auth/internal/usuarios/${ADMIN.sub}/estado`) return { data: estado };
     if (url === 'http://auth/internal/usuarios/administracion') return { data: usuarios };
+    const rol = url.match(/^http:\/\/auth\/internal\/usuarios\/([^/]+)\/estado$/);
+    if (rol && roles[rol[1]]) return { data: { rol: roles[rol[1]], activo: true } };
+    if (perfiles[url]) return { data: perfiles[url] };
     throw new Error(`URL inesperada ${url}`);
   };
   axios.post = async (url, body, config) => {
@@ -156,4 +167,78 @@ test('los DTO aplican la politica de contrasena y la lista de programas', async 
 test('no existe forma de crear otro super administrador', () => {
   const service = new AdministracionService();
   assert.equal(typeof service.crearAdministrador, 'undefined');
+});
+
+test('el administrador asigna una contrasena nueva a otra cuenta', async () => {
+  const llamadas = simularAuth();
+  const service = new AdministracionService();
+
+  await service.restablecerPassword(ADMIN, 'usuario-7', 'Nueva1234');
+
+  const patch = llamadas.find(([m]) => m === 'PATCH');
+  assert.equal(patch[1], 'http://auth/internal/usuarios/usuario-7/password');
+  assert.deepEqual(patch[2], { password: 'Nueva1234' });
+});
+
+test('no puede cambiar su propia contrasena por esta ruta ni sin ser SUPERADMIN', async () => {
+  const llamadas = simularAuth();
+  const service = new AdministracionService();
+
+  await assert.rejects(
+    service.restablecerPassword(ADMIN, ADMIN.sub, 'Nueva1234'),
+    (error) => error.getStatus() === 400,
+  );
+  await assert.rejects(
+    service.restablecerPassword({ ...ADMIN, rol: 'COORDINADOR' }, 'otro', 'Nueva1234'),
+    (error) => error.getStatus() === 403,
+  );
+  assert.equal(llamadas.some(([m]) => m === 'PATCH'), false);
+});
+
+test('devuelve el perfil segun el rol, solo con sus campos', async () => {
+  simularAuth({
+    roles: { e1: 'ESTUDIANTE', c1: 'COORDINADOR' },
+    perfiles: {
+      'http://estudiantes/internal/estudiantes/por-usuario/e1': {
+        id: 'interno', usuarioId: 'e1', codigo: '2026', programa: 'INGENIERO_AGROPECUARIO', semestre: 4,
+      },
+    },
+  });
+  const service = new AdministracionService();
+
+  assert.deepEqual(await service.obtenerPerfil(ADMIN, 'e1'), {
+    rol: 'ESTUDIANTE',
+    perfil: { codigo: '2026', programa: 'INGENIERO_AGROPECUARIO', semestre: 4 },
+  });
+  assert.deepEqual(await service.obtenerPerfil(ADMIN, 'c1'), { rol: 'COORDINADOR', perfil: null });
+});
+
+test('edita nombre y correo en auth-service, pero no los propios', async () => {
+  const llamadas = simularAuth({ roles: { d1: 'DOCENTE' } });
+  const service = new AdministracionService();
+
+  await service.actualizarCuenta(ADMIN, 'd1', { nombre: 'Nuevo nombre' });
+  const patch = llamadas.find(([m]) => m === 'PATCH');
+  assert.equal(patch[1], 'http://auth/internal/usuarios/d1');
+  assert.deepEqual(patch[2], { nombre: 'Nuevo nombre' });
+
+  await assert.rejects(
+    service.actualizarCuenta(ADMIN, ADMIN.sub, { nombre: 'Yo' }),
+    (error) => error.getStatus() === 400,
+  );
+});
+
+test('edita el perfil en el microservicio de su rol y valida los campos', async () => {
+  const llamadas = simularAuth({ roles: { p1: 'EMPRESA', e1: 'ESTUDIANTE', c1: 'COORDINADOR' } });
+  const service = new AdministracionService();
+
+  await service.actualizarPerfil(ADMIN, 'p1', { nit: '900-1', sector: 'Café' });
+  const patch = llamadas.find(([m]) => m === 'PATCH');
+  assert.equal(patch[1], 'http://empresas/internal/empresas/por-usuario/p1');
+  assert.deepEqual(patch[2], { nit: '900-1', sector: 'Café' });
+
+  const esperar400 = (promesa) => assert.rejects(promesa, (error) => error.getStatus() === 400);
+  await esperar400(service.actualizarPerfil(ADMIN, 'p1', { codigo: '1' }));
+  await esperar400(service.actualizarPerfil(ADMIN, 'e1', { programa: 'MEDICINA' }));
+  await esperar400(service.actualizarPerfil(ADMIN, 'c1', { sector: 'x' }));
 });

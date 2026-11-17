@@ -72,6 +72,8 @@ services:
       ESTUDIANTES_SERVICE_URL: http://estudiantes-service:3003
       COORDINADORES_SERVICE_URL: http://coordinadores-service:3005
       DOCENTES_SERVICE_URL: http://docentes-service:3008
+      # Registra los inicios de sesion (exitosos y fallidos).
+      AUDITORIA_SERVICE_URL: http://auditoria-service:3010
       # Super administrador unico: se crea al arrancar solo si aun no existe.
       # No hay forma de crear otro. Se pueden cambiar con variables en el .env de la raiz.
       SUPERADMIN_NOMBRE: ${SUPERADMIN_NOMBRE:-Super administrador}
@@ -150,6 +152,32 @@ services:
       <<: *secrets
       PORT: 3009
       AUTH_SERVICE_URL: http://auth-service:3001
+      # Perfiles que el super administrador puede ver y editar.
+      EMPRESAS_SERVICE_URL: http://empresas-service:3002
+      ESTUDIANTES_SERVICE_URL: http://estudiantes-service:3003
+      DOCENTES_SERVICE_URL: http://docentes-service:3008
+    healthcheck: *healthcheck
+
+  # Historial de acciones de los usuarios (solo lo consulta el super
+  # administrador). Antes de migrar crea auditoria_db si no existe, para las
+  # instalaciones cuyo volumen de Postgres es anterior a este servicio.
+  auditoria-service:
+    init: true
+    build:
+      context: ./services/auditoria-service
+      dockerfile: ../Dockerfile.prisma
+    command:
+      [
+        "sh",
+        "-c",
+        "node prisma/crear-base-datos.mjs && npx prisma migrate deploy && exec node dist/main.js",
+      ]
+    environment:
+      <<: *secrets
+      PORT: 3010
+      DATABASE_URL: postgresql://admin:admin123@postgres:5432/auditoria_db?schema=public
+      AUTH_SERVICE_URL: http://auth-service:3001
+    depends_on: *db-ready
     healthcheck: *healthcheck
 
   diplomado-service:
@@ -201,6 +229,9 @@ services:
     build: ./gateway
     ports: ["3000:3000"]
     environment:
+      # JWT_SECRET para saber quien hace cada accion e INTERNAL_API_KEY para
+      # enviarla a auditoria-service.
+      <<: *secrets
       PORT: 3000
       AUTH_SERVICE_URL: http://auth-service:3001
       EMPRESAS_SERVICE_URL: http://empresas-service:3002
@@ -211,6 +242,7 @@ services:
       INVESTIGACION_SERVICE_URL: http://investigacion-service:3007
       DOCENTES_SERVICE_URL: http://docentes-service:3008
       ADMINISTRACION_SERVICE_URL: http://administracion-service:3009
+      AUDITORIA_SERVICE_URL: http://auditoria-service:3010
       FRONTEND_AUTH_URL: http://localhost:5173
       FRONTEND_EMPRESAS_URL: http://localhost:5174
       FRONTEND_ESTUDIANTES_URL: http://localhost:5175
@@ -230,6 +262,7 @@ services:
       investigacion-service: { condition: service_healthy }
       docentes-service: { condition: service_healthy }
       administracion-service: { condition: service_healthy }
+      auditoria-service: { condition: service_healthy }
     healthcheck: *healthcheck
 
   frontend-auth:
