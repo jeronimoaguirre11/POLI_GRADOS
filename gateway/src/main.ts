@@ -5,6 +5,7 @@ import { NestFactory } from '@nestjs/core';
 import { createProxyMiddleware } from 'http-proxy-middleware';
 import { AppModule } from './app.module.js';
 import { crearMiddlewareAuditoria } from './auditoria.js';
+import express from 'express';
 
 // Un prefijo por microservicio. El gateway NUNCA reenvia nada bajo
 // /internal: esas rutas solo se llaman servicio-a-servicio, directo por su
@@ -65,6 +66,10 @@ async function bootstrap() {
   // romperian las subidas de archivos (imagen de oferta, hoja de vida) y
   // cualquier POST/PATCH con JSON.
   const app = await NestFactory.create(AppModule, { bodyParser: false });
+
+  // GraphQL necesita el body ya leído; el proxy REST no (por eso sigue
+  // bodyParser: false arriba). Este parser aplica solo a /graphql.
+  app.use('/graphql', express.json());
 
   app.enableCors({
     origin: [
