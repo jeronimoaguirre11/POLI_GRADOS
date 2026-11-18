@@ -227,7 +227,7 @@ services:
   gateway:
     init: true
     build: ./gateway
-    ports: ["3000:3000"]
+    # ports: ["3000:3000"] borramos esta linea al implementar nginx
     environment:
       # JWT_SECRET para saber quien hace cada accion e INTERNAL_API_KEY para
       # enviarla a auditoria-service.
@@ -273,7 +273,7 @@ services:
       args:
         <<: *vite-args
         APP: frontend-auth
-    ports: ["5173:80"]
+    # ports: ["5173:80"] borramos esta linea al implementar nginx
 
   frontend-empresas:
     <<: *frontend
@@ -283,7 +283,7 @@ services:
       args:
         <<: *vite-args
         APP: frontend-empresas
-    ports: ["5174:80"]
+    # ports: ["5174:80"] borramos esta linea al implementar nginx
 
   frontend-estudiantes:
     <<: *frontend
@@ -293,7 +293,7 @@ services:
       args:
         <<: *vite-args
         APP: frontend-estudiantes
-    ports: ["5175:80"]
+    # ports: ["5175:80"] borramos esta linea al implementar nginx
 
   frontend-postulaciones:
     <<: *frontend
@@ -303,7 +303,7 @@ services:
       args:
         <<: *vite-args
         APP: frontend-postulaciones
-    ports: ["5176:80"]
+    # ports: ["5176:80"] borramos esta linea al implementar nginx
 
   frontend-coordinadores:
     <<: *frontend
@@ -313,7 +313,7 @@ services:
       args:
         <<: *vite-args
         APP: frontend-coordinadores
-    ports: ["5177:80"]
+    # ports: ["5177:80"] borramos esta linea al implementar nginx
 
   frontend-diplomado:
     <<: *frontend
@@ -323,7 +323,7 @@ services:
       args:
         <<: *vite-args
         APP: frontend-diplomado
-    ports: ["5178:80"]
+    # ports: ["5178:80"] borramos esta linea al implementar nginx
 
   frontend-investigacion:
     <<: *frontend
@@ -333,7 +333,7 @@ services:
       args:
         <<: *vite-args
         APP: frontend-investigacion
-    ports: ["5179:80"]
+    # ports: ["5179:80"] borramos esta linea al implementar nginx
 
   frontend-docentes:
     <<: *frontend
@@ -343,7 +343,7 @@ services:
       args:
         <<: *vite-args
         APP: frontend-docentes
-    ports: ["5180:80"]
+    # ports: ["5180:80"] borramos esta linea al implementar nginx
 
   frontend-administracion:
     <<: *frontend
@@ -353,7 +353,36 @@ services:
       args:
         <<: *vite-args
         APP: frontend-administracion
-    ports: ["5181:80"]
+    # ports: ["5181:80"] borramos esta linea al implementar nginx
+
+  # Nginx ya llama a gateway y a los frontends, y expone todos los puertos de los frontends y el puerto 3000 del gateway.
+  # El healthcheck de nginx hace una llamada a gateway.
+  nginx:
+    build: ./nginx
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+      - "5173:5173"
+      - "5174:5174"
+      - "5175:5175"
+      - "5176:5176"
+      - "5177:5177"
+      - "5178:5178"
+      - "5179:5179"
+      - "5180:5180"
+      - "5181:5181"
+    depends_on:
+      gateway:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "wget -qO- http://127.0.0.1:3000/health >/dev/null || exit 1",
+        ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
 volumes:
   pgdata:
